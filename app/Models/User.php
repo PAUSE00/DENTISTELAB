@@ -21,6 +21,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'phone',
+        'lab_id',
+        'clinic_id',
+        'is_active',
     ];
 
     /**
@@ -43,6 +48,33 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function clinic()
+    {
+        return $this->belongsTo(Clinic::class);
+    }
+
+    public function lab()
+    {
+        return $this->belongsTo(Lab::class);
+    }
+
+    public function orders()
+    {
+        if (in_array($this->role, ['lab_owner', 'lab_tech'])) {
+            return $this->hasMany(Order::class, 'lab_id', 'lab_id');
+        }
+        return $this->hasMany(Order::class, 'clinic_id', 'clinic_id');
+    }
+
+    /**
+     * Check if the user has a specific role.
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
     }
 }

@@ -1,0 +1,85 @@
+{
+    "common": {
+        "dashboard": "لوحة القيادة",
+        "orders": "الطلبات",
+        "patients": "المرضى",
+        "settings": "الإعدادات",
+        "logout": "تسجيل الخروج",
+        "search": "بحث...",
+        "actions": "إجراءات",
+        "status": "الحالة",
+        "date": "التاريخ",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "delete": "حذف",
+        "edit": "تعديل",
+        "view": "عرض",
+        "create": "إنشاء",
+        "back": "رجوع",
+        "loading": "جاري التحميل...",
+        "no_results": "لا توجد نتائج",
+        "all": "الكل"
+    },
+    "auth": {
+        "login": "تسجيل الدخول",
+        "register": "إنشاء حساب",
+        "email": "البريد الإلكتروني",
+        "password": "كلمة المرور",
+        "remember_me": "تذكرني",
+        "forgot_password": "نسيت كلمة المرور؟"
+    },
+    "status": {
+        "new": "جديد",
+        "pending": "قيد الانتظار",
+        "in_progress": "قيد الإنجاز",
+        "fitting": "تجربة",
+        "finished": "منتهي",
+        "shipped": "مشحون",
+        "delivered": "تم التسليم",
+        "rejected": "مرفوض",
+        "archived": "مؤرشف",
+        "paid": "مدفوع",
+        "unpaid": "غير مدفوع",
+        "partial": "جزئي"
+    },
+    "orders": {
+        "title": "إدارة الطلبات",
+        "create_new": "طلب جديد",
+        "id": "رقم الطلب",
+        "patient": "المريض",
+        "dentist": "طبيب الأسنان",
+        "lab": "المختبر",
+        "service": "الخدمة",
+        "price": "السعر",
+        "due_date": "تاريخ الاستحقاق",
+        "notes": "ملاحظات",
+        "attachments": "المرفقات"
+    },
+    "notifications": {
+        "title": "الإشعارات",
+        "read_all": "قراءة الكل",
+        "empty": "لا توجد إشعارات",
+        "mark_read": "تحديد كمقروء",
+        "view": "عرض",
+        "view_all": "جميع الإشعارات"
+    },
+    "nav": {
+        "dashboard": "لوحة القيادة",
+        "my_orders": "طلباتي",
+        "my_patients": "مرضاي",
+        "team": "الفريق",
+        "incoming_orders": "الطلبات الواردة",
+        "my_services": "خدماتي",
+        "manage_users": "إدارة المستخدمين",
+        "manage_clinics": "إدارة العيادات",
+        "manage_labs": "إدارة المختبرات",
+        "clients": "العملاء والشبكة"
+    },
+    "roles": {
+        "dentist": "طبيب أسنان",
+        "clinic_staff": "طاقم العيادة",
+        "lab_owner": "صاحب المختبر",
+        "lab_tech": "فني مختبر",
+        "super_admin": "مدير عام"
+    }
+}

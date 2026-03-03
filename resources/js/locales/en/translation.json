@@ -1,0 +1,85 @@
+{
+    "common": {
+        "dashboard": "Dashboard",
+        "orders": "Orders",
+        "patients": "Patients",
+        "settings": "Settings",
+        "logout": "Logout",
+        "search": "Search...",
+        "actions": "Actions",
+        "status": "Status",
+        "date": "Date",
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "view": "View",
+        "create": "Create",
+        "back": "Back",
+        "loading": "Loading...",
+        "no_results": "No results found",
+        "all": "All"
+    },
+    "auth": {
+        "login": "Login",
+        "register": "Register",
+        "email": "Email Address",
+        "password": "Password",
+        "remember_me": "Remember me",
+        "forgot_password": "Forgot Password?"
+    },
+    "status": {
+        "new": "New",
+        "pending": "Pending",
+        "in_progress": "In Progress",
+        "fitting": "Fitting",
+        "finished": "Finished",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "rejected": "Rejected",
+        "archived": "Archived",
+        "paid": "Paid",
+        "unpaid": "Unpaid",
+        "partial": "Partial"
+    },
+    "orders": {
+        "title": "Order Management",
+        "create_new": "New Order",
+        "id": "Order ID",
+        "patient": "Patient",
+        "dentist": "Dentist",
+        "lab": "Lab",
+        "service": "Service",
+        "price": "Price",
+        "due_date": "Due Date",
+        "notes": "Notes",
+        "attachments": "Attachments"
+    },
+    "notifications": {
+        "title": "Notifications",
+        "read_all": "Read all",
+        "empty": "No notifications",
+        "mark_read": "Mark as read",
+        "view": "View",
+        "view_all": "All notifications"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "my_orders": "My Orders",
+        "my_patients": "My Patients",
+        "team": "Team",
+        "incoming_orders": "Incoming Orders",
+        "my_services": "My Services",
+        "manage_users": "Manage Users",
+        "manage_clinics": "Manage Clinics",
+        "manage_labs": "Manage Labs",
+        "clients": "Clients & Network"
+    },
+    "roles": {
+        "dentist": "Dentist",
+        "clinic_staff": "Clinic Staff",
+        "lab_owner": "Lab Owner",
+        "lab_tech": "Lab Technician",
+        "super_admin": "Super Admin"
+    }
+}

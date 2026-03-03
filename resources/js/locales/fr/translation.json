@@ -1,0 +1,85 @@
+{
+  "common": {
+    "dashboard": "Tableau de bord",
+    "orders": "Commandes",
+    "patients": "Patients",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "search": "Rechercher...",
+    "actions": "Actions",
+    "status": "Statut",
+    "date": "Date",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "create": "Créer",
+    "back": "Retour",
+    "loading": "Chargement...",
+    "no_results": "Aucun résultat trouvé",
+    "all": "Tous"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "email": "Adresse email",
+    "password": "Mot de passe",
+    "remember_me": "Se souvenir de moi",
+    "forgot_password": "Mot de passe oublié ?"
+  },
+  "status": {
+    "new": "Nouveau",
+    "pending": "En attente",
+    "in_progress": "En production",
+    "fitting": "Essayage",
+    "finished": "Terminé",
+    "shipped": "Expédié",
+    "delivered": "Livré",
+    "rejected": "Rejeté",
+    "archived": "Archivé",
+    "paid": "Payé",
+    "unpaid": "Impayé",
+    "partial": "Partiel"
+  },
+  "orders": {
+    "title": "Gestion des Commandes",
+    "create_new": "Nouvelle Commande",
+    "id": "N° Commande",
+    "patient": "Patient",
+    "dentist": "Dentiste",
+    "lab": "Laboratoire",
+    "service": "Service",
+    "price": "Prix",
+    "due_date": "Date d'échéance",
+    "notes": "Notes",
+    "attachments": "Pièces jointes"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "read_all": "Tout lire",
+    "empty": "Pas de notifications",
+    "mark_read": "Marquer lu",
+    "view": "Voir",
+    "view_all": "Toutes les notifications"
+  },
+  "nav": {
+    "dashboard": "Tableau de Bord",
+    "my_orders": "Mes Commandes",
+    "my_patients": "Mes Patients",
+    "team": "Équipe",
+    "incoming_orders": "Commandes Rentrantes",
+    "my_services": "Mes Services",
+    "manage_users": "Gérer les Utilisateurs",
+    "manage_clinics": "Gérer les Cabinets",
+    "manage_labs": "Gérer les Laboratoires",
+    "clients": "Clients & Réseau"
+  },
+  "roles": {
+    "dentist": "Dentiste",
+    "clinic_staff": "Personnel du Cabinet",
+    "lab_owner": "Gérant du Laboratoire",
+    "lab_tech": "Prothésiste",
+    "super_admin": "Super Administrateur"
+  }
+}

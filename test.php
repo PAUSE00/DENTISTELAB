@@ -1,0 +1,1 @@
+<?php require 'vendor/autoload.php'; \ = require_once 'bootstrap/app.php'; \->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); echo json_encode(array_values(array_map(fn(\) => ['value' => \->value], \App\Enums\OrderStatus::New->allowedTransitions())));

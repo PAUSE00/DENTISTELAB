@@ -1,11 +1,97 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@layer base {
+    /* Global zoom out by reducing base font size from 16px to 14px (applies to all REM relative sizing) */
+    html {
+        font-size: 14px;
+    }
+}
+@layer components {
+    /* Glassmorphism */
+    .glass-effect {
+        @apply bg-white/70 backdrop-blur-xl dark:bg-slate-900/70 border-b border-gray-200/50 dark:border-slate-800/50 shadow-sm;
+    }
+    .glass-card {
+        @apply bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-xl shadow-gray-200/40 dark:shadow-slate-900/40;
+    }
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Gradient Text */
+    .gradient-text {
+        @apply bg-gradient-to-br from-primary-600 to-dental-500 bg-clip-text text-transparent;
+    }
+
+    /* Card Hover Effect */
+    .card-hover {
+        @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-slate-900/80;
+    }
+
+    /* Tooth Button used in selection */
+    .tooth-btn {
+        @apply w-10 h-10 rounded-lg border-2 border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-gray-700 dark:text-gray-300 transition-all duration-200 hover:scale-110 hover:border-primary-400 dark:hover:border-primary-500;
+    }
+    .tooth-btn.selected {
+        @apply bg-gradient-to-br from-primary-600 to-primary-500 text-white border-transparent scale-110 shadow-lg shadow-primary-500/40;
+    }
+
+    /* Stepper Line */
+    .step-line {
+        @apply bg-gradient-to-r from-primary-600 to-primary-500;
+    }
+
+    /* Chat Bubble Animation */
+    .chat-bubble {
+        @apply relative animate-fade-in;
+    }
+
+    /* Sidebar Link Indicator */
+    .sidebar-link {
+        @apply relative transition-all duration-300 rounded-xl mb-1 flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400;
+    }
+    .sidebar-link::before {
+        content: '';
+        @apply absolute left-0 top-1/2 -translate-y-1/2 h-0 w-[4px] bg-gradient-to-b from-primary-400 to-primary-600 rounded-r-md transition-all duration-300 opacity-0;
+    }
+    .sidebar-link:hover {
+        @apply text-gray-800 dark:text-white bg-gray-50 dark:bg-slate-800/50 translate-x-1;
+    }
+    .sidebar-link:hover::before {
+        @apply h-1/2 opacity-100 shadow-[2px_0_12px_rgba(59,130,246,0.5)];
+    }
+    .sidebar-link.active {
+        @apply text-primary-700 dark:text-primary-300 font-bold bg-primary-50/80 dark:bg-primary-900/20 shadow-sm ring-1 ring-primary-100/50 dark:ring-primary-800/50;
+    }
+    .sidebar-link.active::before {
+        @apply h-[70%] opacity-100 shadow-[2px_0_12px_rgba(59,130,246,0.7)];
+    }
+
+    /* Input Focus Styles */
+    .input-focus {
+        @apply transition-all duration-300 focus:-translate-y-0.5 focus:shadow-lg focus:shadow-primary-500/15;
+    }
+
+    /* Status Badge Shimmer */
+    .status-badge {
+        @apply relative overflow-hidden;
+    }
+    .status-badge::after {
+        content: '';
+        @apply absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_2s_infinite];
+    }
+}
+
+@layer utilities {
+    .animate-delay-100 { animation-delay: 100ms; }
+    .animate-delay-200 { animation-delay: 200ms; }
+    .animate-delay-300 { animation-delay: 300ms; }
+    .animate-delay-400 { animation-delay: 400ms; }
+    .animate-delay-500 { animation-delay: 500ms; }
+    .animate-fill-both { animation-fill-mode: both; }
+}
+
+@keyframes shimmer {
+    100% {
+        left: 100%;
+    }
 }
