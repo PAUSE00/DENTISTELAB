@@ -6,10 +6,11 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'clinic_id',
@@ -78,6 +79,11 @@ class Order extends Model
     public function history()
     {
         return $this->hasMany(OrderStatusHistory::class)->orderBy('created_at', 'asc');
+    }
+
+    public function notes()
+    {
+        return $this->hasMany(OrderNote::class)->orderBy('created_at', 'desc');
     }
 
     // ─── Scopes ───────────────────────────────────────────

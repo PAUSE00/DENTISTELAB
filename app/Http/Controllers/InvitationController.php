@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invitation;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +11,9 @@ use Inertia\Inertia;
 
 class InvitationController extends Controller
 {
+    public function __construct(
+        private readonly NotificationService $notificationService,
+    ) {}
     /**
      * Show the invitation acceptance page.
      */
@@ -71,7 +75,7 @@ class InvitationController extends Controller
         $invitation->accept();
 
         // Notify the lab
-        \App\Services\NotificationService::invitationAccepted(
+        $this->notificationService->invitationAccepted(
             $invitation->lab_id,
             $user->name
         );

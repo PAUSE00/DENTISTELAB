@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -14,62 +15,62 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $labId = Auth::user()->lab_id;
-        $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
-        $endDate = $request->input('end_date', now()->endOfMonth()->toDateString());
 
-        // 1. Order Status Counts (filtered by date)
-        $statusCounts = Order::where('lab_id', $labId)
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
+        // Quick summary stats
+        $totalActive = Order::where('lab_id', $labId)
+            ->whereNotIn('status', [
+                OrderStatus::Delivered->value,
+                OrderStatus::Archived->value,
+                OrderStatus::Rejected->value,
+                OrderStatus::Cancelled->value,
+            ])
+            ->count();
 
-        // 2. Revenue (Overall and Period)
-        $totalRevenue = Order::where('lab_id', $labId)
+        $pendingNew = Order::where('lab_id', $labId)
+            ->where('status', OrderStatus::New->value)
+            ->count();
+
+        $overdueCount = Order::where('lab_id', $labId)
+            ->whereNotIn('status', [
+                OrderStatus::Delivered->value,
+                OrderStatus::Archived->value,
+                OrderStatus::Rejected->value,
+                OrderStatus::Cancelled->value,
+            ])
+            ->where('due_date', '<', now())
+            ->count();
+
+        $dueTodayCount = Order::where('lab_id', $labId)
+            ->whereNotIn('status', [
+                OrderStatus::Delivered->value,
+                OrderStatus::Archived->value,
+                OrderStatus::Rejected->value,
+                OrderStatus::Cancelled->value,
+            ])
+            ->whereDate('due_date', now())
+            ->count();
+
+        $monthRevenue = Order::where('lab_id', $labId)
             ->whereIn('status', [OrderStatus::Delivered->value, OrderStatus::Finished->value, OrderStatus::Archived->value])
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(final_price, price)')) ?? 0;
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+            ->sum(DB::raw('COALESCE(final_price, price)')) ?? 0;
 
-        $monthlyRevenue = Order::where('lab_id', $labId)
-            ->whereIn('status', [OrderStatus::Delivered->value, OrderStatus::Finished->value, OrderStatus::Archived->value])
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(final_price, price)')) ?? 0;
-
-        // 3. Chart Data (Daily volume in period)
-        // If range is > 31 days, maybe group by week/month? For now, keep simple daily.
-        $chartData = [];
-        $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
-
-        // Optimizing chart query: fetch all in range, then map
-        $dailyOrders = Order::where('lab_id', $labId)
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->selectRaw('DATE(created_at) as date, count(*) as count, SUM(COALESCE(final_price, price)) as revenue')
-            ->groupBy('date')
-            ->get()
-            ->keyBy('date')
-            ->toArray();
-
-        foreach ($period as $date) {
-            $formattedDate = $date->format('Y-m-d');
-            $chartData[] = [
-                'name' => $date->format('d/m'),
-                'orders' => $dailyOrders[$formattedDate]['count'] ?? 0,
-                'revenue' => $dailyOrders[$formattedDate]['revenue'] ?? 0,
-            ];
-        }
+        // Recent orders (last 10)
+        $recentOrders = Order::where('lab_id', $labId)
+            ->with(['patient:id,first_name,last_name', 'clinic:id,name', 'service:id,name,price'])
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
 
         return Inertia::render('Lab/Dashboard', [
             'stats' => [
-                'statusCounts' => $statusCounts,
-                'totalRevenue' => $totalRevenue,
-                'monthlyRevenue' => $monthlyRevenue,
-                'chartData' => $chartData,
-                'pendingOrders' => $statusCounts[OrderStatus::New->value] ?? 0,
+                'totalActive' => $totalActive,
+                'pendingNew' => $pendingNew,
+                'overdueCount' => $overdueCount,
+                'dueTodayCount' => $dueTodayCount,
+                'monthRevenue' => $monthRevenue,
             ],
-            'filters' => [
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-            ]
+            'recentOrders' => $recentOrders,
         ]);
     }
 }

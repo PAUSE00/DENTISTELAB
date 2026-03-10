@@ -8,24 +8,62 @@ use App\Http\Requests\StoreOrderRequest;
 use App\Models\Lab;
 use App\Models\Order;
 use App\Models\Patient;
+use App\Models\Service;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        private readonly OrderService $orderService,
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::with(['patient', 'lab', 'service'])
-            ->where('clinic_id', Auth::user()->clinic_id)
-            ->latest()
-            ->paginate(10);
+        $clinicId = Auth::user()->clinic_id;
+
+        $query = Order::with(['patient', 'lab', 'service'])
+            ->where('clinic_id', $clinicId);
+
+        // Apply shared filters
+        $this->orderService->applyFilters($query, $request);
+
+        // Clinic-specific filters
+        if ($request->filled('lab_id')) {
+            $query->where('lab_id', $request->lab_id);
+        }
+
+        if ($request->filled('service_id')) {
+            $query->whereHas('service', function ($q) use ($request) {
+                $q->where('id', $request->service_id);
+            });
+        }
+
+        $orders = $query->latest()->paginate(10)->withQueryString();
+
+        // Get filter options
+        $labs = Lab::whereHas('orders', function ($q) use ($clinicId) {
+            $q->where('clinic_id', $clinicId);
+        })->select('id', 'name')->get();
+
+        $services = Service::whereHas('orders', function ($q) use ($clinicId) {
+            $q->where('clinic_id', $clinicId);
+        })->select('id', 'name')->get();
 
         return Inertia::render('Clinic/Orders/Index', [
-            'orders' => $orders
+            'orders' => $orders,
+            'filters' => $request->only(['status', 'priority', 'search', 'lab_id', 'service_id', 'date_from', 'date_to', 'payment_status']),
+            'statusOptions' => collect(OrderStatus::cases())->map(fn($s) => [
+                'value' => $s->value,
+                'label' => $s->label(),
+            ]),
+            'labs' => $labs,
+            'services' => $services,
         ]);
     }
 
@@ -60,46 +98,16 @@ class OrderController extends Controller
     {
         $validated = $request->validated();
 
-        $service = \App\Models\Service::findOrFail($validated['service_id']);
-
-        // Create the order
-        $order = Order::create([
-            'clinic_id' => Auth::user()->clinic_id,
-            'lab_id' => $validated['lab_id'],
-            'patient_id' => $validated['patient_id'],
-            'service_id' => $validated['service_id'],
-            'status' => OrderStatus::New,
-            'priority' => $validated['priority'],
-            'due_date' => $validated['due_date'],
-            'teeth' => $validated['teeth'],
-            'shade' => $validated['shade'],
-            'material' => $validated['material'],
-            'instructions' => $validated['instructions'],
-            'price' => $service->price,
-        ]);
-
-        // Log initial status
-        $order->history()->create([
-            'status' => OrderStatus::New->value,
-            'changed_by_user_id' => Auth::id(),
-        ]);
+        $order = $this->orderService->createOrder(
+            $validated,
+            Auth::user()->clinic_id,
+            Auth::id(),
+        );
 
         // Handle File Uploads
         if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $path = $file->store('order_files/' . $order->id, 'public');
-
-                $order->files()->create([
-                    'path' => $path,
-                    'name' => $file->getClientOriginalName(),
-                    'type' => $file->getClientMimeType(),
-                    'size' => $file->getSize(),
-                ]);
-            }
+            $this->orderService->uploadFiles($order, $request->file('files'));
         }
-
-        // Dispatch the event
-        \App\Events\OrderSubmitted::dispatch($order);
 
         return redirect()->route('clinic.orders.index')
             ->with('success', 'Order created successfully.');
@@ -119,29 +127,21 @@ class OrderController extends Controller
             'order' => $order
         ]);
     }
+
     /**
      * Upload a file to the order.
      */
     public function uploadFile(Request $request, $id)
     {
         $request->validate([
-            'file' => 'required|file|max:51200|extensions:pdf,jpg,jpeg,png,stl,dcm,zip', // Max 50MB per PRD, using extensions for STL reliability
+            'file' => 'required|file|max:51200|extensions:pdf,jpg,jpeg,png,stl,dcm,zip',
         ]);
 
         $order = Order::where('clinic_id', Auth::user()->clinic_id)
             ->findOrFail($id);
 
         if ($request->file('file')) {
-            $file = $request->file('file');
-            $path = $file->store('order_files', 'public');
-
-            $order->files()->create([
-                'name' => $file->getClientOriginalName(),
-                'path' => $path,
-                'type' => $file->getClientMimeType(),
-                'size' => $file->getSize(),
-            ]);
-
+            $this->orderService->uploadFiles($order, [$request->file('file')]);
             return redirect()->back()->with('success', 'File uploaded successfully.');
         }
 
@@ -190,7 +190,7 @@ class OrderController extends Controller
         $this->authorize('update', $order);
 
         $validated = $request->validated();
-        $service = \App\Models\Service::findOrFail($validated['service_id']);
+        $service = Service::findOrFail($validated['service_id']);
 
         $order->update([
             'lab_id' => $validated['lab_id'],
@@ -251,16 +251,15 @@ class OrderController extends Controller
     public function cancel($id)
     {
         $order = Order::where('clinic_id', Auth::user()->clinic_id)->findOrFail($id);
-
         $this->authorize('view', $order);
 
-        if (in_array($order->status->value, ['new', 'rejected'])) {
-            $order->transitionTo(\App\Enums\OrderStatus::Cancelled, Auth::id());
+        if ($this->orderService->cancelOrder($order, Auth::id())) {
             return redirect()->back()->with('success', 'Order cancelled successfully.');
         }
 
         return redirect()->back()->with('error', 'This order cannot be cancelled.');
     }
+
     /**
      * Delete a file from the order.
      */
@@ -270,13 +269,54 @@ class OrderController extends Controller
         $this->authorize('update', $order);
 
         $file = $order->files()->findOrFail($fileId);
-
-        // Delete from storage
         \Illuminate\Support\Facades\Storage::disk('public')->delete($file->path);
-
-        // Delete record
         $file->delete();
 
         return redirect()->back()->with('success', 'File deleted successfully.');
+    }
+
+    /**
+     * Bulk cancel selected orders.
+     */
+    public function bulkCancel(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'integer|exists:orders,id',
+        ]);
+
+        $cancelled = $this->orderService->bulkCancel(
+            $request->order_ids,
+            Auth::user()->clinic_id,
+            Auth::id(),
+        );
+
+        return redirect()->back()->with('success', "$cancelled order(s) cancelled successfully.");
+    }
+
+    /**
+     * Bulk export selected orders as CSV.
+     */
+    public function bulkExport(Request $request)
+    {
+        $clinicId = Auth::user()->clinic_id;
+        $orderIds = $request->input('order_ids', []);
+
+        $orders = Order::with(['patient', 'lab', 'service'])
+            ->where('clinic_id', $clinicId)
+            ->when(!empty($orderIds), fn($q) => $q->whereIn('id', $orderIds))
+            ->latest()
+            ->get();
+
+        $filename = 'orders_export_' . now()->format('Y-m-d_His') . '.csv';
+
+        return response()->stream(
+            $this->orderService->exportOrdersCsv($orders),
+            200,
+            [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => "attachment; filename=\"$filename\"",
+            ]
+        );
     }
 }

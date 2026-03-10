@@ -74,10 +74,22 @@ class PatientController extends Controller
             abort(403);
         }
 
-        $patient->load('orders.lab', 'orders.service');
+        $patient->load('orders.lab', 'orders.service', 'orders.history.user');
+
+        // Compute stats
+        $orders = $patient->orders;
+        $stats = [
+            'total_orders' => $orders->count(),
+            'total_spent' => $orders->sum('final_price'),
+            'completed' => $orders->whereIn('status', ['delivered', 'finished', 'archived'])->count(),
+            'in_progress' => $orders->whereIn('status', ['in_progress', 'fitting'])->count(),
+            'pending' => $orders->where('status', 'new')->count(),
+            'cancelled' => $orders->whereIn('status', ['cancelled', 'rejected'])->count(),
+        ];
 
         return Inertia::render('Clinic/Patients/Show', [
             'patient' => $patient,
+            'stats' => $stats,
         ]);
     }
 

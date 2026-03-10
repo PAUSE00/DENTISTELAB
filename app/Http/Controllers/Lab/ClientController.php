@@ -16,6 +16,10 @@ use Inertia\Inertia;
 
 class ClientController extends Controller
 {
+    public function __construct(
+        private readonly NotificationService $notificationService,
+    ) {}
+
     /**
      * Display connected clinics and pending invitations.
      */
@@ -86,7 +90,7 @@ class ClientController extends Controller
         Mail::to($email)->send(new \App\Mail\ClinicInvitationMail($invitation, $lab));
 
         if ($existingClinic) {
-            NotificationService::invitationReceived($existingClinic->id, $lab->name);
+            $this->notificationService->invitationReceived($existingClinic->id, $lab->name);
         }
 
         return redirect()->back()->with('success', 'Invitation envoyée avec succès.');

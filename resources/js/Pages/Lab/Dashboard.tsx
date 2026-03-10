@@ -1,90 +1,61 @@
 import LabLayout from '@/Layouts/LabLayout';
 import { Head, Link } from '@inertiajs/react';
-import { PageProps } from '@/types';
+import { PageProps, Order } from '@/types';
 import {
-    BarChart,
-    Bar,
-    Area,
-    ComposedChart,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-} from 'recharts';
-import {
-    Activity,
-    CreditCard,
-    DollarSign,
-    Users,
     Package,
-    ArrowUpRight,
     Clock,
-    TrendingUp,
-    Calendar,
+    AlertTriangle,
+    CalendarClock,
+    DollarSign,
+    ArrowRight,
     ClipboardList,
     Sparkles,
-    ArrowRight,
-    Zap,
-    MessageSquare,
-    CheckCircle2
+    BarChart3,
+    Eye,
+    TrendingUp,
 } from 'lucide-react';
-import DateRangeFilter from '@/Components/DateRangeFilter';
 import { useEffect } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
 import { router } from '@inertiajs/react';
-import CustomTooltip from '@/Components/CustomTooltip';
 
 interface Stats {
-    statusCounts: Record<string, number>;
-    totalRevenue: number;
-    monthlyRevenue: number;
-    chartData: { name: string; orders: number; revenue: number }[];
-    pendingOrders: number;
+    totalActive: number;
+    pendingNew: number;
+    overdueCount: number;
+    dueTodayCount: number;
+    monthRevenue: number;
 }
 
 interface Props extends PageProps {
     stats: Stats;
-    filters: {
-        start_date: string;
-        end_date: string;
-    };
+    recentOrders: Order[];
 }
 
-const StatCard = ({ icon: Icon, label, value, color, delay, trend }: any) => {
-    return (
-        <div className={`glass-card rounded-3xl p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 animate-fade-in ${delay}`}>
-            <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110 pointer-events-none`}></div>
-            <div className="relative">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br from-${color}-500 to-${color}-600 text-white shadow-xl shadow-${color}-500/20 flex items-center justify-center mb-6`}>
-                    <Icon className="w-7 h-7" />
-                </div>
-                <div className="flex items-end justify-between">
-                    <div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{label}</h3>
-                        <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
-                    </div>
-                    {trend && (
-                        <div className="flex items-center gap-1 text-emerald-500 font-black text-[10px] mb-1">
-                            <TrendingUp className="w-3 h-3" />
-                            {trend}
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+    new: { label: 'New', bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-700 dark:text-amber-400', dot: 'bg-amber-500' },
+    in_progress: { label: 'In Progress', bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-700 dark:text-blue-400', dot: 'bg-blue-500' },
+    fitting: { label: 'Fitting', bg: 'bg-purple-50 dark:bg-purple-500/10', text: 'text-purple-700 dark:text-purple-400', dot: 'bg-purple-500' },
+    finished: { label: 'Finished', bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
+    shipped: { label: 'Shipped', bg: 'bg-indigo-50 dark:bg-indigo-500/10', text: 'text-indigo-700 dark:text-indigo-400', dot: 'bg-indigo-500' },
+    delivered: { label: 'Delivered', bg: 'bg-green-50 dark:bg-green-500/10', text: 'text-green-700 dark:text-green-400', dot: 'bg-green-500' },
+    rejected: { label: 'Rejected', bg: 'bg-red-50 dark:bg-red-500/10', text: 'text-red-700 dark:text-red-400', dot: 'bg-red-500' },
+    archived: { label: 'Archived', bg: 'bg-gray-50 dark:bg-gray-500/10', text: 'text-gray-700 dark:text-gray-400', dot: 'bg-gray-500' },
+    cancelled: { label: 'Cancelled', bg: 'bg-red-50 dark:bg-red-500/10', text: 'text-red-600 dark:text-red-400', dot: 'bg-red-400' },
 };
 
-export default function Dashboard({ auth, stats, filters }: Props) {
+const priorityBadge: Record<string, string> = {
+    urgent: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+    normal: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
+};
+
+export default function Dashboard({ auth, stats, recentOrders }: Props) {
     const { t } = useTranslation();
 
     useEffect(() => {
         if (window.Echo) {
             window.Echo.private(`lab.${auth.user.lab_id}`)
-                .listen('.order.submitted', (e: any) => {
-                    router.reload({ only: ['stats'] });
+                .listen('.order.submitted', () => {
+                    router.reload({ only: ['stats', 'recentOrders'] });
                 });
         }
         return () => {
@@ -94,14 +65,12 @@ export default function Dashboard({ auth, stats, filters }: Props) {
         };
     }, [auth.user.lab_id]);
 
-    const statusColors: Record<string, string> = {
-        completed: 'bg-emerald-500',
-        delivered: 'bg-emerald-500',
-        in_progress: 'bg-blue-500',
-        fitting: 'bg-blue-500',
-        sent: 'bg-amber-500',
-        shipped: 'bg-amber-500',
-        default: 'bg-slate-400'
+    const formatCurrency = (value: number) =>
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD' }).format(value);
+
+    const formatDate = (dateStr: string) => {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
     return (
@@ -127,7 +96,7 @@ export default function Dashboard({ auth, stats, filters }: Props) {
                                 </span>
                             </h1>
                             <p className="text-slate-400 text-lg font-medium max-w-xl">
-                                {t('Orchestrate your production workflows, track technical precision, and maintain peak operational efficiency.')}
+                                {t('Monitor incoming orders and keep your production workflow running smoothly.')}
                             </p>
                         </div>
 
@@ -143,219 +112,134 @@ export default function Dashboard({ auth, stats, filters }: Props) {
                                 </div>
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </Link>
+                            {auth.user.role === 'lab_owner' && (
+                                <Link
+                                    href={route('lab.analytics.index')}
+                                    className="group relative overflow-hidden flex items-center gap-3 px-8 py-5 bg-white/10 hover:bg-white/20 text-white rounded-2xl border border-white/10 transition-all duration-500"
+                                >
+                                    <BarChart3 className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                                    <div className="text-left">
+                                        <span className="block font-black tracking-tight leading-none mb-1">{t('Analytics')}</span>
+                                        <span className="block text-[10px] uppercase font-black opacity-60 tracking-widest leading-none">{t('Detailed Insights')}</span>
+                                    </div>
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            )}
                         </div>
-                    </div>
-
-                    <div className="absolute bottom-0 left-10 translate-y-1/2 flex items-center gap-4">
-                        <DateRangeFilter startDate={filters.start_date} endDate={filters.end_date} />
                     </div>
                 </div>
 
-                {/* Stats Matrix */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
-                    {auth.user.role === 'lab_owner' && (
-                        <StatCard
-                            icon={DollarSign}
-                            label={t('Period Revenue')}
-                            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD' }).format(stats.monthlyRevenue)}
-                            color="emerald"
-                            delay="animate-delay-100"
-                            trend="12.5%"
-                        />
-                    )}
-                    <StatCard
-                        icon={Clock}
-                        label={t('Active Tasks')}
-                        value={stats.pendingOrders}
-                        color="amber"
-                        delay="animate-delay-200"
-                    />
-                    {auth.user.role === 'lab_owner' && (
-                        <StatCard
-                            icon={CreditCard}
-                            label={t('Financial Volume')}
-                            value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD' }).format(stats.totalRevenue)}
-                            color="blue"
-                            delay="animate-delay-300"
-                        />
-                    )}
-                    <StatCard
-                        icon={Users}
-                        label={t('Partner Network')}
-                        value="3"
-                        color="indigo"
-                        delay="animate-delay-400"
-                        trend="Active"
-                    />
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                    {[
+                        { icon: Package, label: t('Active Orders'), value: stats.totalActive, color: 'blue' },
+                        { icon: Clock, label: t('Pending New'), value: stats.pendingNew, color: 'amber' },
+                        { icon: AlertTriangle, label: t('Overdue'), value: stats.overdueCount, color: 'red' },
+                        { icon: CalendarClock, label: t('Due Today'), value: stats.dueTodayCount, color: 'purple' },
+                        ...(auth.user.role === 'lab_owner' ? [{ icon: DollarSign, label: t('Month Revenue'), value: formatCurrency(stats.monthRevenue), color: 'emerald' }] : []),
+                    ].map((stat, idx) => (
+                        <div
+                            key={idx}
+                            className="glass-card rounded-2xl p-5 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300"
+                        >
+                            <div className={`absolute top-0 right-0 w-20 h-20 bg-${stat.color}-500/10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 pointer-events-none`} />
+                            <div className="relative">
+                                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-${stat.color}-500 to-${stat.color}-600 text-white shadow-lg shadow-${stat.color}-500/20 flex items-center justify-center mb-3`}>
+                                    <stat.icon className="w-5 h-5" />
+                                </div>
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1">{stat.label}</h3>
+                                <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Volume Visualization */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="glass-card rounded-[2rem] p-8 border-none overflow-hidden relative group">
-                            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
-                                <Activity className="w-64 h-64 text-emerald-500" />
-                            </div>
-
-                            <div className="flex items-center justify-between mb-8">
-                                <div>
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('Operational Performance')}</h3>
-                                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">{t('Throughput & Logistics')}</p>
-                                </div>
-                                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl text-emerald-500">
-                                    <TrendingUp className="w-6 h-6" />
-                                </div>
-                            </div>
-
-                            <div className="h-80 w-full text-slate-900">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" strokeOpacity={0.4} />
-                                        <XAxis
-                                            dataKey="name"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
-                                            dy={10}
-                                        />
-                                        <YAxis
-                                            yAxisId="left"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
-                                        />
-                                        <YAxis
-                                            yAxisId="right"
-                                            orientation="right"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
-                                            tickFormatter={(value) => `${value} DH`}
-                                        />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Bar
-                                            yAxisId="left"
-                                            dataKey="orders"
-                                            name={t('Order Volume')}
-                                            fill="#3b82f6"
-                                            radius={[8, 8, 0, 0]}
-                                            barSize={32}
-                                            animationDuration={1500}
-                                        />
-                                        {auth.user.role === 'lab_owner' && (
-                                            <Area
-                                                yAxisId="right"
-                                                type="monotone"
-                                                dataKey="revenue"
-                                                name={t('Revenue')}
-                                                stroke="#10b981"
-                                                strokeWidth={4}
-                                                fillOpacity={1}
-                                                fill="url(#colorRevenue)"
-                                                animationDuration={2000}
-                                            />
-                                        )}
-                                    </ComposedChart>
-                                </ResponsiveContainer>
-                            </div>
+                {/* Recent Orders Table */}
+                <div className="glass-card rounded-[2rem] overflow-hidden border-none">
+                    <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-800">
+                        <div>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{t('Recent Orders')}</h2>
+                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">{t('Latest incoming work')}</p>
                         </div>
-
-                        {/* Recent Activity or Status Grid could go here, but focusing on consistency with previous dashboards */}
+                        <Link
+                            href={route('lab.orders.index')}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-xl text-xs font-bold hover:opacity-90 transition-opacity"
+                        >
+                            {t('View All')}
+                            <ArrowRight className="w-4 h-4" />
+                        </Link>
                     </div>
 
-                    {/* Sidebar Area */}
-                    <div className="space-y-8">
-                        {/* Status Matrix */}
-                        <div className="glass-card rounded-[2rem] p-8 border-none relative overflow-hidden">
-                            <div className="flex items-center justify-between mb-8">
-                                <div>
-                                    <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em]">{t('Operational Status')}</h3>
-                                    <p className="font-black text-xs text-slate-900 dark:text-white uppercase tracking-tight mt-1">{t('Protocol Breakdown')}</p>
-                                </div>
-                                <Activity className="w-5 h-5 text-emerald-500 opacity-50" />
-                            </div>
-
-                            <div className="space-y-6">
-                                {Object.entries(stats.statusCounts).map(([status, count]) => {
-                                    const totalOrders = Object.values(stats.statusCounts).reduce((a, b) => a + b, 0);
-                                    const percentage = totalOrders > 0 ? (count / totalOrders) * 100 : 0;
-                                    const bgColorClass = statusColors[status] || statusColors.default;
-
-                                    return (
-                                        <div key={status} className="group">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                                                    {t(status.replace('_', ' '))}
-                                                </span>
-                                                <span className="text-[10px] font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
-                                                    {count}
-                                                </span>
-                                            </div>
-                                            <div className="w-full bg-slate-100 dark:bg-slate-800/50 rounded-full h-1.5 overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full ${bgColorClass} shadow-sm transition-all duration-1000 ease-out`}
-                                                    style={{ width: `${percentage}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                                {Object.keys(stats.statusCounts).length === 0 && (
-                                    <div className="flex flex-col items-center justify-center py-10 opacity-20">
-                                        <Package className="w-12 h-12 mb-3" />
-                                        <span className="font-black text-[10px] uppercase tracking-widest">{t('No active processes')}</span>
-                                    </div>
-                                )}
-                            </div>
+                    {recentOrders.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 opacity-40">
+                            <Package className="w-16 h-16 mb-4 text-slate-400" />
+                            <p className="font-bold text-sm text-slate-500">{t('No orders received yet')}</p>
                         </div>
-
-                        {/* Direct Command Matrix */}
-                        <div className="glass-card rounded-[2rem] p-8 border-none relative overflow-hidden">
-                            <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-6">{t('Command Matrix')}</h3>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <Link
-                                    href={route('lab.orders.index')}
-                                    className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] transition-all group"
-                                >
-                                    <div className="w-10 h-10 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-blue-500 mb-3">
-                                        <ClipboardList className="w-5 h-5" />
-                                    </div>
-                                    <span className="font-black text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{t('Registry')}</span>
-                                </Link>
-
-                                <Link
-                                    href={route('lab.services.index')}
-                                    className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] transition-all group"
-                                >
-                                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-500 mb-3">
-                                        <Zap className="w-5 h-5" />
-                                    </div>
-                                    <span className="font-black text-[10px] uppercase tracking-widest text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">{t('Services')}</span>
-                                </Link>
-                            </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-slate-50/80 dark:bg-slate-800/60">
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Order')}</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Patient')}</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">{t('Service')}</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">{t('Clinic')}</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Status')}</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden sm:table-cell">{t('Due Date')}</th>
+                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Priority')}</th>
+                                        <th className="px-6 py-4"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                                    {recentOrders.map((order) => {
+                                        const sc = statusConfig[order.status] || statusConfig.new;
+                                        return (
+                                            <tr key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
+                                                <td className="px-6 py-4">
+                                                    <span className="font-bold text-sm text-slate-900 dark:text-white">#{order.id}</span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">
+                                                        {order.patient ? `${order.patient.first_name} ${order.patient.last_name}` : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 hidden md:table-cell">
+                                                    <span className="text-sm text-slate-600 dark:text-slate-300">{order.service?.name || '—'}</span>
+                                                </td>
+                                                <td className="px-6 py-4 hidden lg:table-cell">
+                                                    <span className="text-sm text-slate-500 dark:text-slate-400">{order.clinic?.name || '—'}</span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${sc.bg} ${sc.text}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}></span>
+                                                        {t(sc.label)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 hidden sm:table-cell">
+                                                    <span className={`text-sm font-medium ${order.is_overdue ? 'text-red-500 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
+                                                        {order.due_date ? formatDate(order.due_date) : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${priorityBadge[order.priority] || priorityBadge.normal}`}>
+                                                        {t(order.priority)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <Link
+                                                        href={route('lab.orders.show', order.id)}
+                                                        className="opacity-0 group-hover:opacity-100 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
-
-                        {/* Communication Channel */}
-                        <div className="glass-card rounded-[2rem] p-8 border-none relative overflow-hidden bg-gradient-to-br from-blue-500/10 to-transparent">
-                            <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-4">{t('Technical Transmission')}</h3>
-                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                                {t('Need protocol clarification or administrative support? Sync with our support technicians instantly.')}
-                            </p>
-                            <button className="flex items-center gap-3 w-full p-4 bg-white dark:bg-slate-800 rounded-2xl text-slate-900 dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-md transition-all group">
-                                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                                    <MessageSquare className="w-4 h-4" />
-                                </div>
-                                {t('Sync Support')}
-                            </button>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </LabLayout>

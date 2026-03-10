@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Lab\OrderController;
+use App\Http\Controllers\Lab\OrderNoteController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -44,6 +46,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('orders/{order}/files/{file}', [\App\Http\Controllers\Clinic\OrderController::class, 'deleteFile'])->name('orders.delete-file');
         Route::post('orders/{order}/duplicate', [\App\Http\Controllers\Clinic\OrderController::class, 'duplicate'])->name('orders.duplicate');
         Route::patch('orders/{order}/cancel', [\App\Http\Controllers\Clinic\OrderController::class, 'cancel'])->name('orders.cancel');
+
+        // Bulk Operations
+        Route::post('orders/bulk-cancel', [\App\Http\Controllers\Clinic\OrderController::class, 'bulkCancel'])->name('orders.bulk-cancel');
+        Route::get('orders/bulk-export', [\App\Http\Controllers\Clinic\OrderController::class, 'bulkExport'])->name('orders.bulk-export');
         // Dentist Only Routes (Settings & Team)
         Route::middleware('role:dentist')->group(function () {
             Route::resource('team', \App\Http\Controllers\TeamController::class)->only(['index', 'store', 'destroy']);
@@ -57,6 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ════════════════════════════════════════════════════════════
     Route::middleware('role:lab_owner|lab_tech')->prefix('lab')->name('lab.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Lab\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/analytics', [\App\Http\Controllers\Lab\AnalyticsController::class, 'index'])->name('analytics.index')->middleware('role:lab_owner');
 
         // Orders
         Route::resource('orders', \App\Http\Controllers\Lab\OrderController::class)->only(['index', 'show']);
@@ -64,6 +71,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('orders/{order}/payment', [\App\Http\Controllers\Lab\OrderController::class, 'updatePaymentStatus'])->name('orders.update-payment')->middleware('role:lab_owner');
         Route::post('orders/{order}/upload', [\App\Http\Controllers\Lab\OrderController::class, 'uploadFile'])->name('orders.upload');
         Route::delete('orders/{order}/files/{file}', [\App\Http\Controllers\Lab\OrderController::class, 'deleteFile'])->name('orders.delete-file');
+
+        // Bulk Operations
+        Route::post('orders/bulk-status', [\App\Http\Controllers\Lab\OrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-status');
+
+        // Order Notes (lab-only internal notes)
+        Route::get('orders/{order}/notes', [\App\Http\Controllers\Lab\OrderNoteController::class, 'index'])->name('orders.notes.index');
+        Route::post('orders/{order}/notes', [\App\Http\Controllers\Lab\OrderNoteController::class, 'store'])->name('orders.notes.store');
+        Route::delete('orders/{order}/notes/{note}', [\App\Http\Controllers\Lab\OrderNoteController::class, 'destroy'])->name('orders.notes.destroy');
 
         // Services
         Route::resource('services', \App\Http\Controllers\Lab\ServiceController::class)->middleware('role:lab_owner');

@@ -1,59 +1,133 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# DentalLab — Dental Laboratory Management Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern, full-stack web application connecting dental clinics and dental laboratories for streamlined order management, real-time communication, and workflow tracking.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | Laravel 12 (PHP 8.2+) |
+| **Frontend** | React 18 + TypeScript + Inertia.js |
+| **Styling** | Tailwind CSS 3 |
+| **Real-time** | Laravel Reverb + Pusher |
+| **Database** | MySQL 8 / SQLite (dev) |
+| **PDF** | DomPDF |
+| **i18n** | Laravel translations + react-i18next (fr, en, ar) |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Dual Portals** — Separate dashboards for Labs and Clinics
+- **Order Management** — Full lifecycle: New → In Progress → Fitting → Finished → Shipped → Delivered → Archived
+- **Real-time Chat** — Per-order messaging with file attachments via WebSockets
+- **File Management** — STL, DICOM, PDF, and image uploads with 3D preview
+- **Clinic Invitations** — Labs invite clinics via email with secure tokens
+- **Finance Tracking** — Payment status management and reporting
+- **Notifications** — Real-time in-app notifications via broadcasting
+- **Dark Mode** — Full dark mode support
+- **Multi-language** — French, English, and Arabic
 
-## Learning Laravel
+## Prerequisites
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **PHP** ≥ 8.2 with extensions: `pdo`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `json`, `bcmath`
+- **Composer** ≥ 2.x
+- **Node.js** ≥ 18.x with **npm**
+- **MySQL** 8.x (or SQLite for local dev)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Development Setup
 
-## Laravel Sponsors
+```bash
+# 1. Clone the repo
+git clone <repository-url>
+cd DentalLab
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 2. Install PHP dependencies
+composer install
 
-### Premium Partners
+# 3. Configure environment
+cp .env.example .env
+php artisan key:generate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 4. Set up database
+#    Edit .env with your DB credentials, then:
+php artisan migrate
 
-## Contributing
+# 5. Seed demo data
+php artisan db:seed
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 6. Install JS dependencies
+npm install
 
-## Code of Conduct
+# 7. Start all dev servers (Laravel, Vite, Reverb, Queue)
+composer dev
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+This runs concurrently:
+- **Laravel** server on `http://localhost:8000`
+- **Vite** HMR on `http://localhost:5173`
+- **Reverb** WebSocket server
+- **Queue** worker
 
-## Security Vulnerabilities
+## Demo Credentials
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+All accounts use the password: `password`
+
+| Role | Email |
+|------|-------|
+| Super Admin | `admin@dentallab.com` |
+| Lab Owner | `lab@dentallab.com` |
+| Lab Tech | `youssef@prodentlab.ma` |
+| Dentist | `alami@cabinet.ma` |
+| Dentist | `bennani@cabinet.ma` |
+| Dentist | `elfassi@dentaire.ma` |
+
+## Running Tests
+
+```bash
+# Run all tests
+php artisan test
+
+# Run specific test suites
+php artisan test --testsuite=Unit
+php artisan test --testsuite=Feature
+
+# Run specific test
+php artisan test --filter=OrderStatusTest
+```
+
+## Project Structure
+
+```
+app/
+├── Enums/          # OrderStatus, PaymentStatus
+├── Events/         # OrderSubmitted, OrderStatusUpdated, etc.
+├── Http/
+│   ├── Controllers/
+│   │   ├── Clinic/ # Clinic portal controllers
+│   │   ├── Lab/    # Lab portal controllers
+│   │   └── Admin/  # Admin controllers
+│   ├── Middleware/  # RoleMiddleware, etc.
+│   └── Requests/   # Form request validators
+├── Models/         # Eloquent models
+└── Services/       # OrderService, NotificationService
+resources/
+├── js/
+│   ├── Components/ # Reusable React components
+│   ├── Hooks/      # Custom React hooks
+│   ├── Layouts/    # ClinicLayout, LabLayout
+│   └── Pages/      # Inertia page components
+└── views/          # Blade templates
+```
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `composer dev` | Start all development servers |
+| `composer test` | Run test suite |
+| `composer setup` | Full initial setup (install + migrate + build) |
+| `npm run dev` | Start Vite dev server only |
+| `npm run build` | Build production assets |
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+[MIT](LICENSE)

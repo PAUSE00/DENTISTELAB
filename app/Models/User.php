@@ -62,12 +62,34 @@ class User extends Authenticatable
         return $this->belongsTo(Lab::class);
     }
 
-    public function orders()
+    /**
+     * Get orders associated with this user's lab.
+     */
+    public function labOrders()
     {
-        if (in_array($this->role, ['lab_owner', 'lab_tech'])) {
-            return $this->hasMany(Order::class, 'lab_id', 'lab_id');
-        }
+        return $this->hasMany(Order::class, 'lab_id', 'lab_id');
+    }
+
+    /**
+     * Get orders associated with this user's clinic.
+     */
+    public function clinicOrders()
+    {
         return $this->hasMany(Order::class, 'clinic_id', 'clinic_id');
+    }
+
+    /**
+     * Get orders for this user's context.
+     *
+     * Use explicit scopes instead of a conditional relationship:
+     *   - Lab users:    $user->labOrders()
+     *   - Clinic users: $user->clinicOrders()
+     */
+    public function scopeWithContextOrders($query)
+    {
+        // This scope is a documentation placeholder.
+        // Use labOrders() / clinicOrders() directly on the User instance.
+        return $query;
     }
 
     /**
@@ -76,5 +98,37 @@ class User extends Authenticatable
     public function hasRole(string $role): bool
     {
         return $this->role === $role;
+    }
+
+    /**
+     * Check if the user is a lab team member.
+     */
+    public function isLabMember(): bool
+    {
+        return in_array($this->role, ['lab_owner', 'lab_tech']);
+    }
+
+    /**
+     * Check if the user is a clinic team member.
+     */
+    public function isClinicMember(): bool
+    {
+        return in_array($this->role, ['dentist', 'clinic_staff']);
+    }
+
+    /**
+     * Scope: only lab team members.
+     */
+    public function scopeLabTeam($query)
+    {
+        return $query->whereIn('role', ['lab_owner', 'lab_tech']);
+    }
+
+    /**
+     * Scope: only clinic team members.
+     */
+    public function scopeClinicTeam($query)
+    {
+        return $query->whereIn('role', ['dentist', 'clinic_staff']);
     }
 }

@@ -19,17 +19,7 @@ enum OrderStatus: string
      */
     public function label(): string
     {
-        return match ($this) {
-            self::New => 'Nouvelle',
-            self::InProgress => 'En cours',
-            self::Fitting => 'Essayage',
-            self::Finished => 'Terminée',
-            self::Shipped => 'Expédiée',
-            self::Delivered => 'Livrée',
-            self::Rejected => 'Rejetée',
-            self::Archived => 'Archivée',
-            self::Cancelled => 'Annulée',
-        };
+        return __('enums.order_status.' . $this->value);
     }
 
     /**

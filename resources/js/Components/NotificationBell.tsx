@@ -61,9 +61,21 @@ export default function NotificationBell() {
             }
         };
 
+        const handleNotificationSound = () => {
+            // Play sound
+            const audio = new Audio('/sounds/notification.ogg');
+            audio.play().catch(e => console.log('Audio autoplay prevented'));
+
+            // Re-fetch notifications just in case
+            fetchNotifications();
+        };
+
         document.addEventListener('mousedown', handleClickOutside);
+        window.addEventListener('notification-sound', handleNotificationSound);
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('notification-sound', handleNotificationSound);
             if (window.Echo) {
                 window.Echo.leave(`App.Models.User.${user.id}`);
             }
@@ -114,9 +126,11 @@ export default function NotificationBell() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-sub hover:text-text hover:bg-hover rounded-lg transition-all active:scale-95"
+                className="relative p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-all active:scale-95"
             >
-                <Bell className="w-5 h-5" />
+                <div className={unreadCount > 0 ? 'animate-bounce' : ''}>
+                    <Bell className="w-5 h-5" />
+                </div>
                 {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 flex h-4 w-4">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>

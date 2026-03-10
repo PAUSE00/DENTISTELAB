@@ -26,6 +26,7 @@ export function useNotifications() {
                         }
                     });
                     window.dispatchEvent(event);
+                    window.dispatchEvent(new CustomEvent('notification-sound'));
                 });
         }
 
@@ -40,6 +41,7 @@ export function useNotifications() {
                         }
                     });
                     window.dispatchEvent(event);
+                    window.dispatchEvent(new CustomEvent('notification-sound'));
                 });
         }
 

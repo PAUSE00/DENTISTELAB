@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Storage;
 
 class ChatController extends Controller
 {
+    public function __construct(
+        private readonly NotificationService $notificationService,
+    ) {}
+
     public function index(Order $order)
     {
         // Ensure user is authorized to view this order
@@ -30,7 +34,7 @@ class ChatController extends Controller
         return $order->messages()
             ->with(['user' => function ($query) {
                 // Ensure we get the user data properly including profile paths if any in future
-                $query->select('id', 'name'); 
+                $query->select('id', 'name');
             }])
             ->orderBy('created_at', 'asc') // Oldest first for chat history
             ->get();
@@ -58,7 +62,7 @@ class ChatController extends Controller
             $file = $request->file('attachment');
             $path = $file->store('messages/' . $order->id, 'public');
             $messageData['attachment_path'] = $path;
-            
+
             // If no text content, set a default indication
             if (empty($messageData['content'])) {
                 $messageData['content'] = '📎 Attachment: ' . $file->getClientOriginalName();
@@ -71,7 +75,7 @@ class ChatController extends Controller
         $message->load('user');
 
         // Trigger in-app notification to the relevant parties
-        NotificationService::newMessage($order, Auth::user());
+        $this->notificationService->newMessage($order, Auth::user());
 
         broadcast(new OrderMessageSent($message))->toOthers();
 
@@ -82,12 +86,12 @@ class ChatController extends Controller
     public function markAsRead(Order $order)
     {
         $this->authorizeOrderAccess($order);
-        
+
         $order->messages()
             ->whereNull('read_at')
             ->where('user_id', '!=', Auth::id())
             ->update(['read_at' => now()]);
-            
+
         return response()->json(['status' => 'success']);
     }
 

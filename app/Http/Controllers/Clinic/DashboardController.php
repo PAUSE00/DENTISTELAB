@@ -39,9 +39,9 @@ class DashboardController extends Controller
                 ->selectRaw('status, count(*) as count')
                 ->groupBy('status')
                 ->pluck('count', 'status')
-                ->mapKeys(function ($key) {
+                ->mapWithKeys(function ($count, $key) {
                     $status = \App\Enums\OrderStatus::tryFrom($key);
-                    return $status ? $status->value : $key;
+                    return [($status ? $status->value : $key) => $count];
                 })
                 ->toArray(),
         ];

@@ -2,6 +2,7 @@ import { useState, PropsWithChildren, useEffect, ReactNode } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import {
     LayoutDashboard,
+    BarChart3,
     ClipboardList,
     Shield,
     ShieldPlus,
@@ -79,6 +80,7 @@ export default function LabLayout({ children, header }: Props) {
 
     const getPageTitle = () => {
         if (isActive('lab.dashboard')) return t('Dashboard');
+        if (isActive('lab.analytics.*')) return t('Analytics');
         if (isActive('lab.orders.*')) return t('Order Management');
         if (isActive('lab.services.*')) return t('Service Catalog');
         if (isActive('lab.clients.*')) return t('Client Management');
@@ -92,6 +94,7 @@ export default function LabLayout({ children, header }: Props) {
         { routePath: 'lab.dashboard', activePattern: 'lab.dashboard', label: 'Dashboard', Icon: LayoutDashboard },
         { routePath: 'lab.orders.index', activePattern: 'lab.orders.*', label: 'Orders', Icon: ClipboardList },
         { routePath: 'lab.services.index', activePattern: 'lab.services.*', label: 'Service Catalog', Icon: Package },
+        ...(user.role === 'lab_owner' ? [{ routePath: 'lab.analytics.index', activePattern: 'lab.analytics.*', label: 'Analytics', Icon: BarChart3 }] : []),
     ];
 
     const managementNavLinks = [

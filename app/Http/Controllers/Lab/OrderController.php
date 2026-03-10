@@ -4,54 +4,52 @@ namespace App\Http\Controllers\Lab;
 
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Clinic;
 use App\Models\Order;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        private readonly OrderService $orderService,
+    ) {}
+
     /**
      * Display a listing of the orders assigned to the lab.
      */
     public function index(Request $request)
     {
+        $labId = Auth::user()->lab_id;
+
         $query = Order::with(['patient', 'clinic', 'service'])
-            ->where('lab_id', Auth::user()->lab_id);
+            ->where('lab_id', $labId);
 
-        // ── Filtering ─────────────────────────────────────
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+        // Apply shared filters
+        $this->orderService->applyFilters($query, $request);
 
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%")
-                    ->orWhereHas('patient', function ($q) use ($search) {
-                        $q->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
+        // Lab-specific filters
+        if ($request->filled('clinic_id')) {
+            $query->where('clinic_id', $request->clinic_id);
         }
 
         $orders = $query->latest()->paginate(10)->withQueryString();
 
+        // Get filter options
+        $clinics = Clinic::whereHas('orders', function ($q) use ($labId) {
+            $q->where('lab_id', $labId);
+        })->select('id', 'name')->get();
+
         return Inertia::render('Lab/Orders/Index', [
             'orders' => $orders,
-            'filters' => $request->only(['status', 'priority', 'search', 'payment_status']),
+            'filters' => $request->only(['status', 'priority', 'search', 'payment_status', 'clinic_id', 'date_from', 'date_to']),
             'statusOptions' => collect(OrderStatus::cases())->map(fn($s) => [
                 'value' => $s->value,
                 'label' => $s->label(),
             ]),
+            'clinics' => $clinics,
         ]);
     }
 
@@ -60,7 +58,7 @@ class OrderController extends Controller
      */
     public function show($id)
     {
-        $order = Order::with(['patient', 'clinic', 'service', 'files', 'history.user'])
+        $order = Order::with(['patient', 'clinic', 'service', 'files', 'history.user', 'notes.user'])
             ->findOrFail($id);
 
         $this->authorize('view', $order);
@@ -132,28 +130,20 @@ class OrderController extends Controller
     public function uploadFile(Request $request, $id)
     {
         $request->validate([
-            'file' => 'required|file|max:51200|extensions:pdf,jpg,jpeg,png,stl,dcm,zip', // Max 50MB per PRD, using extensions for STL reliability
+            'file' => 'required|file|max:51200|extensions:pdf,jpg,jpeg,png,stl,dcm,zip',
         ]);
 
         $order = Order::findOrFail($id);
         $this->authorize('update', $order);
 
         if ($request->file('file')) {
-            $file = $request->file('file');
-            $path = $file->store('order_files/' . $order->id, 'public');
-
-            $order->files()->create([
-                'name' => $file->getClientOriginalName(),
-                'path' => $path,
-                'type' => $file->getClientMimeType(),
-                'size' => $file->getSize(),
-            ]);
-
+            $this->orderService->uploadFiles($order, [$request->file('file')]);
             return redirect()->back()->with('success', 'File uploaded successfully.');
         }
 
         return redirect()->back()->with('error', 'No file uploaded.');
     }
+
     /**
      * Delete a file from the order.
      */
@@ -164,12 +154,46 @@ class OrderController extends Controller
 
         $file = $order->files()->findOrFail($fileId);
 
-        // Delete from storage
         \Illuminate\Support\Facades\Storage::disk('public')->delete($file->path);
-
-        // Delete record
         $file->delete();
 
         return redirect()->back()->with('success', 'File deleted successfully.');
+    }
+
+    /**
+     * Bulk update status on selected orders.
+     */
+    public function bulkUpdateStatus(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'integer|exists:orders,id',
+            'status' => 'required|string',
+        ]);
+
+        $labId = Auth::user()->lab_id;
+        $targetStatus = OrderStatus::tryFrom($request->status);
+
+        if (! $targetStatus) {
+            return redirect()->back()->withErrors(['status' => 'Invalid status value.']);
+        }
+
+        $updated = 0;
+        $orders = Order::where('lab_id', $labId)
+            ->whereIn('id', $request->order_ids)
+            ->get();
+
+        foreach ($orders as $order) {
+            if ($order->status->canTransitionTo($targetStatus)) {
+                try {
+                    $order->transitionTo($targetStatus, Auth::id());
+                    $updated++;
+                } catch (\InvalidArgumentException $e) {
+                    // Skip orders that can't transition
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', "$updated order(s) updated to {$targetStatus->label()}.");
     }
 }
