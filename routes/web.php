@@ -103,6 +103,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // CSV Export
         Route::get('export/orders', [\App\Http\Controllers\Lab\ExportController::class, 'orders'])->name('export.orders');
         Route::get('export/finance', [\App\Http\Controllers\Lab\ExportController::class, 'finance'])->name('export.finance')->middleware('role:lab_owner');
+
+        // Production Kanban
+        Route::get('kanban', [\App\Http\Controllers\Lab\KanbanController::class, 'index'])->name('kanban.index');
+
+        // Global Search API
+        Route::get('search', [\App\Http\Controllers\Lab\SearchController::class, '__invoke'])->name('search');
+
+        // Calendar / Schedule
+        Route::get('calendar', [\App\Http\Controllers\Lab\CalendarController::class, 'index'])->name('calendar.index');
+
+        // Messages (Inbox)
+        Route::get('inbox', [\App\Http\Controllers\Lab\InboxController::class, 'index'])->name('inbox.index');
+
+        // Reports
+        Route::get('reports', [\App\Http\Controllers\Lab\ReportsController::class, 'index'])->name('reports.index')->middleware('role:lab_owner');
     });
 
     // ════════════════════════════════════════════════════════════

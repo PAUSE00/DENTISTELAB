@@ -34,57 +34,70 @@ export default function OrderFilters({
     const { t } = useTranslation();
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-            <div className="flex flex-col md:flex-row gap-3">
+        <div className="card p-3 space-y-3">
+            <div className="flex gap-2">
                 {/* Search */}
                 <div className="flex-1 relative">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <Search
+                        size={14}
+                        className="absolute left-3 top-1/2 -translate-y-1/2"
+                        style={{ color: 'var(--txt-3)' }}
+                    />
                     <input
                         type="text"
                         placeholder={searchPlaceholder}
                         value={localFilters.search}
                         onChange={(e) => onUpdateFilter('search', e.target.value)}
-                        className="w-full pl-14 pr-6 py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-blue-500/20 text-slate-700 dark:text-slate-200 transition-all font-medium placeholder:text-slate-400 text-sm"
+                        className="app-input pl-9"
                     />
                 </div>
-                {/* Filter Toggle */}
+
+                {/* Filter toggle */}
                 <button
                     onClick={onToggleFilters}
-                    className={`flex items-center gap-2.5 px-5 py-3.5 rounded-2xl border transition-all font-bold text-sm ${showFilters || activeFilterCount > 0
-                        ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30'
-                        : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:text-blue-500'
-                        }`}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[12.5px] font-medium transition-colors"
+                    style={{
+                        background: showFilters || activeFilterCount > 0 ? 'var(--teal-10)' : 'var(--surface)',
+                        border: `1px solid ${showFilters || activeFilterCount > 0 ? 'var(--teal-20)' : 'var(--border-strong)'}`,
+                        color: showFilters || activeFilterCount > 0 ? 'var(--txt-accent)' : 'var(--txt-2)',
+                    }}
                 >
-                    <SlidersHorizontal className="w-4 h-4" />
+                    <SlidersHorizontal size={13} />
                     {t('Filters')}
                     {activeFilterCount > 0 && (
-                        <span className="w-5 h-5 bg-blue-500 text-white rounded-full text-[10px] font-black flex items-center justify-center">
+                        <span className="w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center"
+                            style={{ background: 'var(--txt-accent)', color: 'var(--bg)' }}>
                             {activeFilterCount}
                         </span>
                     )}
                 </button>
+
                 {activeFilterCount > 0 && (
                     <button
                         onClick={onClearFilters}
-                        className="flex items-center gap-2 px-5 py-3.5 bg-rose-50 dark:bg-rose-500/10 text-rose-500 rounded-2xl border border-rose-200 dark:border-rose-500/30 hover:bg-rose-100 transition-all font-bold text-sm"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12.5px] font-medium transition-colors"
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', color: '#f87171' }}
                     >
-                        <FilterX className="w-4 h-4" />
-                        {t('Clear All')}
+                        <FilterX size={13} />
+                        {t('Clear')}
                     </button>
                 )}
             </div>
 
-            {/* Advanced Filter Dropdowns */}
+            {/* Advanced filters */}
             {showFilters && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
                     {filterFields.map((field) => (
                         <div key={field.key}>
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">{field.label}</label>
+                            <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--txt-3)' }}>
+                                {field.label}
+                            </label>
                             {field.type === 'select' ? (
                                 <select
                                     value={localFilters[field.key] || ''}
                                     onChange={(e) => onUpdateFilter(field.key, e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20 appearance-none cursor-pointer"
+                                    className="app-input"
+                                    style={{ paddingTop: '5px', paddingBottom: '5px' }}
                                 >
                                     <option value="">{field.placeholder || t('All')}</option>
                                     {field.options?.map((opt: any) => (
@@ -98,7 +111,8 @@ export default function OrderFilters({
                                     type="date"
                                     value={localFilters[field.key] || ''}
                                     onChange={(e) => onUpdateFilter(field.key, e.target.value)}
-                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500/20"
+                                    className="app-input"
+                                    style={{ paddingTop: '5px', paddingBottom: '5px' }}
                                 />
                             )}
                         </div>

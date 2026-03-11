@@ -1,47 +1,34 @@
 import LabLayout from '@/Layouts/LabLayout';
 import { Head, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, Search, Filter, Download } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, Search, Download } from 'lucide-react';
 import { useState } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
 
 interface Stats {
-    total_revenue: number;
-    pending_amount: number;
-    monthly_revenue: number;
-    unpaid_count: number;
-    partial_count: number;
-    paid_count: number;
+    total_revenue: number; pending_amount: number; monthly_revenue: number;
+    unpaid_count: number; partial_count: number; paid_count: number;
 }
-
 interface Order {
-    id: number;
-    status: string;
-    payment_status: string;
-    price: number;
-    final_price: number | null;
-    created_at: string;
+    id: number; status: string; payment_status: string; price: number;
+    final_price: number | null; created_at: string;
     patient?: { first_name: string; last_name: string };
     clinic?: { name: string };
     service?: { name: string };
 }
-
-interface ClinicBalance {
-    clinic_id: number;
-    clinic_name: string;
-    open_balance: number;
-    orders_count: number;
-}
-
+interface ClinicBalance { clinic_id: number; clinic_name: string; open_balance: number; orders_count: number; }
 interface Props extends PageProps {
     stats: Stats;
     clinic_balances: ClinicBalance[];
-    orders: {
-        data: Order[];
-        links: Array<{ url: string | null; label: string; active: boolean }>;
-    };
+    orders: { data: Order[]; links: Array<{ url: string | null; label: string; active: boolean }>; };
     filters: { payment_status?: string; search?: string };
 }
+
+const PAYMENT: Record<string, { dot: string; text: string; bg: string; label: string }> = {
+    unpaid:  { dot: '#f87171', text: '#f87171', bg: 'rgba(248,113,113,0.1)',  label: 'Unpaid' },
+    partial: { dot: '#f59e0b', text: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  label: 'Partial' },
+    paid:    { dot: '#34d399', text: '#34d399', bg: 'rgba(52,211,153,0.1)',   label: 'Paid' },
+};
 
 export default function FinanceIndex({ auth, stats, clinic_balances, orders, filters }: Props) {
     const { t } = useTranslation();
@@ -49,251 +36,195 @@ export default function FinanceIndex({ auth, stats, clinic_balances, orders, fil
     const [paymentFilter, setPaymentFilter] = useState(filters.payment_status || '');
     const [processingClinicPay, setProcessingClinicPay] = useState<number | null>(null);
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount);
-    };
+    const fmt = (n: number) => new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(n);
 
-    const applyFilters = (overridePayment?: string) => {
-        const ps = overridePayment !== undefined ? overridePayment : paymentFilter;
+    const applyFilters = (ps?: string) => {
         router.get(route('lab.finance.index'), {
             search: search || undefined,
-            payment_status: ps || undefined,
+            payment_status: (ps !== undefined ? ps : paymentFilter) || undefined,
         }, { preserveState: true, preserveScroll: true });
     };
 
-    const paymentBadges: Record<string, string> = {
-        unpaid: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-        partial: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
-        paid: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
-    };
-
-    const paymentLabels: Record<string, string> = {
-        unpaid: t('Unpaid'),
-        partial: t('Partial'),
-        paid: t('Paid'),
-    };
-
-    const handlePaymentUpdate = (orderId: number, status: string) => {
+    const handlePaymentUpdate = (orderId: number, status: string) =>
         router.patch(route('lab.orders.update-payment', orderId), { payment_status: status });
-    };
 
     const handleClinicPay = (clinicId: number) => {
         if (!confirm(t('Are you sure you want to mark this balance as paid?'))) return;
         setProcessingClinicPay(clinicId);
         router.patch(route('lab.finance.clinic.pay', clinicId), {}, {
-            preserveScroll: true,
-            onFinish: () => setProcessingClinicPay(null)
+            preserveScroll: true, onFinish: () => setProcessingClinicPay(null),
         });
     };
+
+    const statCards = [
+        { icon: DollarSign, label: t('Total Revenue'),   value: fmt(stats.total_revenue),   color: '#34d399' },
+        { icon: TrendingUp, label: t('Monthly Revenue'),  value: fmt(stats.monthly_revenue),  color: 'var(--txt-accent)' },
+        { icon: Clock,      label: t('Pending Amount'),   value: fmt(stats.pending_amount),   color: '#f59e0b' },
+    ];
+
+    const filterBtns = [
+        { key: '', label: `${t('All')} (${stats.unpaid_count + stats.partial_count + stats.paid_count})` },
+        { key: 'unpaid',  label: `${t('Unpaid')} (${stats.unpaid_count})` },
+        { key: 'partial', label: `${t('Partial')} (${stats.partial_count})` },
+        { key: 'paid',    label: `${t('Paid')} (${stats.paid_count})` },
+    ];
 
     return (
         <LabLayout>
             <Head title={t('Finance')} />
-            <div className="animate-fade-in max-w-7xl mx-auto space-y-6">
+            <div className="flex flex-col gap-4">
+
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="animate-fade-in animate-delay-100">
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                            {t('Finance & Payments')}
-                        </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('Track billing and payments')}</p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-[18px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('Finance & Payments')}</h2>
+                        <p className="text-[12px] mt-0.5" style={{ color: 'var(--txt-3)' }}>{t('Track billing and payments')}</p>
                     </div>
-                    <a
-                        href={route('lab.export.finance')}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-gray-200 dark:border-slate-700 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50/80 dark:hover:bg-slate-700/80 transition-colors text-sm font-medium shadow-sm animate-fade-in animate-delay-100 group"
-                    >
-                        <Download className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
-                        {t('Export CSV')}
+                    <a href={route('lab.export.finance')} className="btn-ghost">
+                        <Download size={13} /> {t('Export CSV')}
                     </a>
                 </div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in animate-delay-200">
-                    <div className="glass-card rounded-2xl p-6 relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-bl-[100px] -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-125"></div>
-                        <div className="relative">
-                            <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 shadow-md shadow-emerald-500/10">
-                                <DollarSign className="w-6 h-6" />
+                {/* Stat cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {statCards.map(({ icon: Icon, label, value, color }) => (
+                        <div key={label} className="card p-4 flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                                style={{ background: `${color}18`, color }}>
+                                <Icon size={16} />
                             </div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{t('Total Revenue')}</p>
-                            <p className="text-2xl font-bold text-gray-800 dark:text-white mt-1">{formatCurrency(stats.total_revenue)}</p>
-                        </div>
-                    </div>
-
-                    <div className="glass-card rounded-2xl p-6 relative overflow-hidden group hover:-translate-y-1 transition-transform animate-delay-300">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary-500/10 to-transparent rounded-bl-[100px] -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-125"></div>
-                        <div className="relative">
-                            <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center mb-3 shadow-md shadow-primary-500/10">
-                                <TrendingUp className="w-6 h-6" />
+                            <div>
+                                <p className="text-[11px] font-medium" style={{ color: 'var(--txt-3)' }}>{label}</p>
+                                <p className="text-[15px] font-bold" style={{ color: 'var(--txt-1)' }}>{value}</p>
                             </div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{t('Monthly Revenue')}</p>
-                            <p className="text-2xl font-bold text-gray-800 dark:text-white mt-1">{formatCurrency(stats.monthly_revenue)}</p>
                         </div>
-                    </div>
-
-                    <div className="glass-card rounded-2xl p-6 relative overflow-hidden group hover:-translate-y-1 transition-transform animate-delay-400">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-bl-[100px] -mr-4 -mt-4 transition-transform duration-500 group-hover:scale-125"></div>
-                        <div className="relative">
-                            <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3 shadow-md shadow-amber-500/10">
-                                <Clock className="w-6 h-6" />
-                            </div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{t('Pending Amount')}</p>
-                            <p className="text-2xl font-bold text-gray-800 dark:text-white mt-1">{formatCurrency(stats.pending_amount)}</p>
-                        </div>
-                    </div>
+                    ))}
                 </div>
 
-                {/* Clinic Balances Section */}
+                {/* Clinic balances */}
                 {clinic_balances && clinic_balances.length > 0 && (
-                    <div className="glass-card rounded-2xl overflow-hidden animate-fade-in animate-delay-300">
-                        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/30 backdrop-blur-sm">
-                            <h2 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                                <DollarSign className="w-4 h-4 text-emerald-500" />
-                                {t('Clinic Balances (Unpaid / Partial)')}
-                            </h2>
+                    <div className="card overflow-hidden">
+                        <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
+                            <DollarSign size={13} style={{ color: 'var(--txt-accent)' }} />
+                            <p className="text-[12.5px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                                {t('Clinic Balances')}
+                            </p>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-100 dark:border-slate-700">
-                                        <th className="text-left py-3 px-6 font-semibold text-gray-700 dark:text-gray-300">{t('Clinic')}</th>
-                                        <th className="text-center py-3 px-6 font-semibold text-gray-700 dark:text-gray-300">{t('Unpaid Orders')}</th>
-                                        <th className="text-right py-3 px-6 font-semibold text-gray-700 dark:text-gray-300">{t('Open Balance')}</th>
-                                        <th className="text-center py-3 px-6 font-semibold text-gray-700 dark:text-gray-300">{t('Action')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
-                                    {clinic_balances.map(balance => (
-                                        <tr key={balance.clinic_id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                                            <td className="py-3 px-6 font-medium">{balance.clinic_name}</td>
-                                            <td className="py-3 px-6 text-center text-gray-600 dark:text-gray-300">
-                                                <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full text-xs font-bold">
-                                                    {balance.orders_count}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 px-6 text-right font-bold text-gray-800 dark:text-white">{formatCurrency(balance.open_balance)}</td>
-                                            <td className="py-3 px-6 text-center">
-                                                <button
-                                                    onClick={() => handleClinicPay(balance.clinic_id)}
-                                                    disabled={processingClinicPay === balance.clinic_id}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-                                                >
-                                                    <CheckCircle2 className="w-3.5 h-3.5" />
-                                                    {t('Mark as Paid')}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
-
-                {/* Payment Status Pills */}
-                <div className="flex flex-wrap gap-3 animate-fade-in animate-delay-400">
-                    <button
-                        onClick={() => { setPaymentFilter(''); applyFilters(''); }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${!paymentFilter ? 'bg-gray-800 dark:bg-white text-white dark:text-gray-800 border-gray-800 dark:border-white shadow-md' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-gray-400 hover:shadow-sm'}`}
-                    >
-                        {t('All')} ({stats.unpaid_count + stats.partial_count + stats.paid_count})
-                    </button>
-                    <button
-                        onClick={() => { setPaymentFilter('unpaid'); applyFilters('unpaid'); }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${paymentFilter === 'unpaid' ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-500/20' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-red-400 hover:text-red-600 hover:shadow-sm'}`}
-                    >
-                        <span className="flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5" />{t('Unpaid')} ({stats.unpaid_count})</span>
-                    </button>
-                    <button
-                        onClick={() => { setPaymentFilter('partial'); applyFilters('partial'); }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${paymentFilter === 'partial' ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-500/20' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-amber-400 hover:text-amber-600 hover:shadow-sm'}`}
-                    >
-                        <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{t('Partial')} ({stats.partial_count})</span>
-                    </button>
-                    <button
-                        onClick={() => { setPaymentFilter('paid'); applyFilters('paid'); }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${paymentFilter === 'paid' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/20' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:border-emerald-400 hover:text-emerald-600 hover:shadow-sm'}`}
-                    >
-                        <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" />{t('Paid')} ({stats.paid_count})</span>
-                    </button>
-                </div>
-
-                {/* Search */}
-                <div className="relative max-w-md animate-fade-in animate-delay-400">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder={t('Search by Order ID, clinic, patient...')}
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && applyFilters()}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
-                    />
-                </div>
-
-                {/* Orders Table */}
-                <div className="glass-card rounded-2xl overflow-hidden animate-fade-in animate-delay-400">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="data-table">
                             <thead>
-                                <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-900/30">
-                                    <th className="text-left py-3 px-5 font-semibold text-gray-700 dark:text-gray-300">{t('No.')}</th>
-                                    <th className="text-left py-3 px-5 font-semibold text-gray-700 dark:text-gray-300">{t('Clinic')}</th>
-                                    <th className="text-left py-3 px-5 font-semibold text-gray-700 dark:text-gray-300">{t('Patient')}</th>
-                                    <th className="text-left py-3 px-5 font-semibold text-gray-700 dark:text-gray-300">{t('Service')}</th>
-                                    <th className="text-right py-3 px-5 font-semibold text-gray-700 dark:text-gray-300">{t('Price')}</th>
-                                    <th className="text-center py-3 px-5 font-semibold text-gray-700 dark:text-gray-300">{t('Payment')}</th>
-                                    <th className="text-center py-3 px-5 font-semibold text-gray-700 dark:text-gray-300">{t('Actions')}</th>
+                                <tr>
+                                    <th>{t('Clinic')}</th>
+                                    <th>{t('Open Orders')}</th>
+                                    <th className="text-right">{t('Balance')}</th>
+                                    <th>{t('Action')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-50 dark:divide-slate-700/50">
-                                {orders.data.map(order => (
-                                    <tr key={order.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-700/30 transition-colors">
-                                        <td className="py-3 px-5 font-mono text-xs text-gray-500">#{order.id}</td>
-                                        <td className="py-3 px-5 font-medium">{order.clinic?.name || '—'}</td>
-                                        <td className="py-3 px-5 text-gray-600 dark:text-gray-300">
-                                            {order.patient ? `${order.patient.first_name} ${order.patient.last_name}` : '—'}
-                                        </td>
-                                        <td className="py-3 px-5 text-gray-600 dark:text-gray-300">{order.service?.name || '—'}</td>
-                                        <td className="py-3 px-5 text-right font-semibold">{formatCurrency(order.final_price || order.price)}</td>
-                                        <td className="py-3 px-5 text-center">
-                                            <span className={`status-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${paymentBadges[order.payment_status] || 'bg-gray-100 text-gray-600'}`}>
-                                                {paymentLabels[order.payment_status] || order.payment_status}
+                            <tbody>
+                                {clinic_balances.map(balance => (
+                                    <tr key={balance.clinic_id}>
+                                        <td><span className="font-medium text-[13px]" style={{ color: 'var(--txt-1)' }}>{balance.clinic_name}</span></td>
+                                        <td>
+                                            <span className="status-pill" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', borderColor: 'transparent' }}>
+                                                <span className="dot" style={{ background: '#f59e0b' }} />
+                                                {balance.orders_count}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-5 text-center">
-                                            <select
-                                                value={order.payment_status}
-                                                onChange={e => handlePaymentUpdate(order.id, e.target.value)}
-                                                className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1 bg-white dark:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                                            >
-                                                <option value="unpaid">{t('Unpaid')}</option>
-                                                <option value="partial">{t('Partial')}</option>
-                                                <option value="paid">{t('Paid')}</option>
-                                            </select>
+                                        <td className="text-right">
+                                            <span className="font-semibold" style={{ color: 'var(--txt-1)' }}>{fmt(balance.open_balance)}</span>
+                                        </td>
+                                        <td>
+                                            <button onClick={() => handleClinicPay(balance.clinic_id)}
+                                                disabled={processingClinicPay === balance.clinic_id}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold disabled:opacity-40 transition-colors"
+                                                style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', color: '#34d399' }}>
+                                                <CheckCircle2 size={12} /> {t('Mark Paid')}
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
+                )}
 
-                    {/* Pagination */}
+                {/* Payment filter pills + search */}
+                <div className="flex flex-wrap items-center gap-2">
+                    {filterBtns.map(({ key, label }) => (
+                        <button key={key}
+                            onClick={() => { setPaymentFilter(key); applyFilters(key); }}
+                            className="px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-colors"
+                            style={paymentFilter === key
+                                ? { background: 'var(--teal-10)', border: '1px solid var(--teal-20)', color: 'var(--txt-accent)' }
+                                : { background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--txt-2)' }}>
+                            {label}
+                        </button>
+                    ))}
+                    <div className="relative ml-auto">
+                        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--txt-3)' }} />
+                        <input type="text" placeholder={t('Search...')} value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && applyFilters()}
+                            className="app-input pl-8" style={{ width: '220px' }} />
+                    </div>
+                </div>
+
+                {/* Orders table */}
+                <div className="card overflow-hidden">
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>{t('Clinic')}</th>
+                                <th>{t('Patient')}</th>
+                                <th>{t('Service')}</th>
+                                <th className="text-right">{t('Amount')}</th>
+                                <th>{t('Payment')}</th>
+                                <th>{t('Update')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {orders.data.map(order => {
+                                const ps = PAYMENT[order.payment_status] ?? PAYMENT.unpaid;
+                                return (
+                                    <tr key={order.id}>
+                                        <td><span className="tabular-nums" style={{ color: 'var(--txt-accent)' }}>#{order.id}</span></td>
+                                        <td><span style={{ color: 'var(--txt-2)' }}>{order.clinic?.name || '—'}</span></td>
+                                        <td><span style={{ color: 'var(--txt-2)' }}>{order.patient ? `${order.patient.first_name} ${order.patient.last_name}` : '—'}</span></td>
+                                        <td><span style={{ color: 'var(--txt-2)' }}>{order.service?.name || '—'}</span></td>
+                                        <td className="text-right">
+                                            <span className="font-semibold" style={{ color: 'var(--txt-1)' }}>
+                                                {fmt(order.final_price ?? order.price)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="status-pill" style={{ background: ps.bg, color: ps.text, borderColor: 'transparent' }}>
+                                                <span className="dot" style={{ background: ps.dot }} />
+                                                {t(ps.label)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <select value={order.payment_status}
+                                                onChange={e => handlePaymentUpdate(order.id, e.target.value)}
+                                                className="app-input" style={{ width: 'auto', paddingTop: '4px', paddingBottom: '4px', fontSize: '12px' }}>
+                                                <option value="unpaid">{t('Unpaid')}</option>
+                                                <option value="partial">{t('Partial')}</option>
+                                                <option value="paid">{t('Paid')}</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                     {orders.links && orders.links.length > 3 && (
-                        <div className="flex justify-center gap-1 p-4 border-t border-gray-100 dark:border-slate-700">
-                            {orders.links.map((link, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => link.url && router.get(link.url)}
-                                    disabled={!link.url}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${link.active
-                                        ? 'bg-primary-600 text-white shadow-md shadow-primary-500/30'
-                                        : link.url
-                                            ? 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
-                                            : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
-                                        }`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                />
+                        <div className="flex justify-center gap-1 p-3 border-t" style={{ borderColor: 'var(--border)' }}>
+                            {orders.links.map((link, i) => (
+                                <button key={i} onClick={() => link.url && router.get(link.url)} disabled={!link.url}
+                                    className="px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors"
+                                    style={link.active
+                                        ? { background: 'var(--txt-accent)', color: 'var(--bg)' }
+                                        : { color: 'var(--txt-3)', opacity: link.url ? 1 : 0.4 }}
+                                    dangerouslySetInnerHTML={{ __html: link.label }} />
                             ))}
                         </div>
                     )}

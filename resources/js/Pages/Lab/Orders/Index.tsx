@@ -2,28 +2,15 @@ import LabLayout from '@/Layouts/LabLayout';
 import { Head, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { useState, useEffect } from 'react';
-import { Trash2, Download } from 'lucide-react';
+import { Play } from 'lucide-react';
 import useTranslation from '@/Hooks/useTranslation';
-
-// Shared sub-components
 import OrderFilters from '@/Components/Orders/OrderFilters';
 import OrderTable from '@/Components/Orders/OrderTable';
 import { FilterOption, OrderListItem } from '@/types/order';
 
 interface Props extends PageProps {
-    orders: {
-        data: OrderListItem[];
-        links: any[];
-    };
-    filters: {
-        status?: string;
-        priority?: string;
-        search?: string;
-        clinic_id?: string;
-        date_from?: string;
-        date_to?: string;
-        payment_status?: string;
-    };
+    orders: { data: OrderListItem[]; links: any[]; total?: number; };
+    filters: { status?: string; priority?: string; search?: string; clinic_id?: string; date_from?: string; date_to?: string; payment_status?: string; };
     statusOptions: FilterOption[];
     clinics: { id: number; name: string }[];
 }
@@ -55,9 +42,7 @@ export default function Index({ auth, orders, filters, statusOptions, clinics }:
     const applyFilters = (newFilters?: any) => {
         const f = newFilters || localFilters;
         const params: any = {};
-        Object.entries(f).forEach(([key, value]) => {
-            if (value) params[key] = value;
-        });
+        Object.entries(f).forEach(([key, value]) => { if (value) params[key] = value; });
         router.get(route('lab.orders.index'), params, { preserveState: true, preserveScroll: true });
     };
 
@@ -75,13 +60,12 @@ export default function Index({ auth, orders, filters, statusOptions, clinics }:
 
     const activeFilterCount = Object.entries(localFilters).filter(([key, val]) => val && key !== 'search').length;
 
-    const toggleSelectAll = () => {
-        setSelectedOrders(prev => prev.length === orders.data.length ? [] : orders.data.map(o => o.id));
-    };
-
-    const toggleSelect = (id: number) => {
-        setSelectedOrders(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    };
+    const toggleSelectAll = () => setSelectedOrders(prev =>
+        prev.length === orders.data.length ? [] : orders.data.map(o => o.id)
+    );
+    const toggleSelect = (id: number) => setSelectedOrders(prev =>
+        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
 
     const handleBulkStatusUpdate = () => {
         if (!confirm(t('Are you sure you want to update the selected orders?'))) return;
@@ -91,26 +75,27 @@ export default function Index({ auth, orders, filters, statusOptions, clinics }:
     };
 
     const filterFields = [
-        { key: 'status', label: t('Status'), type: 'select' as const, options: statusOptions, placeholder: t('All Statuses') },
-        { key: 'priority', label: t('Priority'), type: 'select' as const, options: [{ value: 'normal', label: t('Normal') }, { value: 'urgent', label: t('Urgent') }], placeholder: t('All Priorities') },
-        { key: 'clinic_id', label: t('Clinic'), type: 'select' as const, options: clinics, placeholder: t('All Clinics') },
-        { key: 'date_from', label: t('From Date'), type: 'date' as const },
-        { key: 'date_to', label: t('To Date'), type: 'date' as const },
-        { key: 'payment_status', label: t('Payment'), type: 'select' as const, options: [{ value: 'unpaid', label: t('Unpaid') }, { value: 'partial', label: t('Partial') }, { value: 'paid', label: t('Paid') }], placeholder: t('All') },
+        { key: 'status',         label: t('Status'),   type: 'select' as const, options: statusOptions, placeholder: t('All Statuses') },
+        { key: 'priority',       label: t('Priority'),  type: 'select' as const, options: [{ value: 'normal', label: t('Normal') }, { value: 'urgent', label: t('Urgent') }], placeholder: t('All') },
+        { key: 'clinic_id',      label: t('Clinic'),    type: 'select' as const, options: clinics, placeholder: t('All Clinics') },
+        { key: 'date_from',      label: t('From'),      type: 'date' as const },
+        { key: 'date_to',        label: t('To'),        type: 'date' as const },
+        { key: 'payment_status', label: t('Payment'),   type: 'select' as const, options: [{ value: 'unpaid', label: t('Unpaid') }, { value: 'partial', label: t('Partial') }, { value: 'paid', label: t('Paid') }], placeholder: t('All') },
     ];
 
     return (
         <LabLayout>
             <Head title={t('Orders')} />
-
-            <div className="space-y-6 animate-fade-in pb-12">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col gap-4">
+                {/* Page header */}
+                <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                            {t('Order')} <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text text-transparent">{t('Management')}</span>
+                        <h2 className="text-[18px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                            {t('Order Management')}
                         </h2>
-                        <p className="text-slate-400 font-medium text-sm mt-1">{t('Track and manage your dental laboratory orders.')}</p>
+                        <p className="text-[12px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                            {orders.total ?? orders.data.length} {t('total orders')}
+                        </p>
                     </div>
                 </div>
 
@@ -133,11 +118,12 @@ export default function Index({ auth, orders, filters, statusOptions, clinics }:
                     onToggleSelectAll={toggleSelectAll}
                     onToggleSelect={toggleSelect}
                     bulkActions={
-                        <>
-                            <button onClick={handleBulkStatusUpdate} className="flex items-center gap-2 px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all font-bold text-xs shadow-lg shadow-blue-500/25">
-                                <Download className="w-3.5 h-3.5" /> {t('Start Production')}
-                            </button>
-                        </>
+                        <button
+                            onClick={handleBulkStatusUpdate}
+                            className="btn-primary text-[12px]"
+                        >
+                            <Play size={12} /> {t('Start Production')}
+                        </button>
                     }
                 />
             </div>

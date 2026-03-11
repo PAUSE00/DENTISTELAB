@@ -1,6 +1,11 @@
-import { Clock, Calendar } from 'lucide-react';
 import useTranslation from '@/Hooks/useTranslation';
 import { OrderHistoryEntry } from '@/types/order';
+
+const STATUS_DOT: Record<string, string> = {
+    new: '#60ddc6', in_progress: '#818cf8', fitting: '#c084fc',
+    finished: '#34d399', shipped: '#60ddc6', delivered: '#34d399',
+    rejected: '#f87171', cancelled: '#f87171', archived: '#94a3b8',
+};
 
 interface OrderTimelineProps {
     history: OrderHistoryEntry[];
@@ -10,44 +15,46 @@ export default function OrderTimeline({ history }: OrderTimelineProps) {
     const { t } = useTranslation();
 
     return (
-        <div className="glass-card rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
-            <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 flex items-center gap-2 mb-6 uppercase tracking-wider">
-                <Clock className="w-4 h-4 text-primary-500" />
-                {t('Order Timeline')}
-            </h3>
-            <div className="relative border-l-2 border-gray-200 dark:border-slate-700 ml-3 space-y-6 pb-2">
-                {history && history.length > 0 ? (
-                    history.map((entry, index) => {
-                        const isLast = index === history.length - 1;
-                        return (
-                            <div key={entry.id} className="relative pl-6">
-                                <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${isLast ? 'bg-primary-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]' : 'bg-gray-300 dark:bg-slate-600'}`}></div>
-                                <div className="flex flex-col">
-                                    <span className={`text-sm font-bold capitalize ${isLast ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
+        <div className="card p-4">
+            <p className="text-[11px] font-semibold mb-4" style={{ color: 'var(--txt-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {t('Timeline')}
+            </p>
+
+            {history && history.length > 0 ? (
+                <div className="relative">
+                    {/* vertical line */}
+                    <div className="absolute left-[6px] top-2 bottom-2 w-px" style={{ background: 'var(--border)' }} />
+
+                    <div className="space-y-4">
+                        {history.map((entry, i) => {
+                            const isLatest = i === history.length - 1;
+                            const dot = STATUS_DOT[entry.status] ?? '#60ddc6';
+                            return (
+                                <div key={entry.id} className="relative pl-5 flex flex-col">
+                                    {/* dot */}
+                                    <div className="absolute left-0 top-[3px] w-3 h-3 rounded-full border-2"
+                                        style={{
+                                            background: isLatest ? dot : 'var(--surface)',
+                                            borderColor: isLatest ? dot : 'var(--border-strong)',
+                                        }} />
+                                    <span className="text-[12.5px] font-semibold capitalize" style={{ color: isLatest ? 'var(--txt-1)' : 'var(--txt-2)' }}>
                                         {t(entry.status.replace('_', ' '))}
                                     </span>
-                                    <span className="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
-                                        <Calendar className="w-3 h-3" />
+                                    <span className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
                                         {new Date(entry.created_at).toLocaleString(undefined, {
                                             month: 'short', day: 'numeric',
-                                            hour: '2-digit', minute: '2-digit'
+                                            hour: '2-digit', minute: '2-digit',
                                         })}
+                                        {entry.user && <> · {entry.user.name}</>}
                                     </span>
-                                    {entry.user && (
-                                        <span className="text-[10px] text-gray-400 font-medium mt-1 bg-gray-50 dark:bg-slate-800 px-2 py-0.5 rounded-md inline-block w-fit border border-gray-100 dark:border-slate-700">
-                                            {t('By')}: {entry.user.name}
-                                        </span>
-                                    )}
                                 </div>
-                            </div>
-                        );
-                    })
-                ) : (
-                    <div className="pl-6 text-xs text-gray-400 italic">
-                        {t('No history available.')}
+                            );
+                        })}
                     </div>
-                )}
-            </div>
+                </div>
+            ) : (
+                <p className="text-[12px]" style={{ color: 'var(--txt-3)' }}>{t('No history available.')}</p>
+            )}
         </div>
     );
 }

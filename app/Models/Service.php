@@ -16,6 +16,8 @@ class Service extends Model
         'price',
         'production_days',
         'is_active',
+        'category',
+        'image',
     ];
 
     protected $casts = [

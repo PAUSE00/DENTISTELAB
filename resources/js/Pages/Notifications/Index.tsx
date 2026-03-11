@@ -1,247 +1,212 @@
 import { useState } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import LabLayout from '@/Layouts/LabLayout';
 import ClinicLayout from '@/Layouts/ClinicLayout';
-import { Bell, BellOff, CheckCheck, Filter, Package, MessageSquare, RefreshCw, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
+import { Bell, CheckCheck, Filter, Inbox, Package, MessageSquare, RefreshCw, X, ArrowRight } from 'lucide-react';
+import useTranslation from '@/Hooks/useTranslation';
 
 interface Notification {
-    id: number;
-    type: string;
-    title: string;
-    body: string;
-    data: Record<string, unknown>;
-    read_at: string | null;
-    created_at: string;
+    id: number; type: string; title: string; body: string;
+    data: Record<string, unknown>; read_at: string | null; created_at: string;
 }
-
 interface PaginatedData {
-    data: Notification[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
+    data: Notification[]; current_page: number; last_page: number;
+    per_page: number; total: number;
     links: { url: string | null; label: string; active: boolean }[];
 }
-
 interface Props {
     notifications: PaginatedData;
     filters: { type: string | null; status: string | null };
     userLayout: 'lab' | 'clinic' | 'admin';
 }
 
-const typeIcons: Record<string, { icon: string; color: string }> = {
-    order_status: { icon: '🔄', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' },
-    new_order: { icon: '📦', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' },
-    new_message: { icon: '💬', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' },
-    invitation_accepted: { icon: '🤝', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' },
+const TYPE_CONFIG: Record<string, { icon: typeof Bell; color: string; label: string }> = {
+    order_status:       { icon: RefreshCw,      color: '#818cf8', label: 'Status Update' },
+    new_order:          { icon: Package,        color: '#60ddc6', label: 'New Order' },
+    new_message:        { icon: MessageSquare,  color: '#c084fc', label: 'Message' },
+    invitation_accepted:{ icon: Bell,           color: '#f59e0b', label: 'Invitation' },
 };
 
-const typeLabels: Record<string, string> = {
-    order_status: 'Statut commande',
-    new_order: 'Nouvelle commande',
-    new_message: 'Message',
-    invitation_accepted: 'Invitation',
-};
-
-function getTimeAgo(dateString: string) {
-    const diff = Date.now() - new Date(dateString).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return "À l'instant";
-    if (minutes < 60) return `Il y a ${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `Il y a ${hours}h`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `Il y a ${days}j`;
-    return new Date(dateString).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+function timeAgo(d: string) {
+    const diff = Date.now() - new Date(d).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1)  return 'Just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    const days = Math.floor(h / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
 function NotificationsContent({ notifications, filters }: Props) {
+    const { t } = useTranslation();
     const [selectedType, setSelectedType] = useState(filters.type || '');
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
 
     const applyFilters = (overrides: { type?: string; status?: string } = {}) => {
-        const params: Record<string, string> = {};
-        const t = overrides.type !== undefined ? overrides.type : selectedType;
-        const s = overrides.status !== undefined ? overrides.status : selectedStatus;
-        if (t) params.type = t;
-        if (s) params.status = s;
-        router.get(route('notifications.index'), params, { preserveState: true, preserveScroll: true });
+        const p: Record<string, string> = {};
+        const ty = overrides.type    !== undefined ? overrides.type   : selectedType;
+        const st = overrides.status  !== undefined ? overrides.status : selectedStatus;
+        if (ty) p.type   = ty;
+        if (st) p.status = st;
+        router.get(route('notifications.index'), p, { preserveState: true, preserveScroll: true });
     };
 
-    const handleTypeFilter = (type: string) => {
-        const newType = selectedType === type ? '' : type;
-        setSelectedType(newType);
-        applyFilters({ type: newType });
-    };
-
-    const handleStatusFilter = (status: string) => {
-        const newStatus = selectedStatus === status ? '' : status;
-        setSelectedStatus(newStatus);
-        applyFilters({ status: newStatus });
-    };
-
-    const markAsRead = (id: number) => {
+    const markAsRead = (id: number) =>
         router.patch(route('notifications.read', id), {}, { preserveScroll: true });
-    };
 
-    const markAllAsRead = () => {
+    const markAllAsRead = () =>
         router.post(route('notifications.read-all'), {}, { preserveScroll: true });
-    };
 
-    const handleClick = (notification: Notification) => {
-        if (!notification.read_at) {
-            markAsRead(notification.id);
-        }
-        if (notification.data?.order_id) {
-            const isLab = route().current('lab.*') || route().current('notifications.*');
-            // Try lab route first, fallback
-            try {
-                const orderRoute = route().has('lab.orders.show')
-                    ? route('lab.orders.show', notification.data.order_id as number)
-                    : route('clinic.orders.show', notification.data.order_id as number);
-                router.visit(orderRoute);
-            } catch {
-                // fallback
-            }
+    const handleClick = (n: Notification) => {
+        if (!n.read_at) markAsRead(n.id);
+        const orderId = n.data?.order_id;
+        if (orderId !== undefined && orderId !== null) {
+            const id = Number(orderId);
+            try { router.visit(route('lab.orders.show', id)); }
+            catch { try { router.visit(route('clinic.orders.show', id)); } catch {} }
         }
     };
 
     const unreadCount = notifications.data.filter(n => !n.read_at).length;
+    const totalUnread = notifications.total;
+
+    const statusFilters = [
+        { key: 'unread', label: t('Unread'), color: '#f59e0b' },
+        { key: 'read',   label: t('Read'),   color: '#34d399' },
+    ];
 
     return (
         <>
-            <Head title="Notifications" />
+            <Head title={t('Notifications')} />
+            <div className="flex flex-col gap-4">
 
-            <div className="space-y-6 animate-fade-in">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/30">
-                                <Bell className="w-5 h-5" />
-                            </div>
-                            Notifications
-                        </h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            {notifications.total} notification{notifications.total > 1 ? 's' : ''} au total
+                        <h2 className="text-[18px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                            {t('Notifications')}
+                            {unreadCount > 0 && (
+                                <span className="ml-2 text-[12px] font-bold px-2 py-px rounded-full"
+                                    style={{ background: 'rgba(96,221,198,0.15)', color: 'var(--txt-accent)' }}>
+                                    {unreadCount} {t('new')}
+                                </span>
+                            )}
+                        </h2>
+                        <p className="text-[12px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                            {notifications.total} {t('total notifications')}
                         </p>
                     </div>
                     {unreadCount > 0 && (
-                        <button
-                            onClick={markAllAsRead}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-all text-sm font-bold border border-primary-200 dark:border-primary-500/30"
-                        >
-                            <CheckCheck className="w-4 h-4" />
-                            Tout marquer comme lu
+                        <button onClick={markAllAsRead} className="btn-ghost text-[12px]">
+                            <CheckCheck size={13} /> {t('Mark all read')}
                         </button>
                     )}
                 </div>
 
                 {/* Filters */}
-                <div className="glass-card rounded-2xl p-4">
-                    <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-600 dark:text-gray-300">
-                        <Filter className="w-4 h-4" />
-                        Filtres
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {/* Status Filters */}
-                        <button
-                            onClick={() => handleStatusFilter('unread')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${selectedStatus === 'unread'
-                                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700'
-                                : 'bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600'
-                                }`}
-                        >
-                            Non lues
+                <div className="card p-3 flex flex-wrap items-center gap-2">
+                    <Filter size={13} style={{ color: 'var(--txt-3)' }} />
+                    {statusFilters.map(f => (
+                        <button key={f.key}
+                            onClick={() => { const v = selectedStatus === f.key ? '' : f.key; setSelectedStatus(v); applyFilters({ status: v }); }}
+                            className="px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-colors"
+                            style={selectedStatus === f.key
+                                ? { background: `${f.color}15`, borderColor: `${f.color}30`, color: f.color }
+                                : { background: 'transparent', borderColor: 'var(--border-strong)', color: 'var(--txt-2)' }}>
+                            {f.label}
                         </button>
-                        <button
-                            onClick={() => handleStatusFilter('read')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${selectedStatus === 'read'
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700'
-                                : 'bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600'
-                                }`}
-                        >
-                            Lues
+                    ))}
+
+                    <div className="w-px h-4 mx-1" style={{ background: 'var(--border-strong)' }} />
+
+                    {Object.entries(TYPE_CONFIG).map(([key, cfg]) => {
+                        const Icon = cfg.icon;
+                        return (
+                            <button key={key}
+                                onClick={() => { const v = selectedType === key ? '' : key; setSelectedType(v); applyFilters({ type: v }); }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-colors"
+                                style={selectedType === key
+                                    ? { background: `${cfg.color}15`, borderColor: `${cfg.color}30`, color: cfg.color }
+                                    : { background: 'transparent', borderColor: 'var(--border-strong)', color: 'var(--txt-2)' }}>
+                                <Icon size={12} /> {t(cfg.label)}
+                            </button>
+                        );
+                    })}
+
+                    {(selectedType || selectedStatus) && (
+                        <button onClick={() => { setSelectedType(''); setSelectedStatus(''); router.get(route('notifications.index')); }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11.5px] transition-colors ml-auto"
+                            style={{ color: 'var(--txt-3)' }}>
+                            <X size={12} /> {t('Clear')}
                         </button>
-
-                        <div className="w-px h-6 bg-gray-200 dark:bg-slate-600 mx-1 self-center" />
-
-                        {/* Type Filters */}
-                        {Object.entries(typeLabels).map(([key, label]) => (
-                            <button
-                                key={key}
-                                onClick={() => handleTypeFilter(key)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${selectedType === key
-                                    ? 'bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-500/50'
-                                    : 'bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600'
-                                    }`}
-                            >
-                                {typeIcons[key]?.icon} {label}
-                            </button>
-                        ))}
-
-                        {(selectedType || selectedStatus) && (
-                            <button
-                                onClick={() => { setSelectedType(''); setSelectedStatus(''); router.get(route('notifications.index'), {}, { preserveState: true }); }}
-                                className="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all"
-                            >
-                                ✕ Réinitialiser
-                            </button>
-                        )}
-                    </div>
+                    )}
                 </div>
 
-                {/* Notifications List */}
-                <div className="glass-card rounded-2xl overflow-hidden">
+                {/* List */}
+                <div className="card overflow-hidden">
                     {notifications.data.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-                            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center mb-4">
-                                <Inbox className="w-8 h-8" />
-                            </div>
-                            <p className="font-medium text-lg">Aucune notification</p>
-                            <p className="text-sm mt-1">Vous n'avez aucune notification pour le moment.</p>
+                        <div className="py-16 text-center" style={{ color: 'var(--txt-3)' }}>
+                            <Inbox size={32} className="mx-auto mb-3 opacity-40" />
+                            <p className="text-[13px] font-medium">{t('No notifications')}</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-100 dark:divide-slate-800">
-                            {notifications.data.map((n) => {
-                                const typeInfo = typeIcons[n.type] || { icon: '🔔', color: 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400' };
+                        <div>
+                            {notifications.data.map((n, i) => {
+                                const cfg = TYPE_CONFIG[n.type] ?? { icon: Bell, color: '#94a3b8', label: n.type };
+                                const Icon = cfg.icon;
+                                const isUnread = !n.read_at;
                                 return (
-                                    <button
-                                        key={n.id}
-                                        onClick={() => handleClick(n)}
-                                        className={`w-full text-left px-6 py-5 hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition-colors group ${!n.read_at ? 'bg-primary-50/40 dark:bg-primary-500/5' : ''
-                                            }`}
-                                    >
-                                        <div className="flex items-start gap-4 text-base">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${typeInfo.color}`}>
-                                                {typeInfo.icon}
+                                    <button key={n.id} onClick={() => handleClick(n)}
+                                        className="w-full text-left flex items-start gap-3 px-4 py-3.5 border-b last:border-b-0 transition-colors group relative"
+                                        style={{
+                                            borderColor: 'var(--border)',
+                                            background: isUnread ? `${cfg.color}06` : 'transparent',
+                                        }}
+                                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                                        onMouseLeave={e => (e.currentTarget.style.background = isUnread ? `${cfg.color}06` : 'transparent')}>
+
+                                        {/* Unread indicator */}
+                                        {isUnread && (
+                                            <span className="absolute left-0 top-0 bottom-0 w-0.5 rounded-r"
+                                                style={{ background: cfg.color }} />
+                                        )}
+
+                                        {/* Icon */}
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                                            style={{ background: `${cfg.color}15`, color: cfg.color }}>
+                                            <Icon size={14} />
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-[12.5px] font-semibold" style={{ color: isUnread ? 'var(--txt-1)' : 'var(--txt-2)' }}>
+                                                    {n.title}
+                                                </p>
+                                                {isUnread && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cfg.color }} />}
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <p className={`text-base ${!n.read_at ? 'font-bold text-gray-900 dark:text-white' : 'font-semibold text-gray-700 dark:text-gray-300'}`}>
-                                                        {n.title}
-                                                    </p>
-                                                    {!n.read_at && (
-                                                        <span className="w-2.5 h-2.5 bg-primary-500 rounded-full flex-shrink-0 animate-pulse shadow-sm shadow-primary-500/50" />
-                                                    )}
-                                                </div>
-                                                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1 line-clamp-2">{n.body}</p>
-                                                <div className="flex items-center gap-3 mt-3">
-                                                    <span className="text-xs font-medium text-gray-400 dark:text-slate-500">{getTimeAgo(n.created_at)}</span>
-                                                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-gray-100 dark:bg-slate-700/50 text-gray-600 dark:text-gray-400 border border-transparent dark:border-slate-700">
-                                                        {typeLabels[n.type] || n.type}
-                                                    </span>
-                                                </div>
+                                            <p className="text-[11.5px] mt-0.5 line-clamp-2" style={{ color: 'var(--txt-3)' }}>{n.body}</p>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <span className="text-[10.5px]" style={{ color: 'var(--txt-3)' }}>{timeAgo(n.created_at)}</span>
+                                                <span className="text-[10.5px] px-1.5 py-px rounded"
+                                                    style={{ background: `${cfg.color}10`, color: cfg.color }}>
+                                                    {t(cfg.label)}
+                                                </span>
                                             </div>
-                                            {!n.read_at && (
-                                                <div
-                                                    onClick={(e) => { e.stopPropagation(); markAsRead(n.id); }}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2.5 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 dark:text-gray-500 flex-shrink-0"
-                                                    title="Marquer comme lu"
-                                                >
-                                                    <CheckCheck className="w-5 h-5" />
-                                                </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                            {isUnread && (
+                                                <button onClick={e => { e.stopPropagation(); markAsRead(n.id); }}
+                                                    className="p-1.5 rounded-md transition-colors"
+                                                    style={{ color: 'var(--txt-3)' }}
+                                                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--txt-accent)')}
+                                                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--txt-3)')}>
+                                                    <CheckCheck size={13} />
+                                                </button>
                                             )}
+                                            {n.data?.order_id != null && <ArrowRight size={13} style={{ color: 'var(--txt-3)' }} />}
                                         </div>
                                     </button>
                                 );
@@ -251,48 +216,21 @@ function NotificationsContent({ notifications, filters }: Props) {
 
                     {/* Pagination */}
                     {notifications.last_page > 1 && (
-                        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/30">
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Page {notifications.current_page} sur {notifications.last_page} ({notifications.total} résultats)
+                        <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
+                            <p className="text-[11px]" style={{ color: 'var(--txt-3)' }}>
+                                {t('Page')} {notifications.current_page} / {notifications.last_page}
                             </p>
-                            <div className="flex items-center gap-1">
-                                {notifications.links.map((link, i) => {
-                                    if (i === 0) {
-                                        return (
-                                            <button
-                                                key="prev"
-                                                disabled={!link.url}
-                                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                                className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                <ChevronLeft className="w-4 h-4" />
-                                            </button>
-                                        );
-                                    }
-                                    if (i === notifications.links.length - 1) {
-                                        return (
-                                            <button
-                                                key="next"
-                                                disabled={!link.url}
-                                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                                className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                            >
-                                                <ChevronRight className="w-4 h-4" />
-                                            </button>
-                                        );
-                                    }
-                                    return (
-                                        <button
-                                            key={i}
-                                            onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                            className={`min-w-[32px] h-8 rounded-lg text-xs font-bold transition-all ${link.active
-                                                ? 'bg-primary-600 text-white shadow-md shadow-primary-500/30'
-                                                : 'hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400'
-                                                }`}
-                                            dangerouslySetInnerHTML={{ __html: link.label }}
-                                        />
-                                    );
-                                })}
+                            <div className="flex gap-1">
+                                {notifications.links.map((link, i) => (
+                                    <button key={i}
+                                        disabled={!link.url}
+                                        onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
+                                        className="px-2.5 py-1 rounded-md text-[12px] font-medium disabled:opacity-30 transition-colors"
+                                        style={link.active
+                                            ? { background: 'var(--txt-accent)', color: 'var(--bg)' }
+                                            : { color: 'var(--txt-3)' }}
+                                        dangerouslySetInnerHTML={{ __html: link.label }} />
+                                ))}
                             </div>
                         </div>
                     )}
@@ -303,19 +241,7 @@ function NotificationsContent({ notifications, filters }: Props) {
 }
 
 export default function NotificationsIndex(props: Props) {
-    const { userLayout } = props;
-
-    if (userLayout === 'lab') {
-        return (
-            <LabLayout>
-                <NotificationsContent {...props} />
-            </LabLayout>
-        );
-    }
-
-    return (
-        <ClinicLayout>
-            <NotificationsContent {...props} />
-        </ClinicLayout>
-    );
+    return props.userLayout === 'lab'
+        ? <LabLayout><NotificationsContent {...props} /></LabLayout>
+        : <ClinicLayout><NotificationsContent {...props} /></ClinicLayout>;
 }

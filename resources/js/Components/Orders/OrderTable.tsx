@@ -1,38 +1,95 @@
-import { Link } from '@inertiajs/react';
-import { ChevronRight, CheckCircle2, Clock, AlertCircle, Package, Building, Zap, Trash2, Download, X } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { ChevronRight, Package, X, Zap } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
 import Pagination from '@/Components/Pagination';
 import { OrderListItem } from '@/types/order';
 
-const statusStyles: Record<string, string> = {
-    new: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    in_progress: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    fitting: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-    finished: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    shipped: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
-    delivered: 'bg-green-500/10 text-green-500 border-green-500/20',
-    rejected: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-    cancelled: 'bg-slate-500/10 text-slate-500 border-slate-500/20',
-    archived: 'bg-slate-500/10 text-slate-500 border-slate-500/20',
+const STATUS: Record<string, { dot: string; text: string; bg: string; label: string }> = {
+    new:         { dot: '#60ddc6', text: 'var(--txt-accent)', bg: 'rgba(96,221,198,0.1)',  label: 'New' },
+    in_progress: { dot: '#818cf8', text: '#818cf8',           bg: 'rgba(129,140,248,0.1)', label: 'In Progress' },
+    fitting:     { dot: '#c084fc', text: '#c084fc',           bg: 'rgba(192,132,252,0.1)', label: 'Fitting' },
+    finished:    { dot: '#34d399', text: '#34d399',           bg: 'rgba(52,211,153,0.1)',  label: 'Finished' },
+    shipped:     { dot: '#60ddc6', text: 'var(--txt-accent)', bg: 'rgba(96,221,198,0.1)',  label: 'Shipped' },
+    delivered:   { dot: '#34d399', text: '#34d399',           bg: 'rgba(52,211,153,0.1)',  label: 'Delivered' },
+    rejected:    { dot: '#f87171', text: '#f87171',           bg: 'rgba(248,113,113,0.1)', label: 'Rejected' },
+    cancelled:   { dot: '#f87171', text: '#f87171',           bg: 'rgba(248,113,113,0.1)', label: 'Cancelled' },
+    archived:    { dot: '#94a3b8', text: '#94a3b8',           bg: 'rgba(148,163,184,0.1)', label: 'Archived' },
 };
 
-const StatusIcon = ({ status }: { status: string }) => {
-    switch (status) {
-        case 'pending': case 'new': return <Clock className="w-3 h-3" />;
-        case 'completed': case 'delivered': case 'finished': return <CheckCircle2 className="w-3 h-3" />;
-        case 'cancelled': case 'rejected': return <AlertCircle className="w-3 h-3" />;
-        default: return <Package className="w-3 h-3" />;
-    }
+// Next logical status transitions per current status
+const NEXT_STATUSES: Record<string, { value: string; label: string; color: string }[]> = {
+    new:         [{ value: 'in_progress', label: 'Start Production', color: '#818cf8' }, { value: 'rejected', label: 'Reject', color: '#f87171' }],
+    in_progress: [{ value: 'fitting',     label: 'Send for Fitting', color: '#c084fc' }, { value: 'finished', label: 'Mark Finished', color: '#34d399' }],
+    fitting:     [{ value: 'finished',    label: 'Mark Finished',    color: '#34d399' }],
+    finished:    [{ value: 'shipped',     label: 'Mark Shipped',     color: '#60ddc6' }],
+    shipped:     [{ value: 'delivered',   label: 'Mark Delivered',   color: '#34d399' }],
 };
+
+interface QuickStatusProps {
+    orderId: number;
+    currentStatus: string;
+    variant: 'lab' | 'clinic';
+}
+
+function QuickStatus({ orderId, currentStatus, variant }: QuickStatusProps) {
+    const { t } = useTranslation();
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const nexts = NEXT_STATUSES[currentStatus] ?? [];
+
+    useEffect(() => {
+        const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+        document.addEventListener('mousedown', h);
+        return () => document.removeEventListener('mousedown', h);
+    }, []);
+
+    if (nexts.length === 0 || variant !== 'lab') return null;
+
+    const updateStatus = (status: string) => {
+        setOpen(false);
+        router.patch(route('lab.orders.update-status', orderId), { status }, { preserveScroll: true });
+    };
+
+    return (
+        <div ref={ref} className="relative" onClick={e => e.stopPropagation()}>
+            <button
+                onClick={() => setOpen(!open)}
+                className="p-1.5 rounded-md transition-colors"
+                style={{ color: open ? 'var(--txt-accent)' : 'var(--txt-3)' }}
+                title={t('Quick status update')}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--txt-accent)')}
+                onMouseLeave={e => !open && (e.currentTarget.style.color = 'var(--txt-3)')}>
+                <Zap size={13} />
+            </button>
+
+            {open && (
+                <div className="absolute right-0 top-full mt-1.5 z-50 min-w-[170px] rounded-lg shadow-2xl overflow-hidden"
+                    style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-strong)' }}>
+                    <p className="px-3 py-1.5 text-[10.5px] font-semibold border-b"
+                        style={{ color: 'var(--txt-3)', borderColor: 'var(--border)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        {t('Move to')}
+                    </p>
+                    {nexts.map(n => (
+                        <button key={n.value}
+                            onClick={() => updateStatus(n.value)}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium transition-colors"
+                            style={{ color: 'var(--txt-2)' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = n.color; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--txt-2)'; }}>
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: n.color }} />
+                            {t(n.label)}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
 
 interface OrderTableProps {
-    orders: {
-        data: OrderListItem[];
-        links: any[];
-        total?: number;
-    };
+    orders: { data: OrderListItem[]; links: any[]; total?: number; };
     selectedOrders: number[];
-    /** 'lab' shows clinic column; 'clinic' shows lab column */
     variant: 'lab' | 'clinic';
     showRoute: (id: number) => string;
     onToggleSelectAll: () => void;
@@ -40,154 +97,129 @@ interface OrderTableProps {
     bulkActions: React.ReactNode;
 }
 
-export default function OrderTable({
-    orders,
-    selectedOrders,
-    variant,
-    showRoute,
-    onToggleSelectAll,
-    onToggleSelect,
-    bulkActions,
-}: OrderTableProps) {
+export default function OrderTable({ orders, selectedOrders, variant, showRoute, onToggleSelectAll, onToggleSelect, bulkActions }: OrderTableProps) {
     const { t } = useTranslation();
-
-    const counterpartyLabel = variant === 'lab' ? t('Clinic') : t('Lab');
-    const serviceLabel = variant === 'lab' ? t('Clinic & Service') : t('Lab & Service');
 
     return (
         <>
-            {/* Bulk Action Bar */}
             {selectedOrders.length > 0 && (
-                <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-2xl p-4 flex items-center justify-between animate-fade-in">
-                    <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border"
+                    style={{ background: 'var(--teal-10)', borderColor: 'var(--teal-20)' }}>
+                    <span className="text-[12.5px] font-semibold" style={{ color: 'var(--txt-accent)' }}>
                         {selectedOrders.length} {t('orders selected')}
                     </span>
                     <div className="flex items-center gap-2">
                         {bulkActions}
-                        <button
-                            onClick={() => onToggleSelectAll()}
-                            className="p-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                        >
-                            <X className="w-4 h-4" />
+                        <button onClick={onToggleSelectAll} className="p-1.5 rounded"
+                            style={{ color: 'var(--txt-3)' }}>
+                            <X size={14} />
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Table */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none">
+            <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50/50 dark:bg-slate-800/50">
-                            <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                <th className="px-6 py-5 w-10">
-                                    <input
-                                        type="checkbox"
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th className="w-10">
+                                    <input type="checkbox"
                                         checked={selectedOrders.length === orders.data.length && orders.data.length > 0}
                                         onChange={onToggleSelectAll}
-                                        className="rounded-md border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500/20 cursor-pointer"
-                                    />
+                                        style={{ accentColor: 'var(--txt-accent)' }} />
                                 </th>
-                                <th className="px-4 py-5">{t('Order')}</th>
-                                <th className="px-4 py-5">{t('Patient')}</th>
-                                <th className="px-4 py-5">{serviceLabel}</th>
-                                <th className="px-4 py-5">{t('Status')}</th>
-                                <th className="px-4 py-5">{t('Due Date')}</th>
-                                <th className="px-6 py-5 text-right">{t('Actions')}</th>
+                                <th>#</th>
+                                <th>{t('Patient')}</th>
+                                <th>{variant === 'lab' ? t('Clinic') : t('Lab')} / {t('Service')}</th>
+                                <th>{t('Status')}</th>
+                                <th>{t('Due Date')}</th>
+                                <th>{t('Priority')}</th>
+                                <th className="w-20"></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                            {orders.data.length > 0 ? (
-                                orders.data.map((order) => {
-                                    const counterpartyName = variant === 'lab'
-                                        ? order.clinic?.name
-                                        : order.lab?.name;
-                                    return (
-                                        <tr
-                                            key={order.id}
-                                            className={`group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all duration-300 ${selectedOrders.includes(order.id) ? 'bg-blue-50/50 dark:bg-blue-500/5' : ''}`}
-                                        >
-                                            <td className="px-6 py-4">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedOrders.includes(order.id)}
-                                                    onChange={() => onToggleSelect(order.id)}
-                                                    className="rounded-md border-slate-300 dark:border-slate-600 text-blue-500 focus:ring-blue-500/20 cursor-pointer"
-                                                />
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <span className="font-black text-slate-900 dark:text-white text-sm tracking-tighter">#{order.id}</span>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black shadow-lg shadow-blue-500/20">
-                                                        {order.patient.first_name[0]}{order.patient.last_name[0]}
-                                                    </div>
-                                                    <span className="font-bold text-slate-900 dark:text-white text-sm tracking-tight">
-                                                        {order.patient.first_name} {order.patient.last_name}
-                                                    </span>
+                        <tbody>
+                            {orders.data.length > 0 ? orders.data.map((order) => {
+                                const s = STATUS[order.status] ?? STATUS.new;
+                                const counterpartyName = variant === 'lab' ? order.clinic?.name : order.lab?.name;
+                                const isSelected = selectedOrders.includes(order.id);
+
+                                return (
+                                    <tr key={order.id} style={isSelected ? { background: 'var(--teal-10)' } : {}}>
+                                        <td>
+                                            <input type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => onToggleSelect(order.id)}
+                                                style={{ accentColor: 'var(--txt-accent)' }} />
+                                        </td>
+                                        <td>
+                                            <span className="font-semibold tabular-nums" style={{ color: 'var(--txt-accent)' }}>
+                                                #{order.id}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                                                    style={{ background: 'linear-gradient(135deg, #60ddc6, #6638b4)' }}>
+                                                    {order.patient.first_name[0]}{order.patient.last_name[0]}
                                                 </div>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="space-y-1.5">
-                                                    <div className="flex items-center gap-2">
-                                                        <Building className="w-3.5 h-3.5 text-slate-400" />
-                                                        <span className="font-bold text-xs text-slate-700 dark:text-slate-300">{counterpartyName || 'N/A'}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <Zap className="w-3.5 h-3.5 text-emerald-500" />
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{order.service.name}</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="space-y-2">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${statusStyles[order.status] || 'bg-slate-100 text-slate-800'}`}>
-                                                        <StatusIcon status={order.status} />
-                                                        {t(order.status.replace('_', ' '))}
-                                                    </span>
-                                                    {order.priority === 'urgent' && (
-                                                        <div className="flex items-center gap-1 text-rose-500 font-black text-[10px] uppercase tracking-widest">
-                                                            <AlertCircle className="w-3 h-3" /> {t('Urgent')}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-4">
-                                                <div className="space-y-1.5">
-                                                    <span className={`text-xs font-bold ${order.is_overdue ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                                                        {new Date(order.due_date).toLocaleDateString()}
-                                                    </span>
-                                                    {order.is_overdue && (
-                                                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-rose-500/30 bg-rose-500/10 text-rose-500 text-[10px] font-black uppercase tracking-widest w-fit">
-                                                            <AlertCircle className="w-3 h-3" /> {t('Overdue')}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-x-2 group-hover:translate-x-0">
-                                                    <Link
-                                                        href={showRoute(order.id)}
-                                                        className="p-2.5 bg-blue-50 dark:bg-blue-500/10 text-blue-500 rounded-xl border border-blue-100 dark:border-blue-500/20 hover:bg-blue-100 transition-all shadow-sm inline-flex"
-                                                    >
-                                                        <ChevronRight className="w-4 h-4" />
-                                                    </Link>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan={7} className="px-8 py-20 text-center">
-                                        <div className="flex flex-col items-center">
-                                            <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                                                <Package className="w-10 h-10 text-slate-300" />
+                                                <span className="font-medium text-[12.5px]" style={{ color: 'var(--txt-1)' }}>
+                                                    {order.patient.first_name} {order.patient.last_name}
+                                                </span>
                                             </div>
-                                            <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('No Orders Found')}</h3>
-                                            <p className="text-slate-400 font-medium text-xs mt-1">{t('Create your first order to get started.')}</p>
-                                        </div>
+                                        </td>
+                                        <td>
+                                            <p className="text-[12.5px] font-medium" style={{ color: 'var(--txt-1)' }}>
+                                                {counterpartyName || '—'}
+                                            </p>
+                                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                                {order.service.name}
+                                            </p>
+                                        </td>
+                                        <td>
+                                            <span className="status-pill" style={{ background: s.bg, color: s.text, borderColor: 'transparent' }}>
+                                                <span className="dot" style={{ background: s.dot }} />
+                                                {t(s.label)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="text-[12.5px]"
+                                                style={{ color: order.is_overdue ? '#f87171' : 'var(--txt-2)' }}>
+                                                {order.due_date ? new Date(order.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                                            </span>
+                                            {order.is_overdue && (
+                                                <p className="text-[10px] font-semibold" style={{ color: '#f87171' }}>Overdue</p>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {order.priority === 'urgent' ? (
+                                                <span className="priority-chip" style={{ background: 'rgba(249,115,22,0.12)', color: '#f97316' }}>urgent</span>
+                                            ) : (
+                                                <span className="priority-chip" style={{ background: 'var(--surface)', color: 'var(--txt-3)' }}>normal</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <div className="flex items-center justify-end gap-0.5">
+                                                {/* Quick status — lab only */}
+                                                <QuickStatus orderId={order.id} currentStatus={order.status} variant={variant} />
+
+                                                <Link href={showRoute(order.id)}
+                                                    className="p-1.5 rounded-md transition-colors inline-flex"
+                                                    style={{ color: 'var(--txt-3)' }}
+                                                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--txt-accent)')}
+                                                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--txt-3)')}>
+                                                    <ChevronRight size={15} />
+                                                </Link>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            }) : (
+                                <tr>
+                                    <td colSpan={8} className="py-16 text-center" style={{ color: 'var(--txt-3)' }}>
+                                        <Package size={32} className="mx-auto mb-3 opacity-40" />
+                                        <p className="text-[13px] font-medium">{t('No Orders Found')}</p>
+                                        <p className="text-[11px] mt-1">{t('Adjust your filters or create a new order.')}</p>
                                     </td>
                                 </tr>
                             )}
@@ -195,8 +227,10 @@ export default function OrderTable({
                     </table>
                 </div>
                 {orders.links && orders.links.length > 3 && (
-                    <div className="px-8 py-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('Order Registry')}</p>
+                    <div className="px-4 py-3 border-t flex justify-between items-center" style={{ borderColor: 'var(--border)' }}>
+                        <p className="text-[11px]" style={{ color: 'var(--txt-3)' }}>
+                            {orders.total} {t('total orders')}
+                        </p>
                         <Pagination links={orders.links} />
                     </div>
                 )}

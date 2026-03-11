@@ -2,244 +2,414 @@ import LabLayout from '@/Layouts/LabLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps, Order } from '@/types';
 import {
-    Package,
-    Clock,
-    AlertTriangle,
-    CalendarClock,
-    DollarSign,
-    ArrowRight,
-    ClipboardList,
-    Sparkles,
-    BarChart3,
-    Eye,
-    TrendingUp,
+    Package, Clock, AlertTriangle, CalendarClock, DollarSign,
+    CreditCard, CheckCircle2, XCircle, TrendingUp, TrendingDown,
+    ArrowRight, MoreHorizontal, ExternalLink
 } from 'lucide-react';
 import { useEffect } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
 import { router } from '@inertiajs/react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface Stats {
     totalActive: number;
     pendingNew: number;
     overdueCount: number;
     dueTodayCount: number;
     monthRevenue: number;
+    lastMonthRevenue?: number;
+    unpaidCount?: number;
 }
-
+interface InboxOrder {
+    id: number; priority: string; created_at: string; due_date: string | null;
+    patient: { first_name: string; last_name: string } | null;
+    clinic: { name: string } | null;
+    service: { name: string } | null;
+}
+interface WeeklyDay { day: string; date: string; orders: number; }
+interface TopService { name: string; count: number; }
+interface ActivityEntry { order_id: number; status: string; clinic: string; at: string; }
 interface Props extends PageProps {
     stats: Stats;
     recentOrders: Order[];
+    newOrdersInbox?: InboxOrder[];
+    weeklyVolume?: WeeklyDay[];
+    topServices?: TopService[];
+    activityFeed?: ActivityEntry[];
 }
 
-const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-    new: { label: 'New', bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-700 dark:text-amber-400', dot: 'bg-amber-500' },
-    in_progress: { label: 'In Progress', bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-700 dark:text-blue-400', dot: 'bg-blue-500' },
-    fitting: { label: 'Fitting', bg: 'bg-purple-50 dark:bg-purple-500/10', text: 'text-purple-700 dark:text-purple-400', dot: 'bg-purple-500' },
-    finished: { label: 'Finished', bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500' },
-    shipped: { label: 'Shipped', bg: 'bg-indigo-50 dark:bg-indigo-500/10', text: 'text-indigo-700 dark:text-indigo-400', dot: 'bg-indigo-500' },
-    delivered: { label: 'Delivered', bg: 'bg-green-50 dark:bg-green-500/10', text: 'text-green-700 dark:text-green-400', dot: 'bg-green-500' },
-    rejected: { label: 'Rejected', bg: 'bg-red-50 dark:bg-red-500/10', text: 'text-red-700 dark:text-red-400', dot: 'bg-red-500' },
-    archived: { label: 'Archived', bg: 'bg-gray-50 dark:bg-gray-500/10', text: 'text-gray-700 dark:text-gray-400', dot: 'bg-gray-500' },
-    cancelled: { label: 'Cancelled', bg: 'bg-red-50 dark:bg-red-500/10', text: 'text-red-600 dark:text-red-400', dot: 'bg-red-400' },
+// ── Status config (restrained — no opacity theatrics) ──────────────────────
+const STATUS: Record<string, { label: string; dot: string; text: string; bg: string }> = {
+    new: { label: 'New', dot: '#60ddc6', text: '#60ddc6', bg: 'rgba(96,221,198,0.1)' },
+    in_progress: { label: 'In Progress', dot: '#818cf8', text: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
+    fitting: { label: 'Fitting', dot: '#c084fc', text: '#c084fc', bg: 'rgba(192,132,252,0.1)' },
+    finished: { label: 'Finished', dot: '#34d399', text: '#34d399', bg: 'rgba(52,211,153,0.1)' },
+    shipped: { label: 'Shipped', dot: '#60ddc6', text: '#60ddc6', bg: 'rgba(96,221,198,0.1)' },
+    delivered: { label: 'Delivered', dot: '#34d399', text: '#34d399', bg: 'rgba(52,211,153,0.1)' },
+    rejected: { label: 'Rejected', dot: '#f87171', text: '#f87171', bg: 'rgba(248,113,113,0.1)' },
+    archived: { label: 'Archived', dot: '#94a3b8', text: '#94a3b8', bg: 'rgba(148,163,184,0.1)' },
+    cancelled: { label: 'Cancelled', dot: '#f87171', text: '#f87171', bg: 'rgba(248,113,113,0.1)' },
 };
 
-const priorityBadge: Record<string, string> = {
-    urgent: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
-    normal: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
+const StatusPill = ({ status }: { status: string }) => {
+    const s = STATUS[status] ?? STATUS.new;
+    return (
+        <span className="status-pill" style={{ background: s.bg, color: s.text }}>
+            <span className="dot" style={{ background: s.dot }} />
+            {s.label}
+        </span>
+    );
 };
 
-export default function Dashboard({ auth, stats, recentOrders }: Props) {
+const fmtDate = (d: string) =>
+    new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const fmtCurrency = (v: number) =>
+    new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(v);
+
+// ── Tooltip for chart ──────────────────────────────────────────────────────
+const ChartTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="card px-3 py-2 text-[12px]">
+            <p style={{ color: 'var(--txt-2)' }}>{label}</p>
+            <p className="font-semibold mt-0.5" style={{ color: 'var(--txt-accent)' }}>
+                {payload[0].value} orders
+            </p>
+        </div>
+    );
+};
+
+// ── Component ──────────────────────────────────────────────────────────────
+export default function Dashboard({
+    auth, stats, recentOrders,
+    newOrdersInbox = [], weeklyVolume = [],
+    topServices = [], activityFeed = [],
+}: Props) {
     const { t } = useTranslation();
 
     useEffect(() => {
         if (window.Echo) {
             window.Echo.private(`lab.${auth.user.lab_id}`)
                 .listen('.order.submitted', () => {
-                    router.reload({ only: ['stats', 'recentOrders'] });
+                    router.reload({ only: ['stats', 'recentOrders', 'newOrdersInbox'] });
                 });
         }
-        return () => {
-            if (window.Echo) {
-                window.Echo.leave(`lab.${auth.user.lab_id}`);
-            }
-        };
+        return () => { if (window.Echo) window.Echo.leave(`lab.${auth.user.lab_id}`); };
     }, [auth.user.lab_id]);
 
-    const formatCurrency = (value: number) =>
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD' }).format(value);
-
-    const formatDate = (dateStr: string) => {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+    const updateStatus = (orderId: number, status: string) => {
+        router.patch(route('lab.orders.update-status', orderId), { status }, { preserveScroll: true });
     };
+
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+    const revChange = (stats.lastMonthRevenue ?? 0) > 0
+        ? Math.round(((stats.monthRevenue - (stats.lastMonthRevenue ?? 0)) / (stats.lastMonthRevenue ?? 1)) * 100)
+        : null;
+
+    const maxService = topServices[0]?.count || 1;
 
     return (
         <LabLayout>
-            <Head title={t('Lab Dashboard')} />
+            <Head title="Lab Dashboard" />
 
-            <div id="lab-dashboard" className="space-y-8 pb-10">
-                {/* Hero Section */}
-                <div className="relative overflow-hidden bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl">
-                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-emerald-500/10 to-transparent pointer-events-none" />
-                    <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none" />
+            <div className="flex flex-col gap-5">
 
-                    <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                        <div>
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 font-black text-[10px] uppercase tracking-widest mb-6">
-                                <Sparkles className="w-3.5 h-3.5" />
-                                {t('Precision Laboratory Management')}
+                {/* ── Greeting ──────────────────────────────────────────── */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-[20px] font-semibold tracking-tight" style={{ color: 'var(--txt-1)' }}>
+                            {greeting}, <span style={{ color: 'var(--txt-accent)' }}>{auth.user.name.split(' ')[0]}</span> 👋
+                        </h2>
+                        <p className="text-[12.5px] mt-0.5" style={{ color: 'var(--txt-2)' }}>
+                            {t('Laboratory')} · {t('Command Center')}
+                            {stats.overdueCount > 0 && (
+                                <> · <span style={{ color: '#f87171' }}>{stats.overdueCount} overdue</span></>
+                            )}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Link href={route('lab.orders.index')} className="btn-ghost text-[12px]">
+                            {t('All Orders')} <ArrowRight size={13} />
+                        </Link>
+                        {stats.overdueCount > 0 && (
+                            <Link href={route('lab.orders.index')} className="btn-primary text-[12px]">
+                                {stats.overdueCount} {t('overdue')}
+                            </Link>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── Stat row ──────────────────────────────────────────── */}
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                    {([
+                        { Icon: Package, label: t('Active'), value: stats.totalActive, accent: undefined },
+                        { Icon: Clock, label: t('Pending'), value: stats.pendingNew, accent: undefined },
+                        { Icon: AlertTriangle, label: t('Overdue'), value: stats.overdueCount, accent: '#f87171' },
+                        { Icon: CalendarClock, label: t('Due Today'), value: stats.dueTodayCount, accent: undefined },
+                    ] as { Icon: React.ElementType; label: string; value: number; accent?: string }[]).map((s, i) => (
+                        <div key={i} className="card p-4 flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[11px] font-medium" style={{ color: 'var(--txt-3)' }}>{s.label}</p>
+                                <s.Icon size={14} style={{ color: s.accent ?? 'var(--txt-3)' }} />
                             </div>
-                            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4">
-                                {t('Laboratory')} <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-400">
-                                    {t('Command Center')}
-                                </span>
-                            </h1>
-                            <p className="text-slate-400 text-lg font-medium max-w-xl">
-                                {t('Monitor incoming orders and keep your production workflow running smoothly.')}
+                            <p className="stat-value" style={{ color: s.accent ?? 'var(--txt-1)' }}>
+                                {s.value}
                             </p>
                         </div>
+                    ))}
 
-                        <div className="flex flex-wrap gap-4">
-                            <Link
-                                href={route('lab.orders.index')}
-                                className="group relative overflow-hidden flex items-center gap-3 px-8 py-5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl shadow-[0_15px_40px_rgba(16,185,129,0.3)] transition-all duration-500"
-                            >
-                                <ClipboardList className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                                <div className="text-left">
-                                    <span className="block font-black tracking-tight leading-none mb-1">{t('Production Queue')}</span>
-                                    <span className="block text-[10px] uppercase font-black opacity-60 tracking-widest leading-none">{t('Active Workflows')}</span>
+                    {/* Revenue */}
+                    <div className="card p-4 flex flex-col gap-3 xl:col-span-2">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-medium" style={{ color: 'var(--txt-3)' }}>{t('Month Revenue')}</p>
+                            <DollarSign size={14} style={{ color: 'var(--txt-3)' }} />
+                        </div>
+                        <div className="flex items-end justify-between gap-2">
+                            <p className="stat-value text-[22px]">{fmtCurrency(stats.monthRevenue)}</p>
+                            {revChange !== null && (
+                                <div className="flex items-center gap-1 text-[11px] font-semibold mb-0.5"
+                                    style={{ color: revChange >= 0 ? '#60ddc6' : '#f87171' }}>
+                                    {revChange >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                                    {Math.abs(revChange)}%
                                 </div>
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                            {auth.user.role === 'lab_owner' && (
-                                <Link
-                                    href={route('lab.analytics.index')}
-                                    className="group relative overflow-hidden flex items-center gap-3 px-8 py-5 bg-white/10 hover:bg-white/20 text-white rounded-2xl border border-white/10 transition-all duration-500"
-                                >
-                                    <BarChart3 className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                                    <div className="text-left">
-                                        <span className="block font-black tracking-tight leading-none mb-1">{t('Analytics')}</span>
-                                        <span className="block text-[10px] uppercase font-black opacity-60 tracking-widest leading-none">{t('Detailed Insights')}</span>
+                            )}
+                        </div>
+                        {stats.unpaidCount !== undefined && (
+                            <p className="text-[11px]" style={{ color: 'var(--txt-3)' }}>
+                                <span style={{ color: '#f59e0b' }}>{stats.unpaidCount}</span> unpaid orders
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── Middle row ────────────────────────────────────────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+                    {/* Chart */}
+                    <div className="card lg:col-span-5 p-4 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                                    Weekly Order Volume
+                                </p>
+                                <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                    Orders received per day
+                                </p>
+                            </div>
+                        </div>
+                        <div style={{ height: 160 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={weeklyVolume} margin={{ top: 5, right: 5, left: -30, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#60ddc6" stopOpacity={0.25} />
+                                            <stop offset="100%" stopColor="#60ddc6" stopOpacity={0.01} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="0" />
+                                    <XAxis dataKey="day" axisLine={false} tickLine={false}
+                                        tick={{ fill: 'var(--txt-3)', fontSize: 11 }} />
+                                    <YAxis axisLine={false} tickLine={false}
+                                        tick={{ fill: 'var(--txt-3)', fontSize: 11 }} />
+                                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--border-strong)', strokeWidth: 1 }} />
+                                    <Area type="monotone" dataKey="orders"
+                                        stroke="#60ddc6" strokeWidth={1.5}
+                                        fillOpacity={1} fill="url(#g1)"
+                                        dot={false} activeDot={{ r: 3, fill: '#60ddc6', strokeWidth: 0 }} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* New Orders Inbox */}
+                    <div className="card lg:col-span-4 flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                            <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                                {t('New Orders')}
+                            </p>
+                            <span className="status-pill" style={{ background: 'var(--teal-10)', color: 'var(--txt-accent)', fontSize: '11px' }}>
+                                {newOrdersInbox.length} pending
+                            </span>
+                        </div>
+                        <div className="flex-1 overflow-y-auto no-scrollbar" style={{ maxHeight: 220 }}>
+                            {newOrdersInbox.length === 0 ? (
+                                <div className="flex items-center justify-center h-full text-[12px] py-8"
+                                    style={{ color: 'var(--txt-3)' }}>
+                                    All caught up ✓
+                                </div>
+                            ) : newOrdersInbox.map(o => (
+                                <div key={o.id} className="flex items-center gap-3 px-4 py-2.5 border-b last:border-0 hover:bg-[var(--surface)] transition-colors"
+                                    style={{ borderColor: 'var(--border)' }}>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[12.5px] font-medium truncate" style={{ color: 'var(--txt-1)' }}>
+                                            <span style={{ color: 'var(--txt-accent)' }}>#{o.id}</span>&nbsp;
+                                            {o.patient ? `${o.patient.first_name} ${o.patient.last_name}` : '—'}
+                                        </p>
+                                        <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                            {o.clinic?.name} · {o.due_date ? fmtDate(o.due_date) : '—'}
+                                        </p>
                                     </div>
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                </Link>
+                                    <div className="flex gap-1.5 shrink-0">
+                                        <button onClick={() => updateStatus(o.id, 'in_progress')}
+                                            className="p-1.5 rounded-md transition-colors"
+                                            style={{ background: 'rgba(96,221,198,0.1)', color: '#60ddc6' }}
+                                            title="Accept">
+                                            <CheckCircle2 size={13} />
+                                        </button>
+                                        <button onClick={() => updateStatus(o.id, 'rejected')}
+                                            className="p-1.5 rounded-md transition-colors"
+                                            style={{ background: 'var(--surface)', color: 'var(--txt-3)' }}
+                                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
+                                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--txt-3)'; }}
+                                            title="Reject">
+                                            <XCircle size={13} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Activity feed */}
+                    <div className="card lg:col-span-3 flex flex-col overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                            <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('Activity')}</p>
+                        </div>
+                        <div className="flex-1 overflow-y-auto no-scrollbar" style={{ maxHeight: 220 }}>
+                            {activityFeed.length === 0 ? (
+                                <div className="flex items-center justify-center h-full text-[12px] py-8"
+                                    style={{ color: 'var(--txt-3)' }}>No recent activity</div>
+                            ) : activityFeed.slice(0, 8).map((a, i) => (
+                                <div key={i} className="flex gap-3 px-4 py-2.5 border-b last:border-0"
+                                    style={{ borderColor: 'var(--border)' }}>
+                                    <div className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0"
+                                        style={{ background: STATUS[a.status]?.dot ?? '#60ddc6' }} />
+                                    <div className="min-w-0">
+                                        <p className="text-[12.5px] font-medium" style={{ color: 'var(--txt-1)' }}>
+                                            #{a.order_id}
+                                            <span className="ml-1.5 font-normal" style={{ color: 'var(--txt-2)' }}>
+                                                {STATUS[a.status]?.label}
+                                            </span>
+                                        </p>
+                                        <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                            {a.clinic} · {a.at}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Bottom row ────────────────────────────────────────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+                    {/* Services */}
+                    <div className="card lg:col-span-4 p-4">
+                        <p className="text-[13px] font-semibold mb-4" style={{ color: 'var(--txt-1)' }}>
+                            {t('Most Requested')}
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            {topServices.slice(0, 5).map((s, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <span className="text-[11px] w-4 text-right shrink-0 font-medium tabular-nums"
+                                        style={{ color: 'var(--txt-3)' }}>{i + 1}</span>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-[12px] font-medium truncate" style={{ color: 'var(--txt-1)' }}>{s.name}</span>
+                                            <span className="text-[11px] font-semibold tabular-nums ml-2 shrink-0" style={{ color: 'var(--txt-accent)' }}>{s.count}</span>
+                                        </div>
+                                        <div className="h-1 rounded-full" style={{ background: 'var(--surface)' }}>
+                                            <div className="h-full rounded-full transition-all duration-500"
+                                                style={{
+                                                    width: `${Math.max(4, (s.count / maxService) * 100)}%`,
+                                                    background: i === 0 ? '#60ddc6' : i === 1 ? '#818cf8' : 'var(--txt-3)',
+                                                }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {topServices.length === 0 && (
+                                <p className="text-[12px] text-center py-4" style={{ color: 'var(--txt-3)' }}>No data yet</p>
                             )}
                         </div>
                     </div>
-                </div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                    {[
-                        { icon: Package, label: t('Active Orders'), value: stats.totalActive, color: 'blue' },
-                        { icon: Clock, label: t('Pending New'), value: stats.pendingNew, color: 'amber' },
-                        { icon: AlertTriangle, label: t('Overdue'), value: stats.overdueCount, color: 'red' },
-                        { icon: CalendarClock, label: t('Due Today'), value: stats.dueTodayCount, color: 'purple' },
-                        ...(auth.user.role === 'lab_owner' ? [{ icon: DollarSign, label: t('Month Revenue'), value: formatCurrency(stats.monthRevenue), color: 'emerald' }] : []),
-                    ].map((stat, idx) => (
-                        <div
-                            key={idx}
-                            className="glass-card rounded-2xl p-5 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300"
-                        >
-                            <div className={`absolute top-0 right-0 w-20 h-20 bg-${stat.color}-500/10 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110 pointer-events-none`} />
-                            <div className="relative">
-                                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-${stat.color}-500 to-${stat.color}-600 text-white shadow-lg shadow-${stat.color}-500/20 flex items-center justify-center mb-3`}>
-                                    <stat.icon className="w-5 h-5" />
-                                </div>
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1">{stat.label}</h3>
-                                <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
-                            </div>
+                    {/* Orders table */}
+                    <div className="card lg:col-span-8 overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                            <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('Recent Orders')}</p>
+                            <Link href={route('lab.orders.index')}
+                                className="flex items-center gap-1.5 text-[11.5px] font-medium transition-colors hover:opacity-80"
+                                style={{ color: 'var(--txt-accent)' }}>
+                                {t('View all')} <ExternalLink size={11} />
+                            </Link>
                         </div>
-                    ))}
-                </div>
-
-                {/* Recent Orders Table */}
-                <div className="glass-card rounded-[2rem] overflow-hidden border-none">
-                    <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-800">
-                        <div>
-                            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{t('Recent Orders')}</h2>
-                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-1">{t('Latest incoming work')}</p>
-                        </div>
-                        <Link
-                            href={route('lab.orders.index')}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-xl text-xs font-bold hover:opacity-90 transition-opacity"
-                        >
-                            {t('View All')}
-                            <ArrowRight className="w-4 h-4" />
-                        </Link>
-                    </div>
-
-                    {recentOrders.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 opacity-40">
-                            <Package className="w-16 h-16 mb-4 text-slate-400" />
-                            <p className="font-bold text-sm text-slate-500">{t('No orders received yet')}</p>
-                        </div>
-                    ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left">
+                            <table className="data-table">
                                 <thead>
-                                    <tr className="bg-slate-50/80 dark:bg-slate-800/60">
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Order')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Patient')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden md:table-cell">{t('Service')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden lg:table-cell">{t('Clinic')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Status')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hidden sm:table-cell">{t('Due Date')}</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">{t('Priority')}</th>
-                                        <th className="px-6 py-4"></th>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>{t('Patient')}</th>
+                                        <th className="hidden md:table-cell">{t('Service')}</th>
+                                        <th className="hidden lg:table-cell">{t('Clinic')}</th>
+                                        <th>{t('Status')}</th>
+                                        <th className="hidden sm:table-cell">{t('Due')}</th>
+                                        <th>{t('Priority')}</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-                                    {recentOrders.map((order) => {
-                                        const sc = statusConfig[order.status] || statusConfig.new;
-                                        return (
-                                            <tr key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
-                                                <td className="px-6 py-4">
-                                                    <span className="font-bold text-sm text-slate-900 dark:text-white">#{order.id}</span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">
-                                                        {order.patient ? `${order.patient.first_name} ${order.patient.last_name}` : '—'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 hidden md:table-cell">
-                                                    <span className="text-sm text-slate-600 dark:text-slate-300">{order.service?.name || '—'}</span>
-                                                </td>
-                                                <td className="px-6 py-4 hidden lg:table-cell">
-                                                    <span className="text-sm text-slate-500 dark:text-slate-400">{order.clinic?.name || '—'}</span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${sc.bg} ${sc.text}`}>
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}></span>
-                                                        {t(sc.label)}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 hidden sm:table-cell">
-                                                    <span className={`text-sm font-medium ${order.is_overdue ? 'text-red-500 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
-                                                        {order.due_date ? formatDate(order.due_date) : '—'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${priorityBadge[order.priority] || priorityBadge.normal}`}>
-                                                        {t(order.priority)}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <Link
-                                                        href={route('lab.orders.show', order.id)}
-                                                        className="opacity-0 group-hover:opacity-100 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                <tbody>
+                                    {recentOrders.map(o => (
+                                        <tr key={o.id}>
+                                            <td>
+                                                <span className="font-semibold tabular-nums" style={{ color: 'var(--txt-accent)' }}>
+                                                    #{o.id}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className="font-medium">
+                                                    {o.patient ? `${o.patient.first_name} ${o.patient.last_name}` : '—'}
+                                                </span>
+                                            </td>
+                                            <td className="hidden md:table-cell">
+                                                <span style={{ color: 'var(--txt-2)' }}>{o.service?.name || '—'}</span>
+                                            </td>
+                                            <td className="hidden lg:table-cell">
+                                                <span style={{ color: 'var(--txt-2)' }}>{o.clinic?.name || '—'}</span>
+                                            </td>
+                                            <td>
+                                                <StatusPill status={o.status as string} />
+                                            </td>
+                                            <td className="hidden sm:table-cell">
+                                                <span style={{ color: (o as any).is_overdue ? '#f87171' : 'var(--txt-2)' }}>
+                                                    {o.due_date ? fmtDate(o.due_date as string) : '—'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className="priority-chip"
+                                                    style={o.priority === 'urgent'
+                                                        ? { background: 'rgba(249,115,22,0.12)', color: '#f97316' }
+                                                        : { background: 'var(--surface)', color: 'var(--txt-3)' }}>
+                                                    {o.priority || 'normal'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {recentOrders.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="text-center py-10" style={{ color: 'var(--txt-3)' }}>
+                                                No orders yet
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </LabLayout>

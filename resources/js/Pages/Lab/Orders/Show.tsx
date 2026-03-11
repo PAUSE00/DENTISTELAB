@@ -4,14 +4,12 @@ import { PageProps } from '@/types';
 import ChatBox from '@/Components/ChatBox';
 import StatusBadge from '@/Components/StatusBadge';
 import { useState, useEffect } from 'react';
-import { FileText, ArrowLeft, Printer, FileDown, ClipboardCheck, AlertCircle, Box, X } from 'lucide-react';
+import { FileText, ArrowLeft, Printer, FileDown, AlertCircle, Box, X } from 'lucide-react';
 import Odontogram from '@/Components/Odontogram';
 import Modal from '@/Components/Modal';
 import ThreeDViewer from '@/Components/ThreeDViewer';
 import useTranslation from '@/Hooks/useTranslation';
-import { User } from 'lucide-react';
-
-// Shared sub-components
+import { MessageSquare } from 'lucide-react';
 import OrderSteps from '@/Components/Orders/OrderSteps';
 import OrderTimeline from '@/Components/Orders/OrderTimeline';
 import OrderAttachments from '@/Components/Orders/OrderAttachments';
@@ -21,21 +19,12 @@ import OrderActions from '@/Components/Orders/OrderActions';
 import { OrderFile, AllowedTransition, OrderHistoryEntry, OrderNote } from '@/types/order';
 
 interface Order {
-    id: number;
-    status: string;
-    priority: string;
-    due_date: string;
-    created_at: string;
-    teeth: number[];
-    shade: string;
-    material: string;
-    instructions: string | null;
+    id: number; status: string; priority: string; due_date: string; created_at: string;
+    teeth: number[]; shade: string; material: string; instructions: string | null;
     patient: { id: number; first_name: string; last_name: string };
     clinic: { id: number; name: string };
     service: { id: number; name: string };
-    files: OrderFile[];
-    history: OrderHistoryEntry[];
-    notes: OrderNote[];
+    files: OrderFile[]; history: OrderHistoryEntry[]; notes: OrderNote[];
 }
 
 interface Props extends PageProps {
@@ -53,42 +42,24 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
     useEffect(() => {
         if (window.Echo) {
             window.Echo.private(`orders.${order.id}`)
-                .listen('.order.updated', () => {
-                    router.reload({ only: ['order', 'allowedTransitions'] });
-                });
+                .listen('.order.updated', () => { router.reload({ only: ['order', 'allowedTransitions'] }); });
         }
-        return () => {
-            if (window.Echo) {
-                window.Echo.leave(`orders.${order.id}`);
-            }
-        };
+        return () => { if (window.Echo) window.Echo.leave(`orders.${order.id}`); };
     }, [order.id]);
 
     const updateStatus = (newStatus: string) => {
-        if (newStatus === 'rejected') {
-            setShowRejectModal(true);
-            return;
-        }
+        if (newStatus === 'rejected') { setShowRejectModal(true); return; }
         setProcessing(true);
         router.patch(route('lab.orders.update-status', order.id), { status: newStatus }, {
-            preserveScroll: true,
-            onFinish: () => setProcessing(false)
+            preserveScroll: true, onFinish: () => setProcessing(false),
         });
     };
 
     const submitRejection = () => {
         setProcessing(true);
         router.patch(route('lab.orders.update-status', order.id), {
-            status: 'rejected',
-            rejection_reason: rejectionReason,
-        }, {
-            preserveScroll: true,
-            onFinish: () => {
-                setProcessing(false);
-                setShowRejectModal(false);
-                setRejectionReason('');
-            }
-        });
+            status: 'rejected', rejection_reason: rejectionReason,
+        }, { preserveScroll: true, onFinish: () => { setProcessing(false); setShowRejectModal(false); setRejectionReason(''); } });
     };
 
     const teethNumbers = (order.teeth || []).map(Number);
@@ -97,42 +68,51 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
         <LabLayout>
             <Head title={`${t('Order')} #${order.id}`} />
 
-            <div className="max-w-7xl mx-auto animate-fade-in pb-10 sm:px-6 lg:px-8">
-                {/* Header & Stepper Card */}
-                <div className="glass-card rounded-2xl mb-6 overflow-hidden animate-fade-in animate-delay-100">
-                    <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-700/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
-                        <div className="flex items-center gap-4">
-                            <Link href={route('lab.orders.index')} className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all shadow-sm">
-                                <ArrowLeft className="w-4 h-4" />
+            <div className="flex flex-col gap-4 pb-10">
+
+                {/* ── Top bar ──────────────────────────────────────────── */}
+                <div className="card overflow-hidden">
+                    {/* Header row */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 px-4 py-3 border-b"
+                        style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex items-center gap-3">
+                            <Link href={route('lab.orders.index')}
+                                className="p-1.5 rounded-lg transition-colors"
+                                style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--txt-2)' }}>
+                                <ArrowLeft size={14} />
                             </Link>
                             <div>
-                                <div className="flex items-center gap-3">
-                                    <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{t('Order')} #{order.id}</h1>
+                                <div className="flex items-center gap-2.5">
+                                    <h1 className="text-[15px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                                        {t('Order')} <span style={{ color: 'var(--txt-accent)' }}>#{order.id}</span>
+                                    </h1>
                                     <StatusBadge status={order.status} />
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                                    {t('Created on')} {new Date(order.created_at).toLocaleDateString()} &middot; <span className="text-gray-400">{t('Clinic')}:</span> <span className="text-gray-700 dark:text-gray-300">{order.clinic?.name || 'N/A'}</span>
+                                <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                    {t('Created')} {new Date(order.created_at).toLocaleDateString()} · {order.clinic?.name || '—'}
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap-2.5">
-                            <a href={route('orders.job-ticket', order.id)} target="_blank" className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-xs font-semibold shadow-sm">
-                                <FileText className="w-3.5 h-3.5" /> {t('Job Ticket')}
+                        <div className="flex gap-2">
+                            <a href={route('orders.job-ticket', order.id)} target="_blank" className="btn-ghost text-[12px]">
+                                <FileText size={13} /> {t('Job Ticket')}
                             </a>
-                            <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-xs font-semibold shadow-sm">
-                                <Printer className="w-3.5 h-3.5" /> {t('Print')}
+                            <button className="btn-ghost text-[12px]" onClick={() => window.print()}>
+                                <Printer size={13} /> {t('Print')}
                             </button>
-                            <button onClick={() => window.open(route('orders.invoice', order.id), '_blank')} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-xs font-semibold shadow-sm">
-                                <FileDown className="w-3.5 h-3.5" /> {t('Invoice')} (PDF)
+                            <button className="btn-ghost text-[12px]" onClick={() => window.open(route('orders.invoice', order.id), '_blank')}>
+                                <FileDown size={13} /> {t('Invoice')}
                             </button>
                         </div>
                     </div>
-                    <div className="px-8 py-6 bg-gray-50/50 dark:bg-slate-900/30">
+
+                    {/* Progress steps */}
+                    <div className="px-5 py-4" style={{ background: 'var(--surface)' }}>
                         <OrderSteps status={order.status} createdAt={order.created_at} dueDate={order.due_date} history={order.history} />
                     </div>
                 </div>
 
-                {/* Info Cards Row */}
+                {/* Info row */}
                 <OrderInfoCards
                     dueDate={order.due_date}
                     patient={order.patient}
@@ -142,55 +122,63 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
                     priority={order.priority}
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Column - Main Details (2/3) */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Clinical Specifications */}
-                        <div className="glass-card rounded-2xl p-6 animate-fade-in animate-delay-300 hover:shadow-lg transition-shadow">
-                            <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 flex items-center gap-2 mb-6 uppercase tracking-wider">
-                                <ClipboardCheck className="w-4 h-4 text-primary-500" /> {t('Clinical Specifications')}
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="w-full">
-                                    <h4 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t('Interactive Odontogram')}</h4>
-                                    <div className="bg-white dark:bg-slate-900 shadow-inner p-4 rounded-xl border border-gray-100 dark:border-slate-800 w-full">
-                                        <div className="w-full flex justify-center">
+                {/* ── Main layout ───────────────────────────────────────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                    {/* Left — details */}
+                    <div className="lg:col-span-2 flex flex-col gap-4">
+
+                        {/* Clinical specs */}
+                        <div className="card p-4">
+                            <p className="text-[11px] font-semibold mb-4" style={{ color: 'var(--txt-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                {t('Clinical Specifications')}
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Odontogram */}
+                                <div>
+                                    <p className="text-[11px] mb-2 font-medium" style={{ color: 'var(--txt-3)' }}>{t('Odontogram')}</p>
+                                    <div className="rounded-lg p-3 border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                        <div className="flex justify-center">
                                             <Odontogram selectedTeeth={teethNumbers} readOnly={true} />
                                         </div>
-                                        <div className="text-center mt-2 border-t border-gray-100 dark:border-slate-800 pt-3">
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {t('Selected')}: <span className="font-bold text-primary-600 dark:text-primary-400">
-                                                    {teethNumbers?.length > 0 ? [...teethNumbers].sort().join(', ') : t('None')}
-                                                </span>
+                                        {teethNumbers.length > 0 && (
+                                            <p className="text-center text-[11px] mt-2 pt-2 border-t" style={{ color: 'var(--txt-3)', borderColor: 'var(--border)' }}>
+                                                {t('Teeth')}: <span style={{ color: 'var(--txt-accent)' }}>{[...teethNumbers].sort().join(', ')}</span>
                                             </p>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{t('Restoration Parameters')}</h4>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="bg-gray-50 dark:bg-slate-900/40 p-3.5 rounded-xl border border-gray-100 dark:border-slate-700/50">
-                                            <span className="text-[10px] text-gray-400 block uppercase tracking-wide mb-1.5 font-semibold">{t('Service Type')}</span>
-                                            <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{order.service?.name || 'N/A'}</span>
-                                        </div>
-                                        <div className="bg-gray-50 dark:bg-slate-900/40 p-3.5 rounded-xl border border-gray-100 dark:border-slate-700/50">
-                                            <span className="text-[10px] text-gray-400 block uppercase tracking-wide mb-1.5 font-semibold">{t('Material & Shade')}</span>
-                                            <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{order.material} <span className="text-gray-300 mx-1">/</span> {order.shade}</span>
-                                        </div>
+
+                                {/* Parameters */}
+                                <div className="flex flex-col gap-3">
+                                    <p className="text-[11px] mb-1 font-medium" style={{ color: 'var(--txt-3)' }}>{t('Restoration Parameters')}</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { label: t('Service'), value: order.service?.name },
+                                            { label: t('Material'), value: order.material },
+                                            { label: t('Shade'), value: order.shade },
+                                        ].map(item => (
+                                            <div key={item.label} className="rounded-lg p-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                                                <p className="text-[10.5px] mb-1" style={{ color: 'var(--txt-3)' }}>{item.label}</p>
+                                                <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>{item.value || '—'}</p>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div className="bg-gray-50 dark:bg-slate-900/40 p-4 rounded-xl border border-gray-100 dark:border-slate-700/50 mt-3 h-[120px]">
-                                        <span className="text-[10px] text-gray-400 block uppercase tracking-wide mb-2 font-semibold flex items-center gap-1">
-                                            <AlertCircle className="w-3 h-3" /> {t('Special Instructions')}
-                                        </span>
-                                        <p className="text-gray-600 dark:text-gray-300 italic text-xs leading-relaxed">
-                                            "{order.instructions || t('No specific instructions provided.')}"
+
+                                    {/* Instructions */}
+                                    <div className="rounded-lg p-3 flex-1" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                            <AlertCircle size={11} style={{ color: 'var(--txt-3)' }} />
+                                            <p className="text-[10.5px]" style={{ color: 'var(--txt-3)' }}>{t('Instructions')}</p>
+                                        </div>
+                                        <p className="text-[12.5px] italic leading-relaxed" style={{ color: order.instructions ? 'var(--txt-2)' : 'var(--txt-3)' }}>
+                                            {order.instructions || t('No specific instructions provided.')}
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Attachments */}
                         <OrderAttachments
                             orderId={order.id}
                             files={order.files}
@@ -199,31 +187,29 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
                             onViewStl={(url) => setViewingStl(url)}
                         />
 
-                        {/* Internal Notes */}
                         <OrderNotes orderId={order.id} notes={order.notes} />
                     </div>
 
-                    {/* Right Column - Sidebar (1/3) */}
-                    <div className="space-y-6">
-                        {/* Order Actions */}
+                    {/* Right — sidebar */}
+                    <div className="flex flex-col gap-4">
                         <OrderActions
                             allowedTransitions={allowedTransitions}
                             processing={processing}
                             onUpdateStatus={updateStatus}
                         />
 
-                        {/* Order Timeline */}
                         <OrderTimeline history={order.history} />
 
                         {/* Chat */}
-                        <div className="glass-card rounded-2xl overflow-hidden animate-fade-in animate-delay-400">
-                            <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700/50 flex justify-between items-center bg-gray-50/50 dark:bg-slate-900/30 backdrop-blur-sm">
-                                <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2 text-xs uppercase tracking-wide">
-                                    <User className="w-3.5 h-3.5" /> {t('Clinic Chat')}
-                                </h3>
-                                <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-900/30">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                    <span className="text-[10px] font-bold text-green-700 dark:text-green-400">{t('Online')}</span>
+                        <div className="card overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+                                <div className="flex items-center gap-2">
+                                    <MessageSquare size={13} style={{ color: 'var(--txt-3)' }} />
+                                    <p className="text-[12.5px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('Clinic Chat')}</p>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                                    <span className="text-[11px]" style={{ color: 'var(--txt-3)' }}>{t('Live')}</span>
                                 </div>
                             </div>
                             <ChatBox orderId={order.id} compact className="border-none shadow-none" />
@@ -234,22 +220,34 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
 
             {/* Rejection Modal */}
             {showRejectModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t('Reject Order')}</h3>
-                        <p className="text-sm text-gray-500 mb-4">{t('Please provide a reason for rejection')}:</p>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+                    <div className="w-full max-w-md rounded-xl p-5 shadow-2xl"
+                        style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-strong)' }}>
+                        <div className="flex items-start justify-between mb-3">
+                            <div>
+                                <h3 className="text-[15px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('Reject Order')}</h3>
+                                <p className="text-[12px] mt-0.5" style={{ color: 'var(--txt-3)' }}>{t('Please provide a reason for rejection')}</p>
+                            </div>
+                            <button onClick={() => setShowRejectModal(false)} className="p-1" style={{ color: 'var(--txt-3)' }}>
+                                <X size={16} />
+                            </button>
+                        </div>
                         <textarea
                             value={rejectionReason}
                             onChange={e => setRejectionReason(e.target.value)}
                             rows={3}
-                            className="w-full rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 p-3 text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                            className="app-input resize-none"
                             placeholder={t('Bad impression quality, missing info...')}
                         />
-                        <div className="flex gap-3 mt-4">
-                            <button onClick={() => setShowRejectModal(false)} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 text-sm font-medium hover:bg-gray-50">
+                        <div className="flex gap-2 mt-3">
+                            <button onClick={() => setShowRejectModal(false)} className="btn-ghost flex-1 justify-center">
                                 {t('Cancel')}
                             </button>
-                            <button onClick={submitRejection} disabled={!rejectionReason.trim() || processing} className="flex-1 px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 disabled:opacity-50">
+                            <button
+                                onClick={submitRejection}
+                                disabled={!rejectionReason.trim() || processing}
+                                className="flex-1 flex items-center justify-center px-4 py-2 rounded-lg text-[12.5px] font-semibold transition-opacity disabled:opacity-40"
+                                style={{ background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)', color: '#f87171' }}>
                                 {t('Confirm Rejection')}
                             </button>
                         </div>
@@ -257,18 +255,19 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
                 </div>
             )}
 
-            {/* 3D STL Viewer Modal */}
+            {/* 3D Viewer */}
             <Modal show={!!viewingStl} onClose={() => setViewingStl(null)} maxWidth="2xl">
-                <div className="p-6 bg-white dark:bg-slate-800">
+                <div className="p-5" style={{ background: 'var(--bg-raised)' }}>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Box className="w-5 h-5 text-primary-500" /> {t('3D Model Viewer')}
-                        </h3>
-                        <button onClick={() => setViewingStl(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
-                            <X className="w-5 h-5" />
+                        <div className="flex items-center gap-2">
+                            <Box size={15} style={{ color: 'var(--txt-accent)' }} />
+                            <h3 className="text-[14px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('3D Model Viewer')}</h3>
+                        </div>
+                        <button onClick={() => setViewingStl(null)} className="p-1 rounded transition-colors" style={{ color: 'var(--txt-3)' }}>
+                            <X size={16} />
                         </button>
                     </div>
-                    <div className="h-[60vh] min-h-[500px] w-full bg-slate-900 rounded-xl overflow-hidden relative shadow-inner border border-slate-700">
+                    <div className="h-[60vh] w-full rounded-lg overflow-hidden border" style={{ background: 'var(--bg)', borderColor: 'var(--border)' }}>
                         {viewingStl && <ThreeDViewer url={viewingStl} color="#e8d2ac" />}
                     </div>
                 </div>
