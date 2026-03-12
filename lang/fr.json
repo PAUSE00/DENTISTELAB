@@ -210,5 +210,17 @@
     "All Clients": "Tous les Clients",
     "Filter by Status": "Filtrer par Statut",
     "Remove Client?": "Supprimer le Client ?",
-    "Remove Client": "Supprimer le Client"
+    "Remove Client": "Supprimer le Client",
+    "notifications.title": "Notifications",
+    "notifications.read_all": "Tout marquer comme lu",
+    "notifications.empty": "Aucune notification",
+    "notifications.mark_read": "Marquer lu",
+    "notifications.view": "Voir",
+    "notifications.view_all": "Toutes les notifications",
+    "notifications.new_message.title": "Nouveau message",
+    "notifications.new_message.body": "Vous avez un nouveau message sur votre commande.",
+    "notifications.invitation_accepted.title": "Invitation acceptée",
+    "notifications.invitation_accepted.body": "Votre invitation a été acceptée.",
+    "notifications.invitation_received.title": "Invitation reçue",
+    "notifications.invitation_received.body": "Vous avez reçu une nouvelle invitation."
 }

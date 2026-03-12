@@ -88,15 +88,13 @@ export default function Index({ auth, orders, filters, statusOptions, clinics }:
             <Head title={t('Orders')} />
             <div className="flex flex-col gap-4">
                 {/* Page header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-[18px] font-semibold" style={{ color: 'var(--txt-1)' }}>
-                            {t('Order Management')}
-                        </h2>
-                        <p className="text-[12px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
-                            {orders.total ?? orders.data.length} {t('total orders')}
-                        </p>
-                    </div>
+                <div>
+                    <h2 className="text-[17px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                        {t('Order Management')}
+                    </h2>
+                    <p className="text-[12px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                        {orders.total ?? orders.data.length} {t('total orders')}
+                    </p>
                 </div>
 
                 <OrderFilters

@@ -182,11 +182,11 @@ function NotificationsContent({ notifications, filters }: Props) {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <p className="text-[12.5px] font-semibold" style={{ color: isUnread ? 'var(--txt-1)' : 'var(--txt-2)' }}>
-                                                    {n.title}
+                                                    {t(n.title)}
                                                 </p>
                                                 {isUnread && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cfg.color }} />}
                                             </div>
-                                            <p className="text-[11.5px] mt-0.5 line-clamp-2" style={{ color: 'var(--txt-3)' }}>{n.body}</p>
+                                            <p className="text-[11.5px] mt-0.5 line-clamp-2" style={{ color: 'var(--txt-3)' }}>{t(n.body)}</p>
                                             <div className="flex items-center gap-2 mt-1.5">
                                                 <span className="text-[10.5px]" style={{ color: 'var(--txt-3)' }}>{timeAgo(n.created_at)}</span>
                                                 <span className="text-[10.5px] px-1.5 py-px rounded"

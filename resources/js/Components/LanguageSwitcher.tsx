@@ -40,35 +40,62 @@ export default function LanguageSwitcher() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm hover:text-gray-900 dark:hover:text-gray-200 transition-all duration-200 group"
+                className="flex items-center justify-center p-1.5 rounded-md transition-colors gap-1.5"
+                style={{
+                    color: isOpen ? 'var(--txt-accent)' : 'var(--txt-2)',
+                    background: isOpen ? 'var(--surface)' : 'transparent',
+                }}
+                onMouseEnter={e => {
+                    if (!isOpen) {
+                        e.currentTarget.style.background = 'var(--surface)';
+                    }
+                }}
+                onMouseLeave={e => {
+                    if (!isOpen) {
+                        e.currentTarget.style.background = 'transparent';
+                    }
+                }}
+                title="Change language"
             >
-                <Globe className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300 transition-colors" />
-                <span className="flex-1 text-left text-sm">{currentLang.flag} {currentLang.label}</span>
-                <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <Globe size={16} />
+                <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:block">
+                    {currentLang.code}
+                </span>
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden z-50 animate-fade-in">
-                    {languages.map((lang) => (
-                        <button
-                            key={lang.code}
-                            onClick={() => switchLocale(lang.code)}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${lang.code === locale
-                                ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium'
-                                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600'
-                                }`}
-                        >
-                            <span className="text-base">{lang.flag}</span>
-                            <span>{lang.label}</span>
-                            {lang.code === locale && (
-                                <svg className="w-4 h-4 ml-auto text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                </svg>
-                            )}
-                        </button>
-                    ))}
+                <div className="absolute top-full right-0 mt-2 w-40 rounded-xl overflow-hidden shadow-2xl z-50 p-1 animate-in fade-in zoom-in-95 duration-200"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    {languages.map((lang) => {
+                        const active = lang.code === locale;
+                        return (
+                            <button
+                                key={lang.code}
+                                onClick={() => switchLocale(lang.code)}
+                                className="w-full flex items-center gap-3 px-3 py-2 text-[12.5px] font-medium rounded-lg transition-colors text-left"
+                                style={{
+                                    color: active ? 'var(--txt-accent)' : 'var(--txt-2)',
+                                    background: active ? 'var(--teal-10)' : 'transparent',
+                                }}
+                                onMouseEnter={e => {
+                                    if (!active) {
+                                        e.currentTarget.style.background = 'var(--bg)';
+                                        e.currentTarget.style.color = 'var(--txt-1)';
+                                    }
+                                }}
+                                onMouseLeave={e => {
+                                    if (!active) {
+                                        e.currentTarget.style.background = 'transparent';
+                                        e.currentTarget.style.color = 'var(--txt-2)';
+                                    }
+                                }}
+                            >
+                                <span className="text-[14px]">{lang.flag}</span>
+                                <span className="flex-1">{lang.label}</span>
+                                {active && <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--txt-accent)' }} />}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>

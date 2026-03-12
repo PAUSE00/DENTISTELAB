@@ -1,23 +1,22 @@
 import { Link, router } from '@inertiajs/react';
-import { ChevronRight, Package, X, Zap } from 'lucide-react';
+import { ChevronRight, Package, X, Zap, AlertTriangle } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
 import Pagination from '@/Components/Pagination';
 import { OrderListItem } from '@/types/order';
 
-const STATUS: Record<string, { dot: string; text: string; bg: string; label: string }> = {
-    new:         { dot: '#60ddc6', text: 'var(--txt-accent)', bg: 'rgba(96,221,198,0.1)',  label: 'New' },
-    in_progress: { dot: '#818cf8', text: '#818cf8',           bg: 'rgba(129,140,248,0.1)', label: 'In Progress' },
-    fitting:     { dot: '#c084fc', text: '#c084fc',           bg: 'rgba(192,132,252,0.1)', label: 'Fitting' },
-    finished:    { dot: '#34d399', text: '#34d399',           bg: 'rgba(52,211,153,0.1)',  label: 'Finished' },
-    shipped:     { dot: '#60ddc6', text: 'var(--txt-accent)', bg: 'rgba(96,221,198,0.1)',  label: 'Shipped' },
-    delivered:   { dot: '#34d399', text: '#34d399',           bg: 'rgba(52,211,153,0.1)',  label: 'Delivered' },
-    rejected:    { dot: '#f87171', text: '#f87171',           bg: 'rgba(248,113,113,0.1)', label: 'Rejected' },
-    cancelled:   { dot: '#f87171', text: '#f87171',           bg: 'rgba(248,113,113,0.1)', label: 'Cancelled' },
-    archived:    { dot: '#94a3b8', text: '#94a3b8',           bg: 'rgba(148,163,184,0.1)', label: 'Archived' },
+const STATUS: Record<string, { dot: string; bg: string; border: string; label: string }> = {
+    new:         { dot: '#60ddc6', bg: 'rgba(96,221,198,0.1)',  border: 'rgba(96,221,198,0.4)',  label: 'New' },
+    in_progress: { dot: '#818cf8', bg: 'rgba(129,140,248,0.1)', border: 'rgba(129,140,248,0.4)', label: 'In Progress' },
+    fitting:     { dot: '#c084fc', bg: 'rgba(192,132,252,0.1)', border: 'rgba(192,132,252,0.4)', label: 'Fitting' },
+    finished:    { dot: '#34d399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.4)',  label: 'Finished' },
+    shipped:     { dot: '#60ddc6', bg: 'rgba(96,221,198,0.1)',  border: 'rgba(96,221,198,0.4)',  label: 'Shipped' },
+    delivered:   { dot: '#34d399', bg: 'rgba(52,211,153,0.1)',  border: 'rgba(52,211,153,0.4)',  label: 'Delivered' },
+    rejected:    { dot: '#f87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.4)', label: 'Rejected' },
+    cancelled:   { dot: '#f87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.4)', label: 'Cancelled' },
+    archived:    { dot: '#64748b', bg: 'rgba(100,116,139,0.1)', border: 'rgba(100,116,139,0.4)', label: 'Archived' },
 };
 
-// Next logical status transitions per current status
 const NEXT_STATUSES: Record<string, { value: string; label: string; color: string }[]> = {
     new:         [{ value: 'in_progress', label: 'Start Production', color: '#818cf8' }, { value: 'rejected', label: 'Reject', color: '#f87171' }],
     in_progress: [{ value: 'fitting',     label: 'Send for Fitting', color: '#c084fc' }, { value: 'finished', label: 'Mark Finished', color: '#34d399' }],
@@ -26,13 +25,7 @@ const NEXT_STATUSES: Record<string, { value: string; label: string; color: strin
     shipped:     [{ value: 'delivered',   label: 'Mark Delivered',   color: '#34d399' }],
 };
 
-interface QuickStatusProps {
-    orderId: number;
-    currentStatus: string;
-    variant: 'lab' | 'clinic';
-}
-
-function QuickStatus({ orderId, currentStatus, variant }: QuickStatusProps) {
+function QuickStatus({ orderId, currentStatus, variant }: { orderId: number; currentStatus: string; variant: 'lab' | 'clinic' }) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -53,27 +46,29 @@ function QuickStatus({ orderId, currentStatus, variant }: QuickStatusProps) {
 
     return (
         <div ref={ref} className="relative" onClick={e => e.stopPropagation()}>
-            <button
-                onClick={() => setOpen(!open)}
-                className="p-1.5 rounded-md transition-colors"
-                style={{ color: open ? 'var(--txt-accent)' : 'var(--txt-3)' }}
+            <button onClick={() => setOpen(!open)}
+                className="p-1.5 rounded transition-all inline-flex items-center justify-center"
+                style={{ 
+                    color: open ? 'var(--txt-accent)' : 'var(--txt-3)',
+                    border: open ? '1px solid var(--teal-20)' : '1px solid transparent',
+                    background: open ? 'var(--teal-10)' : 'transparent'
+                }}
                 title={t('Quick status update')}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--txt-accent)')}
-                onMouseLeave={e => !open && (e.currentTarget.style.color = 'var(--txt-3)')}>
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--txt-accent)'; e.currentTarget.style.borderColor = 'var(--teal-20)'; e.currentTarget.style.background = 'var(--teal-10)'; }}
+                onMouseLeave={e => { if (!open) { e.currentTarget.style.color = 'var(--txt-3)'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent'; } }}>
                 <Zap size={13} />
             </button>
-
             {open && (
-                <div className="absolute right-0 top-full mt-1.5 z-50 min-w-[170px] rounded-lg shadow-2xl overflow-hidden"
+                <div className="absolute right-0 top-full mt-1 z-50 min-w-[170px] rounded-lg overflow-hidden shadow-xl"
                     style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-strong)' }}>
-                    <p className="px-3 py-1.5 text-[10.5px] font-semibold border-b"
-                        style={{ color: 'var(--txt-3)', borderColor: 'var(--border)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider border-b"
+                        style={{ color: 'var(--txt-3)', borderColor: 'var(--border)' }}>
                         {t('Move to')}
                     </p>
                     {nexts.map(n => (
                         <button key={n.value}
                             onClick={() => updateStatus(n.value)}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium transition-colors"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] transition-colors"
                             style={{ color: 'var(--txt-2)' }}
                             onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = n.color; }}
                             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--txt-2)'; }}>
@@ -85,6 +80,14 @@ function QuickStatus({ orderId, currentStatus, variant }: QuickStatusProps) {
             )}
         </div>
     );
+}
+
+// Deterministic color from initials (no gradient, just a muted solid)
+const AVATAR_COLORS = ['#4f6272','#5c5f7a','#4a6a5c','#6b5060','#4d6b6b','#5f5070'];
+function avatarColor(name: string) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
 }
 
 interface OrderTableProps {
@@ -101,133 +104,149 @@ export default function OrderTable({ orders, selectedOrders, variant, showRoute,
     const { t } = useTranslation();
 
     return (
-        <>
+        <div className="flex flex-col gap-2">
             {selectedOrders.length > 0 && (
-                <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border"
-                    style={{ background: 'var(--teal-10)', borderColor: 'var(--teal-20)' }}>
-                    <span className="text-[12.5px] font-semibold" style={{ color: 'var(--txt-accent)' }}>
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg"
+                    style={{ background: 'var(--teal-10)', border: '1px solid var(--teal-20)' }}>
+                    <span className="text-[12.5px] font-medium" style={{ color: 'var(--txt-accent)' }}>
                         {selectedOrders.length} {t('orders selected')}
                     </span>
                     <div className="flex items-center gap-2">
                         {bulkActions}
-                        <button onClick={onToggleSelectAll} className="p-1.5 rounded"
-                            style={{ color: 'var(--txt-3)' }}>
-                            <X size={14} />
+                        <button onClick={onToggleSelectAll} className="p-1 rounded" style={{ color: 'var(--txt-3)' }}>
+                            <X size={13} />
                         </button>
                     </div>
                 </div>
             )}
 
-            <div className="card overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th className="w-10">
-                                    <input type="checkbox"
-                                        checked={selectedOrders.length === orders.data.length && orders.data.length > 0}
-                                        onChange={onToggleSelectAll}
-                                        style={{ accentColor: 'var(--txt-accent)' }} />
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #312e81', background: 'transparent' }}>
+                <table className="w-full">
+                    <thead>
+                        <tr style={{ borderBottom: '1px solid #312e81', background: 'rgba(15,23,42,0.1)' }}>
+                            <th className="w-10 px-4 py-2.5">
+                                <input type="checkbox"
+                                    checked={selectedOrders.length === orders.data.length && orders.data.length > 0}
+                                    onChange={onToggleSelectAll}
+                                    style={{ accentColor: 'var(--txt-accent)' }} />
+                            </th>
+                            {['#', t('Patient'), `${variant === 'lab' ? t('Clinic') : t('Lab')} / ${t('Service')}`, t('Status'), t('Due Date'), t('Priority'), ''].map((h, i) => (
+                                <th key={i} className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide"
+                                    style={{ color: 'var(--txt-3)' }}>
+                                    {h}
                                 </th>
-                                <th>#</th>
-                                <th>{t('Patient')}</th>
-                                <th>{variant === 'lab' ? t('Clinic') : t('Lab')} / {t('Service')}</th>
-                                <th>{t('Status')}</th>
-                                <th>{t('Due Date')}</th>
-                                <th>{t('Priority')}</th>
-                                <th className="w-20"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.data.length > 0 ? orders.data.map((order) => {
-                                const s = STATUS[order.status] ?? STATUS.new;
-                                const counterpartyName = variant === 'lab' ? order.clinic?.name : order.lab?.name;
-                                const isSelected = selectedOrders.includes(order.id);
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orders.data.length > 0 ? orders.data.map(order => {
+                            const s = STATUS[order.status] ?? STATUS.new;
+                            const counterpartyName = variant === 'lab' ? order.clinic?.name : order.lab?.name;
+                            const isSelected = selectedOrders.includes(order.id);
+                            const initials = `${order.patient.first_name[0]}${order.patient.last_name[0]}`;
+                            const bg = avatarColor(initials);
 
-                                return (
-                                    <tr key={order.id} style={isSelected ? { background: 'var(--teal-10)' } : {}}>
-                                        <td>
-                                            <input type="checkbox"
-                                                checked={isSelected}
-                                                onChange={() => onToggleSelect(order.id)}
-                                                style={{ accentColor: 'var(--txt-accent)' }} />
-                                        </td>
-                                        <td>
-                                            <span className="font-semibold tabular-nums" style={{ color: 'var(--txt-accent)' }}>
-                                                #{order.id}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                                                    style={{ background: 'linear-gradient(135deg, #60ddc6, #6638b4)' }}>
-                                                    {order.patient.first_name[0]}{order.patient.last_name[0]}
-                                                </div>
-                                                <span className="font-medium text-[12.5px]" style={{ color: 'var(--txt-1)' }}>
-                                                    {order.patient.first_name} {order.patient.last_name}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <p className="text-[12.5px] font-medium" style={{ color: 'var(--txt-1)' }}>
-                                                {counterpartyName || '—'}
-                                            </p>
-                                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
-                                                {order.service.name}
-                                            </p>
-                                        </td>
-                                        <td>
-                                            <span className="status-pill" style={{ background: s.bg, color: s.text, borderColor: 'transparent' }}>
-                                                <span className="dot" style={{ background: s.dot }} />
-                                                {t(s.label)}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className="text-[12.5px]"
-                                                style={{ color: order.is_overdue ? '#f87171' : 'var(--txt-2)' }}>
-                                                {order.due_date ? new Date(order.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                                            </span>
-                                            {order.is_overdue && (
-                                                <p className="text-[10px] font-semibold" style={{ color: '#f87171' }}>Overdue</p>
-                                            )}
-                                        </td>
-                                        <td>
-                                            {order.priority === 'urgent' ? (
-                                                <span className="priority-chip" style={{ background: 'rgba(249,115,22,0.12)', color: '#f97316' }}>urgent</span>
-                                            ) : (
-                                                <span className="priority-chip" style={{ background: 'var(--surface)', color: 'var(--txt-3)' }}>normal</span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <div className="flex items-center justify-end gap-0.5">
-                                                {/* Quick status — lab only */}
-                                                <QuickStatus orderId={order.id} currentStatus={order.status} variant={variant} />
+                            return (
+                                <tr key={order.id}
+                                    style={{
+                                        borderBottom: '1px solid #312e81',
+                                        background: isSelected ? 'var(--teal-10)' : 'transparent',
+                                    }}
+                                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(15,23,42,0.1)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = isSelected ? 'var(--teal-10)' : 'transparent'; }}>
 
-                                                <Link href={showRoute(order.id)}
-                                                    className="p-1.5 rounded-md transition-colors inline-flex"
-                                                    style={{ color: 'var(--txt-3)' }}
-                                                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--txt-accent)')}
-                                                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--txt-3)')}>
-                                                    <ChevronRight size={15} />
-                                                </Link>
+                                    <td className="px-4 py-3">
+                                        <input type="checkbox" checked={isSelected}
+                                            onChange={() => onToggleSelect(order.id)}
+                                            style={{ accentColor: 'var(--txt-accent)' }} />
+                                    </td>
+
+                                    <td className="px-3 py-3">
+                                        <span className="text-[12px] font-semibold tabular-nums" style={{ color: 'var(--txt-accent)' }}>
+                                            #{order.id}
+                                        </span>
+                                    </td>
+
+                                    <td className="px-3 py-3">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white shrink-0"
+                                                style={{ background: bg }}>
+                                                {initials}
                                             </div>
-                                        </td>
-                                    </tr>
-                                );
-                            }) : (
-                                <tr>
-                                    <td colSpan={8} className="py-16 text-center" style={{ color: 'var(--txt-3)' }}>
-                                        <Package size={32} className="mx-auto mb-3 opacity-40" />
-                                        <p className="text-[13px] font-medium">{t('No Orders Found')}</p>
-                                        <p className="text-[11px] mt-1">{t('Adjust your filters or create a new order.')}</p>
+                                            <span className="text-[13px] font-medium" style={{ color: 'var(--txt-1)' }}>
+                                                {order.patient.first_name} {order.patient.last_name}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td className="px-3 py-3">
+                                        <p className="text-[12.5px] font-medium" style={{ color: 'var(--txt-1)' }}>
+                                            {counterpartyName || '—'}
+                                        </p>
+                                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                            {order.service.name}
+                                        </p>
+                                    </td>
+
+                                    <td className="px-3 py-3">
+                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11.5px] font-medium transition-all"
+                                            style={{ background: s.bg, border: `1px solid ${s.border}`, color: 'var(--txt-1)', boxShadow: `0 0 6px ${s.border}` }}>
+                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.dot, boxShadow: `0 0 5px ${s.dot}` }} />
+                                            <span>{t(s.label)}</span>
+                                        </span>
+                                    </td>
+
+                                    <td className="px-3 py-3">
+                                        <span className="text-[12.5px]"
+                                            style={{ color: order.is_overdue ? '#f87171' : 'var(--txt-2)' }}>
+                                            {order.due_date
+                                                ? new Date(order.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                : '—'}
+                                        </span>
+                                        {order.is_overdue && (
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                <AlertTriangle size={10} color="#f87171" />
+                                                <p className="text-[10px] font-medium" style={{ color: '#f87171' }}>Overdue</p>
+                                            </div>
+                                        )}
+                                    </td>
+
+                                    <td className="px-3 py-3">
+                                        <span className="text-[12px]"
+                                            style={{ color: order.priority === 'urgent' ? '#f97316' : 'var(--txt-3)' }}>
+                                            {order.priority}
+                                        </span>
+                                    </td>
+
+                                    <td className="px-3 py-3">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <QuickStatus orderId={order.id} currentStatus={order.status} variant={variant} />
+                                            <Link href={showRoute(order.id)}
+                                                className="p-1.5 rounded transition-all inline-flex items-center justify-center"
+                                                style={{ color: 'var(--txt-3)', border: '1px solid transparent', background: 'transparent' }}
+                                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--txt-accent)'; e.currentTarget.style.borderColor = 'var(--teal-20)'; e.currentTarget.style.background = 'var(--teal-10)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--txt-3)'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent'; }}>
+                                                <ChevronRight size={15} />
+                                            </Link>
+                                        </div>
                                     </td>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            );
+                        }) : (
+                            <tr>
+                                <td colSpan={8} className="py-16 text-center" style={{ color: 'var(--txt-3)' }}>
+                                    <Package size={28} className="mx-auto mb-3 opacity-30" />
+                                    <p className="text-[13px]">{t('No Orders Found')}</p>
+                                    <p className="text-[11px] mt-1 opacity-70">{t('Adjust your filters or create a new order.')}</p>
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+
                 {orders.links && orders.links.length > 3 && (
-                    <div className="px-4 py-3 border-t flex justify-between items-center" style={{ borderColor: 'var(--border)' }}>
+                    <div className="px-4 py-3 border-t flex justify-between items-center"
+                        style={{ borderColor: '#312e81', background: 'transparent' }}>
                         <p className="text-[11px]" style={{ color: 'var(--txt-3)' }}>
                             {orders.total} {t('total orders')}
                         </p>
@@ -235,6 +254,6 @@ export default function OrderTable({ orders, selectedOrders, variant, showRoute,
                     </div>
                 )}
             </div>
-        </>
+        </div>
     );
 }

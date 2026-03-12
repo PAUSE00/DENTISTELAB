@@ -15,9 +15,10 @@ import GlobalSearch from '@/Components/GlobalSearch';
 
 interface Props extends PropsWithChildren {
     header?: ReactNode;
+    fullBleed?: boolean;
 }
 
-export default function LabLayout({ children, header }: Props) {
+export default function LabLayout({ children, header, fullBleed }: Props) {
     const user = usePage().props.auth.user;
     useNotifications();
     const { t } = useTranslation();
@@ -100,7 +101,7 @@ export default function LabLayout({ children, header }: Props) {
         );
     };
 
-    const w = collapsed ? 'w-[52px]' : 'w-56';
+    const w = collapsed ? 'w-[52px]' : 'w-[250px]';
 
     return (
         <div className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--txt-1)' }}>
@@ -191,7 +192,7 @@ export default function LabLayout({ children, header }: Props) {
             )}
 
             {/* ── Main layout ──────────────────────────────────────────── */}
-            <main className={`transition-all duration-200 ${collapsed ? 'lg:ml-[52px]' : 'lg:ml-56'} min-h-screen flex flex-col`}>
+            <main className={`transition-all duration-200 ${collapsed ? 'lg:ml-[52px]' : 'lg:ml-[250px]'} h-screen overflow-hidden flex flex-col`}>
 
                 {/* Header */}
                 <header className="app-header sticky top-0 z-40 h-14 flex items-center justify-between px-5">
@@ -225,6 +226,16 @@ export default function LabLayout({ children, header }: Props) {
                         </button>
 
                         <LanguageSwitcher />
+
+                        <Link href={route('lab.inbox.index')}
+                            className="p-1.5 rounded-md transition-colors flex items-center justify-center relative"
+                            style={{ color: 'var(--txt-2)', background: 'transparent' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                            title={t('Messages')}>
+                            <MessageSquare size={16} />
+                        </Link>
+
                         <NotificationBell />
 
                         <div style={{ width: 1, height: 20, background: 'var(--border-strong)', margin: '0 4px' }} />
@@ -243,11 +254,17 @@ export default function LabLayout({ children, header }: Props) {
                 </header>
 
                 {/* Content */}
-                <div className="flex-1 p-5">
-                    <div className="max-w-[1400px] mx-auto">
+                {fullBleed ? (
+                    <div className="flex-1 overflow-hidden">
                         {children}
                     </div>
-                </div>
+                ) : (
+                    <div className="flex-1 overflow-auto p-5">
+                        <div className="max-w-[1400px] mx-auto">
+                            {children}
+                        </div>
+                    </div>
+                )}
             </main>
 
             <ToastContainer />

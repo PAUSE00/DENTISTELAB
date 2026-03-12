@@ -4,7 +4,7 @@ import { PageProps, Order } from '@/types';
 import {
     Package, Clock, AlertTriangle, CalendarClock, DollarSign,
     CreditCard, CheckCircle2, XCircle, TrendingUp, TrendingDown,
-    ArrowRight, MoreHorizontal, ExternalLink
+    ArrowRight, MoreHorizontal, ExternalLink, CalendarDays, MessageSquare, Kanban
 } from 'lucide-react';
 import { useEffect } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
@@ -308,34 +308,61 @@ export default function Dashboard({
                 {/* ── Bottom row ────────────────────────────────────────── */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-                    {/* Services */}
-                    <div className="card lg:col-span-4 p-4">
-                        <p className="text-[13px] font-semibold mb-4" style={{ color: 'var(--txt-1)' }}>
-                            {t('Most Requested')}
-                        </p>
-                        <div className="flex flex-col gap-3">
-                            {topServices.slice(0, 5).map((s, i) => (
-                                <div key={i} className="flex items-center gap-3">
-                                    <span className="text-[11px] w-4 text-right shrink-0 font-medium tabular-nums"
-                                        style={{ color: 'var(--txt-3)' }}>{i + 1}</span>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-[12px] font-medium truncate" style={{ color: 'var(--txt-1)' }}>{s.name}</span>
-                                            <span className="text-[11px] font-semibold tabular-nums ml-2 shrink-0" style={{ color: 'var(--txt-accent)' }}>{s.count}</span>
-                                        </div>
-                                        <div className="h-1 rounded-full" style={{ background: 'var(--surface)' }}>
-                                            <div className="h-full rounded-full transition-all duration-500"
-                                                style={{
-                                                    width: `${Math.max(4, (s.count / maxService) * 100)}%`,
-                                                    background: i === 0 ? '#60ddc6' : i === 1 ? '#818cf8' : 'var(--txt-3)',
-                                                }} />
-                                        </div>
-                                    </div>
+                    {/* Quick Actions */}
+                    <div className="card lg:col-span-4 p-5 flex flex-col gap-4">
+                        <div className="flex flex-col gap-1">
+                            <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                                {t('Quick Actions')}
+                            </p>
+                            <p className="text-[11px]" style={{ color: 'var(--txt-3)' }}>
+                                {t('Frequently used tools and shortcuts')}
+                            </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 mt-1">
+                            {/* Schedule */}
+                            <Link href={route('lab.calendar.index')} className="flex flex-col gap-2.5 p-3.5 rounded-xl border border-dashed transition-all hover:border-solid group" style={{ borderColor: 'var(--border-strong)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: 'var(--teal-10)', color: 'var(--txt-accent)' }}>
+                                    <CalendarDays size={15} />
                                 </div>
-                            ))}
-                            {topServices.length === 0 && (
-                                <p className="text-[12px] text-center py-4" style={{ color: 'var(--txt-3)' }}>No data yet</p>
-                            )}
+                                <div className="mt-1">
+                                    <p className="text-[13px] font-bold" style={{ color: 'var(--txt-1)' }}>{t('Schedule')}</p>
+                                    <p className="text-[10px]" style={{ color: 'var(--txt-3)' }}>{t('View daily tasks')}</p>
+                                </div>
+                            </Link>
+
+                            {/* Messages */}
+                            <Link href={route('lab.inbox.index')} className="flex flex-col gap-2.5 p-3.5 rounded-xl border border-dashed transition-all hover:border-solid group" style={{ borderColor: 'var(--border-strong)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: 'rgba(192,132,252,0.1)', color: '#c084fc' }}>
+                                    <MessageSquare size={15} />
+                                </div>
+                                <div className="mt-1">
+                                    <p className="text-[13px] font-bold" style={{ color: 'var(--txt-1)' }}>{t('Messages')}</p>
+                                    <p className="text-[10px]" style={{ color: 'var(--txt-3)' }}>{t('Reply to clinics')}</p>
+                                </div>
+                            </Link>
+
+                            {/* Kanban Board */}
+                            <Link href={route('lab.kanban.index')} className="flex flex-col gap-2.5 p-3.5 rounded-xl border border-dashed transition-all hover:border-solid group" style={{ borderColor: 'var(--border-strong)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: 'rgba(96,221,198,0.1)', color: '#60ddc6' }}>
+                                    <Kanban size={15} />
+                                </div>
+                                <div className="mt-1">
+                                    <p className="text-[13px] font-bold" style={{ color: 'var(--txt-1)' }}>{t('Production')}</p>
+                                    <p className="text-[10px]" style={{ color: 'var(--txt-3)' }}>{t('Manage board')}</p>
+                                </div>
+                            </Link>
+
+                            {/* Service Catalog */}
+                            <Link href={route('lab.services.index')} className="flex flex-col gap-2.5 p-3.5 rounded-xl border border-dashed transition-all hover:border-solid group" style={{ borderColor: 'var(--border-strong)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: 'rgba(129,140,248,0.1)', color: '#818cf8' }}>
+                                    <Package size={15} />
+                                </div>
+                                <div className="mt-1">
+                                    <p className="text-[13px] font-bold" style={{ color: 'var(--txt-1)' }}>{t('Catalog')}</p>
+                                    <p className="text-[10px]" style={{ color: 'var(--txt-3)' }}>{t('Update services')}</p>
+                                </div>
+                            </Link>
                         </div>
                     </div>
 

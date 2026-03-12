@@ -156,5 +156,17 @@
     "Archive": "Archive",
     "No actions available": "No actions available",
     "No messages yet. Start the conversation!": "No messages yet. Start the conversation!",
-    "Type a message...": "Type a message..."
+    "Type a message...": "Type a message...",
+    "notifications.title": "Notifications",
+    "notifications.read_all": "Mark all as read",
+    "notifications.empty": "No notifications",
+    "notifications.mark_read": "Mark read",
+    "notifications.view": "View",
+    "notifications.view_all": "All notifications",
+    "notifications.new_message.title": "New Message",
+    "notifications.new_message.body": "You have a new message on your order.",
+    "notifications.invitation_accepted.title": "Invitation Accepted",
+    "notifications.invitation_accepted.body": "Your invitation was accepted.",
+    "notifications.invitation_received.title": "Received Invitation",
+    "notifications.invitation_received.body": "You received a new invitation."
 }

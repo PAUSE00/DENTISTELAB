@@ -146,5 +146,17 @@
     "Archive": "أرشفة",
     "No actions available": "لا توجد إجراءات متاحة",
     "No messages yet. Start the conversation!": "لا توجد رسائل بعد. ابدأ المحادثة!",
-    "Type a message...": "اكتب رسالة..."
+    "Type a message...": "اكتب رسالة...",
+    "notifications.title": "إشعارات",
+    "notifications.read_all": "تحديد الكل كمقروء",
+    "notifications.empty": "لا توجد إشعارات",
+    "notifications.mark_read": "تحديد كمقروء",
+    "notifications.view": "عرض",
+    "notifications.view_all": "كل الإشعارات",
+    "notifications.new_message.title": "رسالة جديدة",
+    "notifications.new_message.body": "لديك رسالة جديدة بخصوص طلبك.",
+    "notifications.invitation_accepted.title": "تم قبول الدعوة",
+    "notifications.invitation_accepted.body": "تم قبول دعوتك بنجاح.",
+    "notifications.invitation_received.title": "دعوة جديدة",
+    "notifications.invitation_received.body": "لقد تلقيت دعوة جديدة."
 }

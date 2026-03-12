@@ -1,11 +1,12 @@
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import { User, Mail, Save, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import useTranslation from '@/Hooks/useTranslation';
+
+const LABEL = "block text-[10px] uppercase font-bold tracking-widest mb-2 opacity-70";
+const INPUT_BASE = "w-full px-4 py-2.5 rounded-lg text-[13px] border border-[#312e81] focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-[rgba(15,23,42,0.2)] text-[var(--txt-1)] placeholder-white/30";
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -31,92 +32,98 @@ export default function UpdateProfileInformation({
     };
 
     return (
-        <section className={className}>
-            <form onSubmit={submit} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                        <InputLabel htmlFor="name" value={t('Full Name')} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1" />
-                        <div className="relative group/field">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within/field:text-indigo-500 transition-colors" />
-                            <TextInput
-                                id="name"
-                                value={data.name}
-                                className="pl-12 w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-white font-bold h-14"
-                                onChange={(e) => setData('name', e.target.value)}
-                                required
-                                isFocused
-                                autoComplete="name"
-                            />
-                        </div>
-                        <InputError className="mt-2" message={errors.name} />
+        <form onSubmit={submit} className={`space-y-6 ${className}`}>
+            
+            {/* Box exactly like reference image */}
+            <div className="rounded-xl border p-6 flex flex-col gap-6 relative" style={{ borderColor: '#312e81', background: 'transparent' }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label htmlFor="name" className={LABEL} style={{ color: 'var(--txt-1)' }}>
+                            {t('Full Name')}
+                        </label>
+                        <input
+                            id="name"
+                            type="text"
+                            value={data.name}
+                            className={INPUT_BASE}
+                            onChange={(e) => setData('name', e.target.value)}
+                            required
+                            autoComplete="name"
+                        />
+                        <InputError className="mt-2 text-[11px]" message={errors.name} />
                     </div>
 
-                    <div className="space-y-2">
-                        <InputLabel htmlFor="email" value={t('Email Address')} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1" />
-                        <div className="relative group/field">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within/field:text-indigo-500 transition-colors" />
-                            <TextInput
-                                id="email"
-                                type="email"
-                                value={data.email}
-                                className="pl-12 w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-white font-bold h-14"
-                                onChange={(e) => setData('email', e.target.value)}
-                                required
-                                autoComplete="username"
-                            />
-                        </div>
-                        <InputError className="mt-2" message={errors.email} />
+                    <div>
+                        <label htmlFor="email" className={LABEL} style={{ color: 'var(--txt-1)' }}>
+                            {t('Personal Work Email')}
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            value={data.email}
+                            className={INPUT_BASE}
+                            onChange={(e) => setData('email', e.target.value)}
+                            required
+                            autoComplete="username"
+                        />
+                        <InputError className="mt-2 text-[11px]" message={errors.email} />
                     </div>
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
-                    <div className="p-4 bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 rounded-2xl">
-                        <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg mt-2">
+                        <p className="text-[12.5px] text-amber-500 font-medium">
                             {t('Your email address is unverified.')}
                             <Link
                                 href={route('verification.send')}
                                 method="post"
                                 as="button"
-                                className="ml-2 font-black text-amber-800 dark:text-amber-300 underline hover:no-underline decoration-2 transition-all"
+                                className="ml-2 font-bold text-amber-400 underline hover:no-underline transition-all"
                             >
                                 {t('Resend verification email')}
                             </Link>
                         </p>
 
                         {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-xs font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                                <CheckCircle2 className="w-3 h-3" />
+                            <div className="mt-2 text-[11.5px] font-bold text-emerald-500 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4" />
                                 {t('A new verification link has been sent.')}
                             </div>
                         )}
                     </div>
                 )}
+            </div>
 
-                <div className="flex items-center gap-6 pt-4">
-                    <button 
-                        type="submit" 
-                        disabled={processing}
-                        className="btn-primary group relative overflow-hidden flex items-center gap-3 px-10 py-5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl shadow-[0_15px_40px_rgba(99,102,241,0.3)] transition-all duration-500 disabled:opacity-50"
-                    >
-                        <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        <span className="font-black tracking-tight">{t('Save Identity')}</span>
-                    </button>
+            <div className="flex items-center justify-end gap-6 pt-2">
+                <Transition
+                    show={recentlySuccessful}
+                    enter="transition ease-in-out duration-300"
+                    enterFrom="opacity-0 translate-x-4"
+                    enterTo="opacity-100 translate-x-0"
+                    leave="transition ease-in-out duration-300"
+                    leaveTo="opacity-0 translate-x-4"
+                >
+                    <div className="flex items-center gap-2 text-emerald-500 font-bold text-[10px] uppercase tracking-widest">
+                        <CheckCircle2 className="w-4 h-4" />
+                        {t('Updated')}
+                    </div>
+                </Transition>
 
-                    <Transition
-                        show={recentlySuccessful}
-                        enter="transition ease-in-out duration-300"
-                        enterFrom="opacity-0 translate-x-4"
-                        enterTo="opacity-100 translate-x-0"
-                        leave="transition ease-in-out duration-300"
-                        leaveTo="opacity-0 translate-x-4"
-                    >
-                        <div className="flex items-center gap-2 text-emerald-500 font-black text-[10px] uppercase tracking-widest">
-                            <CheckCircle2 className="w-4 h-4" />
-                            {t('Synchronized')}
-                        </div>
-                    </Transition>
-                </div>
-            </form>
-        </section>
+                <button 
+                    type="submit" 
+                    disabled={processing}
+                    className="px-6 py-2.5 rounded-lg border text-[13px] font-bold transition-all disabled:opacity-50"
+                    style={{
+                        borderColor: '#4338ca', // indigo-700
+                        color: 'var(--txt-1)',
+                        background: 'transparent'
+                    }}
+                    onMouseEnter={e => { if (!processing) e.currentTarget.style.background = 'rgba(67, 56, 202, 0.1)' }}
+                    onMouseLeave={e => { if (!processing) e.currentTarget.style.background = 'transparent' }}
+                >
+                    {t('Update Identity')}
+                </button>
+            </div>
+        </form>
     );
 }

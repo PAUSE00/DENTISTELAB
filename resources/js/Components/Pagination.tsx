@@ -13,29 +13,74 @@ export default function Pagination({ links }: PaginationProps) {
     if (links.length <= 3) return null;
 
     return (
-        <div className="flex flex-wrap justify-center gap-1">
+        <div className="flex items-center gap-1">
             {links.map((link, key) => {
                 let label = link.label;
-                if (label.includes('&laquo;')) label = 'Previous';
-                if (label.includes('&raquo;')) label = 'Next';
+                const isPrev = label.includes('&laquo;');
+                const isNext = label.includes('&raquo;');
 
-                return link.url === null ? (
-                    <div
-                        key={key}
-                        className="mr-1 mb-1 px-4 py-2 text-sm leading-4 text-sub rounded border border-transparent opacity-50 cursor-not-allowed"
-                    >
-                        {label === 'Previous' ? <ChevronLeft className="w-4 h-4" /> : label === 'Next' ? <ChevronRight className="w-4 h-4" /> : <div dangerouslySetInnerHTML={{ __html: label }} />}
-                    </div>
-                ) : (
-                    <Link
-                        key={key}
-                        className={`mr-1 mb-1 px-4 py-2 text-sm leading-4 rounded border focus:border-brand focus:text-brand transition-colors ${link.active
-                                ? 'bg-brand text-text border-brand'
-                                : 'bg-surface hover:bg-bg dark:bg-surface dark:hover:bg-sidebar text-text border-border'
-                            }`}
-                        href={link.url}
-                    >
-                        {label === 'Previous' ? <ChevronLeft className="w-4 h-4" /> : label === 'Next' ? <ChevronRight className="w-4 h-4" /> : <div dangerouslySetInnerHTML={{ __html: label }} />}
+                const baseStyle: React.CSSProperties = {
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: isPrev || isNext ? '32px' : '32px',
+                    height: '32px',
+                    padding: isPrev || isNext ? '0 8px' : '0',
+                    borderRadius: '8px',
+                    fontSize: '12.5px',
+                    fontWeight: 500,
+                    transition: 'all 0.15s',
+                    cursor: link.url ? 'pointer' : 'not-allowed',
+                    opacity: link.url ? 1 : 0.35,
+                };
+
+                const activeStyle: React.CSSProperties = {
+                    ...baseStyle,
+                    background: 'var(--teal)',
+                    color: 'var(--bg)',
+                    fontWeight: 700,
+                    boxShadow: '0 0 10px rgba(96,221,198,0.35)',
+                };
+
+                const inactiveStyle: React.CSSProperties = {
+                    ...baseStyle,
+                    background: 'var(--surface)',
+                    color: 'var(--txt-2)',
+                    border: '1px solid var(--border)',
+                };
+
+                const content = isPrev
+                    ? <ChevronLeft size={14} />
+                    : isNext
+                    ? <ChevronRight size={14} />
+                    : <span dangerouslySetInnerHTML={{ __html: label }} />;
+
+                if (!link.url) {
+                    return (
+                        <div key={key} style={inactiveStyle}>
+                            {content}
+                        </div>
+                    );
+                }
+
+                return (
+                    <Link key={key} href={link.url}
+                        style={link.active ? activeStyle : inactiveStyle}
+                        onMouseEnter={e => {
+                            if (!link.active) {
+                                e.currentTarget.style.borderColor = 'var(--teal-20)';
+                                e.currentTarget.style.color = 'var(--txt-accent)';
+                                e.currentTarget.style.background = 'var(--teal-10)';
+                            }
+                        }}
+                        onMouseLeave={e => {
+                            if (!link.active) {
+                                e.currentTarget.style.borderColor = 'var(--border)';
+                                e.currentTarget.style.color = 'var(--txt-2)';
+                                e.currentTarget.style.background = 'var(--surface)';
+                            }
+                        }}>
+                        {content}
                     </Link>
                 );
             })}
