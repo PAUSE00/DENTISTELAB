@@ -18,6 +18,9 @@ class Patient extends Model
         'email',
         'external_id',
         'medical_notes',
+        'allergies',
+        'medical_history',
+        'blood_group',
     ];
 
     protected $casts = [
@@ -32,5 +35,15 @@ class Patient extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    public function clinicalNotes()
+    {
+        return $this->hasMany(PatientClinicalNote::class);
     }
 }

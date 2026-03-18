@@ -21,6 +21,9 @@ export interface Patient {
     email?: string;
     external_id?: string;
     medical_notes?: string;
+    blood_group?: string;
+    allergies?: string;
+    medical_history?: string;
     created_at: string;
     updated_at: string;
 }

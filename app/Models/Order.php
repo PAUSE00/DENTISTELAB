@@ -28,6 +28,7 @@ class Order extends Model
         'final_price',
         'payment_status',
         'rejection_reason',
+        'invoice_id',
     ];
 
     protected $casts = [
@@ -84,6 +85,11 @@ class Order extends Model
     public function notes()
     {
         return $this->hasMany(OrderNote::class)->orderBy('created_at', 'desc');
+    }
+
+    public function invoice()
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     // ─── Scopes ───────────────────────────────────────────

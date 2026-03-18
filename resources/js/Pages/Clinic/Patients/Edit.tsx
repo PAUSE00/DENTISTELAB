@@ -24,6 +24,9 @@ export default function Edit({ auth, patient }: Props) {
         email: patient.email || '',
         external_id: patient.external_id || '',
         medical_notes: patient.medical_notes || '',
+        blood_group: patient.blood_group || '',
+        allergies: patient.allergies || '',
+        medical_history: patient.medical_history || '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -142,6 +145,56 @@ export default function Edit({ auth, patient }: Props) {
                                         />
                                         <InputError className="mt-2" message={errors.email} />
                                     </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {/* Blood Group */}
+                                    <div>
+                                        <InputLabel htmlFor="blood_group" value="Blood Group" />
+                                        <select
+                                            id="blood_group"
+                                            className="mt-1 block w-full border-gray-300 dark:border-slate-600 dark:bg-slate-700/50 dark:text-gray-300 focus:border-primary-500 rounded-xl shadow-sm"
+                                            value={data.blood_group}
+                                            onChange={(e) => setData('blood_group', e.target.value)}
+                                        >
+                                            <option value="">N/A</option>
+                                            <option value="A+">A+</option>
+                                            <option value="A-">A-</option>
+                                            <option value="B+">B+</option>
+                                            <option value="B-">B-</option>
+                                            <option value="AB+">AB+</option>
+                                            <option value="AB-">AB-</option>
+                                            <option value="O+">O+</option>
+                                            <option value="O-">O-</option>
+                                        </select>
+                                        <InputError className="mt-2" message={errors.blood_group} />
+                                    </div>
+
+                                    {/* Medical History */}
+                                    <div className="md:col-span-2">
+                                        <InputLabel htmlFor="medical_history" value="Medical History" />
+                                        <TextInput
+                                            id="medical_history"
+                                            className="mt-1 block w-full"
+                                            value={data.medical_history}
+                                            onChange={(e) => setData('medical_history', e.target.value)}
+                                            placeholder="e.g. Diabetes, Hypertension..."
+                                        />
+                                        <InputError className="mt-2" message={errors.medical_history} />
+                                    </div>
+                                </div>
+
+                                {/* Allergies */}
+                                <div>
+                                    <InputLabel htmlFor="allergies" value="Allergies" />
+                                    <TextInput
+                                        id="allergies"
+                                        className="mt-1 block w-full"
+                                        value={data.allergies}
+                                        onChange={(e) => setData('allergies', e.target.value)}
+                                        placeholder="e.g. Penicillin, Latex..."
+                                    />
+                                    <InputError className="mt-2" message={errors.allergies} />
                                 </div>
 
                                 {/* Medical Notes */}

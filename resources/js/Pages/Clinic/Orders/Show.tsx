@@ -65,178 +65,186 @@ export default function Show({ auth, order }: Props) {
             <div className="max-w-7xl mx-auto animate-fade-in pb-10 sm:px-6 lg:px-8">
                 {/* Rejection Banner */}
                 {order.status === 'rejected' && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-5 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-red-100 dark:bg-red-900/30 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                        <div className="flex gap-4 items-start relative z-10">
-                            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0">
-                                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    <div className="rounded-xl p-5 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                        style={{ background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.25)' }}>
+                        <div className="flex gap-4 items-start">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ background: 'rgba(248,113,113,0.1)', color: '#f87171' }}>
+                                <AlertCircle className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="text-red-800 dark:text-red-300 font-bold text-lg leading-tight">{t('Order Rejected')}</h3>
-                                <p className="text-red-600 dark:text-red-400 text-sm mt-1 mb-2">{t('The laboratory rejected this order with the following reason:')}</p>
-                                <div className="bg-white/60 dark:bg-slate-900/40 px-4 py-3 rounded-xl border border-red-100 dark:border-red-800/50">
-                                    <p className="font-medium text-red-800 dark:text-red-200 text-sm">"{order.rejection_reason || t('No reason provided.')}"</p>
+                                <h3 className="font-bold text-[14px] leading-tight" style={{ color: '#f87171' }}>{t('Order Rejected')}</h3>
+                                <p className="text-[12px] mt-1 mb-2" style={{ color: 'var(--txt-3)' }}>{t('The laboratory rejected this order with the following reason:')}</p>
+                                <div className="px-4 py-3 rounded-xl text-[12px]" style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)', color: 'var(--txt-2)' }}>
+                                    "{order.rejection_reason || t('No reason provided.')}"
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-3 relative z-10 w-full md:w-auto mt-2 md:mt-0">
-                            <button onClick={() => router.post(route('clinic.orders.duplicate', order.id))} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800/50 rounded-xl text-red-700 dark:text-red-400 font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors shadow-sm text-sm">
-                                <Copy className="w-4 h-4" /> {t('Edit & Resubmit')}
+                        <div className="flex gap-2">
+                            <button onClick={() => router.post(route('clinic.orders.duplicate', order.id))} className="btn-ghost text-[12px]">
+                                <Copy size={13} /> {t('Edit & Resubmit')}
                             </button>
-                            <button onClick={() => router.patch(route('clinic.orders.cancel', order.id))} disabled={processing} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors shadow-sm text-sm disabled:opacity-50">
-                                <X className="w-4 h-4" /> {t('Cancel Completely')}
+                            <button onClick={() => router.patch(route('clinic.orders.cancel', order.id))} disabled={processing}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold disabled:opacity-50"
+                                style={{ background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.25)' }}>
+                                <X size={13} /> {t('Cancel')}
                             </button>
                         </div>
                     </div>
                 )}
 
                 {/* Header & Stepper Card */}
-                <div className="glass-card rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 mb-6 overflow-hidden">
-                    <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-700/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm">
-                        <div className="flex items-center gap-4">
-                            <Link href={route('clinic.orders.index')} className="p-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all shadow-sm">
-                                <ArrowLeft className="w-4 h-4" />
+                <div className="card overflow-hidden mb-6" style={{ background: 'var(--bg-raised)' }}>
+                    <div className="px-5 py-4 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4" style={{ borderColor: 'var(--border)' }}>
+                        <div className="flex items-center gap-3">
+                            <Link href={route('clinic.orders.index')}
+                                className="p-1.5 rounded-lg transition-colors"
+                                style={{ border: '1px solid var(--border-strong)', color: 'var(--txt-3)' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                                <ArrowLeft size={14} />
                             </Link>
                             <div>
                                 <div className="flex items-center gap-3">
-                                    <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{t('Order')} #{order.id}</h1>
+                                    <h1 className="text-[16px] font-bold" style={{ color: 'var(--txt-1)' }}>{t('Order')} #{order.id}</h1>
                                     <StatusBadge status={order.status} />
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                                    {t('Created on')} {new Date(order.created_at).toLocaleDateString()} &middot; <span className="text-gray-400">{t('Lab')}:</span> <span className="text-gray-700 dark:text-gray-300">{order.lab.name}</span>
+                                <p className="text-[11.5px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                    {t('Created on')} {new Date(order.created_at).toLocaleDateString()} · {t('Lab')}: <span style={{ color: 'var(--txt-2)' }}>{order.lab.name}</span>
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap-2.5">
+                        <div className="flex gap-2">
                             {order.status === 'new' && (
-                                <Link href={route('clinic.orders.edit', order.id)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-brand/20 bg-brand/5 dark:bg-brand/10 text-brand dark:text-brand-light hover:bg-brand/10 dark:hover:bg-brand/20 transition-colors text-xs font-semibold shadow-sm">
-                                    <ClipboardCheck className="w-3.5 h-3.5" /> {t('Edit Order')}
+                                <Link href={route('clinic.orders.edit', order.id)} className="btn-ghost text-[12px] !py-1.5">
+                                    <ClipboardCheck size={12} /> {t('Edit Order')}
                                 </Link>
                             )}
-                            <button onClick={() => router.post(route('clinic.orders.duplicate', order.id))} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-xs font-semibold shadow-sm">
-                                <Copy className="w-3.5 h-3.5" /> {t('Duplicate')}
+                            <button onClick={() => router.post(route('clinic.orders.duplicate', order.id))} className="btn-ghost text-[12px] !py-1.5">
+                                <Copy size={12} /> {t('Duplicate')}
                             </button>
-                            <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-xs font-semibold shadow-sm">
-                                <Printer className="w-3.5 h-3.5" /> {t('Print Report')}
+                            <button className="btn-ghost text-[12px] !py-1.5">
+                                <Printer size={12} /> {t('Print')}
                             </button>
-                            <button onClick={() => window.open(route('orders.invoice', order.id), '_blank')} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors text-xs font-semibold shadow-sm">
-                                <Download className="w-3.5 h-3.5" /> {t('Invoice')} (PDF)
+                            <button onClick={() => window.open(route('orders.invoice', order.id), '_blank')} className="btn-ghost text-[12px] !py-1.5">
+                                <Download size={12} /> PDF
                             </button>
                         </div>
                     </div>
-                    <div className="px-8 py-6 bg-gray-50/50 dark:bg-slate-900/30">
+                    <div className="px-6 py-5" style={{ background: 'rgba(255,255,255,0.01)' }}>
                         <OrderSteps status={order.status} createdAt={order.created_at} dueDate={order.due_date} history={order.history} />
                     </div>
                 </div>
 
                 {/* Info Cards Row — Clinic-specific (has overdue + lab email info) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     {/* Due Date Card */}
-                    <div className="glass-card rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 group hover:border-amber-200 dark:hover:border-amber-800/50 transition-colors">
-                        <div className="flex gap-4 items-center">
-                            <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/10 text-amber-500 border border-amber-100 dark:border-amber-800/30 flex items-center justify-center shrink-0 shadow-sm">
-                                <Calendar className="w-6 h-6" />
+                    <div className="card p-4" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="flex gap-3 items-center">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+                                <Calendar size={18} />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('Due Date')}</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                                    {new Date(order.due_date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                                <p className="text-[10.5px] font-semibold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Due Date')}</p>
+                                <p className="text-[15px] font-bold leading-tight" style={{ color: 'var(--txt-1)' }}>
+                                    {new Date(order.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </p>
-                                <p className="text-amber-600 text-[10px] font-bold mt-0.5 bg-amber-50 dark:bg-amber-900/20 inline-block px-1.5 rounded">
-                                    {order.is_overdue ? (
-                                        <span className="text-red-600 dark:text-red-400">{t('OVERDUE')}</span>
-                                    ) : (
-                                        `${order.days_remaining} ${t('DAYS REMAINING')}`
-                                    )}
-                                </p>
+                                <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-md mt-1 inline-block"
+                                    style={order.is_overdue
+                                        ? { background: 'rgba(248,113,113,0.1)', color: '#f87171' }
+                                        : { background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>
+                                    {order.is_overdue ? t('OVERDUE') : `${order.days_remaining}d ${t('remaining')}`}
+                                </span>
                             </div>
                         </div>
                     </div>
 
                     {/* Patient Card */}
-                    <div className="glass-card rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 dark:bg-blue-900/10 rounded-bl-full -mr-4 -mt-4 -z-0 pointer-events-none"></div>
-                        <div className="flex items-center gap-4 relative z-10">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-blue-500/20 shrink-0">
+                    <div className="card p-4" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-[13px] text-white shrink-0"
+                                style={{ background: 'linear-gradient(135deg, #818cf8, #6638b4)' }}>
                                 {order.patient.first_name[0]}{order.patient.last_name[0]}
                             </div>
                             <div className="overflow-hidden">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{t('Patient')}</p>
-                                <p className="font-bold text-gray-900 dark:text-white text-lg truncate leading-tight">{order.patient.first_name} {order.patient.last_name}</p>
-                                <p className="text-[10px] text-gray-500 font-mono tracking-tight bg-gray-100 dark:bg-slate-700/50 px-1.5 rounded inline-block mt-1">ID: {order.patient.id.toString().padStart(6, 'PR-2026-000')}</p>
+                                <p className="text-[10.5px] font-semibold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Patient')}</p>
+                                <p className="font-bold text-[14px] truncate leading-tight" style={{ color: 'var(--txt-1)' }}>{order.patient.first_name} {order.patient.last_name}</p>
+                                <p className="text-[10.5px] mt-0.5" style={{ color: 'var(--txt-3)' }}>ID #{order.patient.id}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Lab Info Card */}
-                    <div className="glass-card rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5">
+                    <div className="card p-4" style={{ background: 'var(--bg-raised)' }}>
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/10 text-indigo-500 border border-indigo-100 dark:border-indigo-800/30 flex items-center justify-center shrink-0 shadow-sm">
-                                <Building className="w-5 h-5" />
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ background: 'rgba(129,140,248,0.1)', color: '#818cf8' }}>
+                                <Building size={18} />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('Laboratory')}</p>
-                                <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{order.lab.name}</p>
+                                <p className="text-[10.5px] font-semibold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Laboratory')}</p>
+                                <p className="font-bold text-[13px] truncate" style={{ color: 'var(--txt-1)' }}>{order.lab.name}</p>
                             </div>
                         </div>
-                        <div className="space-y-2 border-t border-gray-100 dark:border-slate-700/50 pt-3">
+                        <div className="border-t pt-3 flex flex-col gap-2" style={{ borderColor: 'var(--border)' }}>
                             {order.lab.email && (
-                                <div className="flex justify-between items-center group">
-                                    <span className="text-[10px] text-gray-500">{t('Email')}</span>
-                                    <span className="font-bold text-[10px] text-primary-600 bg-primary-50 dark:bg-primary-900/20 px-1.5 py-0.5 rounded truncate max-w-[120px]">{order.lab.email}</span>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px]" style={{ color: 'var(--txt-3)' }}>{t('Email')}</span>
+                                    <span className="text-[11px] font-semibold" style={{ color: '#60ddc6' }}>{order.lab.email}</span>
                                 </div>
                             )}
                             <div className="flex justify-between items-center">
-                                <span className="text-[10px] text-gray-500">{t('Priority')}</span>
-                                <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                                    <Box className="w-3 h-3" /> {t('Standard')}
+                                <span className="text-[11px]" style={{ color: 'var(--txt-3)' }}>{t('Priority')}</span>
+                                <span className="text-[11px] font-semibold flex items-center gap-1" style={{ color: 'var(--txt-2)' }}>
+                                    <Box size={11} /> {t('Standard')}
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     {/* Left Column - Main Details (2/3) */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 flex flex-col gap-5">
                         {/* Clinical Specifications */}
-                        <div className="glass-card rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
-                            <h3 className="text-[11px] font-bold text-gray-400 dark:text-gray-500 flex items-center gap-2 mb-6 uppercase tracking-widest">
-                                <ClipboardCheck className="w-4 h-4 text-primary-500" /> {t('Clinical Specifications')}
+                        <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
+                            <h3 className="text-[11px] font-semibold flex items-center gap-2 mb-5 uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>
+                                <ClipboardCheck size={13} style={{ color: '#60ddc6' }} /> {t('Clinical Specifications')}
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="w-full">
-                                    <h4 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{t('Interactive Odontogram')}</h4>
-                                    <div className="bg-white/50 dark:bg-slate-900/40 shadow-inner p-4 rounded-xl border border-gray-100 dark:border-slate-800 w-full backdrop-blur-sm">
+                                    <h4 className="text-[10.5px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--txt-3)' }}>{t('Interactive Odontogram')}</h4>
+                                    <div className="p-4 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
                                         <div className="w-full flex justify-center">
                                             <Odontogram selectedTeeth={(order.teeth || []).map(Number)} readOnly={true} />
                                         </div>
-                                        <div className="text-center mt-2 border-t border-gray-100 dark:border-slate-800 pt-3">
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {t('Selected')}: <span className="font-bold text-primary-600 dark:text-primary-400">
+                                        <div className="text-center mt-2 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
+                                            <p className="text-[11.5px]" style={{ color: 'var(--txt-3)' }}>
+                                                {t('Selected')}: <span className="font-bold" style={{ color: '#60ddc6' }}>
                                                     {order.teeth?.length > 0 ? [...order.teeth].sort().join(', ') : t('None')}
                                                 </span>
                                             </p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{t('Restoration Parameters')}</h4>
+                                <div className="flex flex-col gap-3">
+                                    <h4 className="text-[10.5px] font-semibold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Restoration Parameters')}</h4>
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="bg-gray-50 dark:bg-slate-900/40 p-3.5 rounded-xl border border-gray-100 dark:border-slate-700/50 hover:border-gray-200 dark:hover:border-slate-600 transition-colors">
-                                            <span className="text-[10px] text-gray-400 block uppercase tracking-wide mb-1.5 font-semibold">{t('Service Type')}</span>
-                                            <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{order.service.name}</span>
+                                        <div className="p-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                                            <span className="text-[10px] block uppercase tracking-wide mb-1.5 font-semibold" style={{ color: 'var(--txt-3)' }}>{t('Service Type')}</span>
+                                            <span className="font-semibold text-[12.5px]" style={{ color: 'var(--txt-1)' }}>{order.service.name}</span>
                                         </div>
-                                        <div className="bg-gray-50 dark:bg-slate-900/40 p-3.5 rounded-xl border border-gray-100 dark:border-slate-700/50 hover:border-gray-200 dark:hover:border-slate-600 transition-colors">
-                                            <span className="text-[10px] text-gray-400 block uppercase tracking-wide mb-1.5 font-semibold">{t('Material & Shade')}</span>
-                                            <span className="font-bold text-sm text-gray-800 dark:text-gray-200">{order.material} <span className="text-gray-300 mx-1">/</span> {order.shade}</span>
+                                        <div className="p-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                                            <span className="text-[10px] block uppercase tracking-wide mb-1.5 font-semibold" style={{ color: 'var(--txt-3)' }}>{t('Material & Shade')}</span>
+                                            <span className="font-semibold text-[12.5px]" style={{ color: 'var(--txt-1)' }}>{order.material} / {order.shade}</span>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 dark:bg-slate-900/40 p-4 rounded-xl border border-gray-100 dark:border-slate-700/50 mt-3 h-[120px]">
-                                        <span className="text-[10px] text-gray-400 block uppercase tracking-wide mb-2 font-semibold flex items-center gap-1">
-                                            <AlertCircle className="w-3 h-3" /> {t('Special Instructions')}
+                                    <div className="p-3 rounded-xl flex-1" style={{ background: 'var(--surface)', border: '1px solid var(--border)', minHeight: 100 }}>
+                                        <span className="text-[10px] block uppercase tracking-wide mb-2 font-semibold flex items-center gap-1" style={{ color: 'var(--txt-3)' }}>
+                                            <AlertCircle size={11} /> {t('Special Instructions')}
                                         </span>
-                                        <p className="text-gray-600 dark:text-gray-300 italic text-xs leading-relaxed">
+                                        <p className="text-[12px] italic leading-relaxed" style={{ color: 'var(--txt-2)' }}>
                                             "{order.instructions || t('No specific instructions provided.')}"
                                         </p>
                                     </div>
@@ -255,19 +263,20 @@ export default function Show({ auth, order }: Props) {
                     </div>
 
                     {/* Right Column - Sidebar (1/3) */}
-                    <div className="space-y-6">
+                    <div className="flex flex-col gap-5">
                         {/* Order Timeline */}
                         <OrderTimeline history={order.history} />
 
                         {/* Chat */}
-                        <div className="glass-card rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
-                            <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700/50 flex justify-between items-center bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm">
-                                <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2 text-xs uppercase tracking-wide">
+                        <div className="card overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
+                            <div className="px-4 py-3 border-b flex justify-between items-center" style={{ borderColor: 'var(--border)' }}>
+                                <h3 className="font-semibold text-[12px] uppercase tracking-widest" style={{ color: 'var(--txt-2)' }}>
                                     {t('Live Order Chat')}
                                 </h3>
-                                <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-900/30">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                    <span className="text-[10px] font-bold text-green-700 dark:text-green-400">{t('Online')}</span>
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full"
+                                    style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[#34d399] animate-pulse" />
+                                    <span className="text-[10px] font-bold" style={{ color: '#34d399' }}>{t('Online')}</span>
                                 </div>
                             </div>
                             <ChatBox orderId={order.id} compact className="border-none shadow-none" />
@@ -278,16 +287,17 @@ export default function Show({ auth, order }: Props) {
 
             {/* 3D STL Viewer Modal */}
             <Modal show={!!viewingStl} onClose={() => setViewingStl(null)} maxWidth="2xl">
-                <div className="p-6 bg-white dark:bg-slate-800">
+                <div className="p-5" style={{ background: 'var(--bg-raised)' }}>
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Box className="w-5 h-5 text-primary-500" /> {t('3D Model Viewer')}
+                        <h3 className="font-bold text-[14px] flex items-center gap-2" style={{ color: 'var(--txt-1)' }}>
+                            <Box size={15} style={{ color: '#60ddc6' }} /> {t('3D Model Viewer')}
                         </h3>
-                        <button onClick={() => setViewingStl(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
-                            <X className="w-5 h-5" />
+                        <button onClick={() => setViewingStl(null)} style={{ color: 'var(--txt-3)' }}>
+                            <X size={16} />
                         </button>
                     </div>
-                    <div className="h-[60vh] min-h-[500px] w-full bg-slate-900 rounded-xl overflow-hidden relative shadow-inner border border-slate-700">
+                    <div className="h-[60vh] min-h-[500px] w-full rounded-xl overflow-hidden"
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)' }}>
                         {viewingStl && <ThreeDViewer url={viewingStl} color="#e8d2ac" />}
                     </div>
                 </div>

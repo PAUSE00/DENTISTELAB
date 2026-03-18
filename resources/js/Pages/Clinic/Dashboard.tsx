@@ -1,21 +1,19 @@
 import ClinicLayout from '@/Layouts/ClinicLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { Package, Clock, CheckCircle2, ArrowRight, Users, MessageSquare, DollarSign, Activity, Zap, Sparkles, TrendingUp, Calendar } from 'lucide-react';
 import {
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
+    Package, Clock, CheckCircle2, ArrowRight, Users, DollarSign,
+    Activity, Zap, TrendingUp, Calendar, ExternalLink,
+    Plus, AlertTriangle, Bell, ChevronRight, Stethoscope,
+    BarChart2, MessageSquare, FileText, Shield, Settings
+} from 'lucide-react';
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+    ResponsiveContainer, LineChart, Line
 } from 'recharts';
 import DateRangeFilter from '@/Components/DateRangeFilter';
 import { useEffect } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
-import { router } from '@inertiajs/react';
-import CustomTooltip from '@/Components/CustomTooltip';
 
 interface DashboardProps extends PageProps {
     stats: {
@@ -24,46 +22,66 @@ interface DashboardProps extends PageProps {
         completed_orders: number;
         total_spend: number;
     };
-    chartData: Array<{
-        name: string;
-        orders: number;
-        spend: number;
-    }>;
+    chartData: Array<{ name: string; orders: number; spend: number }>;
     recent_orders: Array<{
-        id: number;
-        patient_name: string;
-        service_name: string;
-        status: string;
-        created_at: string;
-        due_date: string;
+        id: number; patient_name: string; service_name: string;
+        status: string; created_at: string; due_date: string;
     }>;
-    filters: {
-        start_date: string;
-        end_date: string;
-    };
+    filters: { start_date: string; end_date: string };
 }
 
-const StatCard = ({ icon: Icon, label, value, color, delay, trend }: any) => {
+const STATUS: Record<string, { label: string; dot: string; text: string; bg: string }> = {
+    new:         { label: 'New',         dot: '#60ddc6', text: '#60ddc6', bg: 'rgba(96,221,198,0.1)'  },
+    in_progress: { label: 'In Progress', dot: '#818cf8', text: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
+    fitting:     { label: 'Fitting',     dot: '#c084fc', text: '#c084fc', bg: 'rgba(192,132,252,0.1)' },
+    finished:    { label: 'Finished',    dot: '#34d399', text: '#34d399', bg: 'rgba(52,211,153,0.1)'  },
+    shipped:     { label: 'Shipped',     dot: '#60ddc6', text: '#60ddc6', bg: 'rgba(96,221,198,0.1)'  },
+    delivered:   { label: 'Delivered',   dot: '#34d399', text: '#34d399', bg: 'rgba(52,211,153,0.1)'  },
+    rejected:    { label: 'Rejected',    dot: '#f87171', text: '#f87171', bg: 'rgba(248,113,113,0.1)' },
+    archived:    { label: 'Archived',    dot: '#94a3b8', text: '#94a3b8', bg: 'rgba(148,163,184,0.1)' },
+    cancelled:   { label: 'Cancelled',   dot: '#f87171', text: '#f87171', bg: 'rgba(248,113,113,0.1)' },
+};
+
+const PRIORITY: Record<string, { label: string; color: string; bg: string }> = {
+    high:   { label: 'high',   color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
+    medium: { label: 'med',    color: '#f59e0b', bg: 'rgba(245,158,11,0.12)'  },
+    low:    { label: 'low',    color: '#34d399', bg: 'rgba(52,211,153,0.12)'  },
+};
+
+const getPriority = (order: DashboardProps['recent_orders'][0]) => {
+    if (!order.due_date) return PRIORITY.low;
+    const diff = (new Date(order.due_date).getTime() - Date.now()) / 86400000;
+    if (diff < 3) return PRIORITY.high;
+    if (diff < 7) return PRIORITY.medium;
+    return PRIORITY.low;
+};
+
+const StatusPill = ({ status, t }: { status: string; t: any }) => {
+    const s = STATUS[status] ?? STATUS.new;
     return (
-        <div className={`glass-card rounded-3xl p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-500 animate-fade-in ${delay}`}>
-            <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110 pointer-events-none`}></div>
-            <div className="relative">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br from-${color}-500 to-${color}-600 text-white shadow-xl shadow-${color}-500/20 flex items-center justify-center mb-6`}>
-                    <Icon className="w-7 h-7" />
-                </div>
-                <div className="flex items-end justify-between">
-                    <div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">{label}</h3>
-                        <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
-                    </div>
-                    {trend && (
-                        <div className="flex items-center gap-1 text-emerald-500 font-black text-[10px] mb-1">
-                            <TrendingUp className="w-3 h-3" />
-                            {trend}
-                        </div>
-                    )}
-                </div>
-            </div>
+        <span className="status-pill" style={{ background: s.bg, color: s.text }}>
+            <span className="dot" style={{ background: s.dot }} />
+            {t(s.label)}
+        </span>
+    );
+};
+
+const fmtDate = (d: string) =>
+    new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const fmtCurrency = (v: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(v);
+
+const ChartTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="card px-3 py-2 text-[11.5px] shadow-xl" style={{ border: '1px solid var(--border-strong)' }}>
+            <p style={{ color: 'var(--txt-3)' }}>{label}</p>
+            {payload.map((p: any) => (
+                <p key={p.dataKey} className="font-semibold mt-0.5" style={{ color: p.color }}>
+                    {p.dataKey === 'spend' ? fmtCurrency(p.value) : `${p.value} orders`}
+                </p>
+            ))}
         </div>
     );
 };
@@ -74,309 +92,350 @@ export default function Dashboard({ auth, stats, chartData, recent_orders, filte
     useEffect(() => {
         if (window.Echo) {
             window.Echo.private(`clinic.${auth.user.clinic_id}`)
-                .listen('.order.updated', (e: any) => {
+                .listen('.order.updated', () => {
                     router.reload({ only: ['stats', 'chartData', 'recent_orders'] });
                 });
         }
-        return () => {
-            if (window.Echo) {
-                window.Echo.leave(`clinic.${auth.user.clinic_id}`);
-            }
-        };
+        return () => { if (window.Echo) window.Echo.leave(`clinic.${auth.user.clinic_id}`); };
     }, [auth.user.clinic_id]);
 
-    const statusBadges: Record<string, string> = {
-        new: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]',
-        in_progress: 'bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]',
-        fitting: 'bg-purple-500/10 text-purple-500 border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]',
-        finished: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]',
-        shipped: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]',
-        delivered: 'bg-green-500/10 text-green-500 border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]',
-        rejected: 'bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)]',
-        archived: 'bg-slate-500/10 text-slate-500 border-slate-500/20 shadow-[0_0_15px_rgba(100,116,139,0.1)]',
-    };
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    const pendingNew = Math.round(stats.pending_orders * 0.7);
+    const pendingCritical = stats.pending_orders - pendingNew;
+    const pendingPct = stats.total_orders > 0 ? (stats.pending_orders / stats.total_orders) * 100 : 0;
+
+    const actions = [
+        { label: 'New Protocol',    sub: 'Initialize Order',         icon: Plus,           color: '#60ddc6', bg: 'rgba(96,221,198,0.08)',   href: 'clinic.orders.create'   },
+        { label: 'Patient Intake',  sub: 'Patient Entry',            icon: Users,          color: '#818cf8', bg: 'rgba(129,140,248,0.08)',  href: 'clinic.patients.create' },
+        { label: 'Teleconsultation',sub: 'Full Audit',               icon: Stethoscope,    color: '#c084fc', bg: 'rgba(192,132,252,0.08)',  href: 'clinic.orders.index'    },
+        { label: 'Inventory Mgmt', sub: 'Stock & materials',         icon: Package,        color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',   href: 'clinic.orders.index'    },
+        { label: 'Team Comms',      sub: 'Coordination Hub',         icon: MessageSquare,  color: '#34d399', bg: 'rgba(52,211,153,0.08)',   href: 'clinic.team.index'      },
+        { label: 'Billing',         sub: 'Billing overview',         icon: FileText,       color: '#f87171', bg: 'rgba(248,113,113,0.08)',  href: 'clinic.orders.index'    },
+    ];
 
     return (
         <ClinicLayout>
             <Head title={t('Clinic Dashboard')} />
 
-            <div id="clinic-dashboard" className="space-y-8 pb-10">
-                {/* Hero Section */}
-                <div className="relative overflow-hidden bg-slate-900 rounded-[2.5rem] p-10 shadow-2xl">
-                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/10 to-transparent pointer-events-none" />
-                    <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-500/20 blur-[100px] rounded-full pointer-events-none" />
+            <div className="flex flex-col gap-5 pb-10">
 
-                    <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-                        <div>
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 font-black text-[10px] uppercase tracking-widest mb-6">
-                                <Sparkles className="w-3.5 h-3.5" />
-                                {t('Operational Excellence')}
-                            </div>
-                            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4">
-                                {t('Welcome to Your')} <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-                                    {t('Digital Clinic')}
-                                </span>
-                            </h1>
-                            <p className="text-slate-400 text-lg font-medium max-w-xl">
-                                {t('Monitor your cases, track laboratory progress, and manage clinic operations from a single unified workspace.')}
-                            </p>
-                        </div>
+                {/* ── Welcome Banner ─────────────────────────────────────── */}
+                <div className="relative overflow-hidden rounded-2xl px-6 py-5 flex items-center justify-between gap-4"
+                    style={{ background: 'linear-gradient(135deg, rgba(96,221,198,0.06) 0%, rgba(129,140,248,0.05) 100%)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full opacity-10 pointer-events-none"
+                        style={{ background: 'radial-gradient(circle, #60ddc6, transparent)', filter: 'blur(40px)' }} />
 
-                        <div className="flex flex-wrap gap-4">
-                            <Link
-                                href={route('clinic.orders.create')}
-                                className="group relative overflow-hidden flex items-center gap-3 px-8 py-5 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl shadow-[0_15px_40px_rgba(59,130,246,0.3)] transition-all duration-500"
-                            >
-                                <Package className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                                <div className="text-left">
-                                    <span className="block font-black tracking-tight leading-none mb-1">{t('Dispatch Order')}</span>
-                                    <span className="block text-[10px] uppercase font-black opacity-60 tracking-widest leading-none">{t('Instant Lab Request')}</span>
-                                </div>
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </div>
+                    <div className="relative z-10">
+                        <h2 className="text-[22px] font-extrabold tracking-tight" style={{ color: 'var(--txt-1)' }}>
+                            {t(greeting)}, <span style={{ color: '#60ddc6' }}>{t('Dr.')} {auth.user.name.split(' ').pop()}</span> 👋
+                        </h2>
+                        <p className="text-[12px] mt-1 font-medium" style={{ color: 'var(--txt-3)' }}>
+                            {auth.user.clinic?.name} · {t('Digital Workspace')}
+                        </p>
                     </div>
 
-                    <div className="absolute bottom-0 left-10 translate-y-1/2 flex items-center gap-4">
+                    <div className="flex items-center gap-3 relative z-10 flex-wrap justify-end">
+                        <div className="hidden lg:flex flex-col items-end">
+                            <span className="text-[12px] font-semibold" style={{ color: 'var(--txt-2)' }}>{dateStr}</span>
+                            <span className="text-[11px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'var(--txt-3)' }}>{timeStr}</span>
+                        </div>
+                        <div style={{ width: 1, height: 28, background: 'var(--border-strong)' }} />
                         <DateRangeFilter startDate={filters.start_date} endDate={filters.end_date} />
+                        <Link href={route('clinic.orders.create')} className="btn-primary shrink-0">
+                            <Plus size={13} /> {t('New Order')}
+                        </Link>
                     </div>
                 </div>
 
-                {/* Stats Matrix */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
-                    <StatCard
-                        icon={Package}
-                        label={t('Total Requests')}
-                        value={stats.total_orders}
-                        color="blue"
-                        delay="animate-delay-100"
-                        trend="14%"
-                    />
-                    <StatCard
-                        icon={Clock}
-                        label={t('In Production')}
-                        value={stats.pending_orders}
-                        color="amber"
-                        delay="animate-delay-200"
-                    />
-                    <StatCard
-                        icon={CheckCircle2}
-                        label={t('Successfully Delivered')}
-                        value={stats.completed_orders}
-                        color="emerald"
-                        delay="animate-delay-300"
-                        trend="22%"
-                    />
-                    <StatCard
-                        icon={DollarSign}
-                        label={t('Financial Volume')}
-                        value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD' }).format(stats.total_spend)}
-                        color="indigo"
-                        delay="animate-delay-400"
-                    />
+                {/* ── KPI Cards ─────────────────────────────────────────── */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+
+                    {/* Pending */}
+                    <div className="card p-4 flex flex-col gap-2 group" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Pending Requests')}</p>
+                            <Package size={13} style={{ color: 'var(--txt-3)' }} />
+                        </div>
+                        <p className="text-[32px] font-black leading-none tabular-nums" style={{ color: 'var(--txt-1)' }}>{stats.pending_orders}</p>
+                        <div>
+                            <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--surface)' }}>
+                                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pendingPct, 100)}%`, background: 'linear-gradient(90deg, #60ddc6, #818cf8)' }} />
+                            </div>
+                            <div className="flex justify-between mt-1.5">
+                                <span className="text-[10.5px] font-semibold" style={{ color: '#60ddc6' }}>{pendingNew} {t('New')}</span>
+                                <span className="text-[10.5px] font-semibold" style={{ color: '#f87171' }}>{pendingCritical} {t('Critical')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* In Production */}
+                    <div className="card p-4 flex flex-col gap-2" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('In Production')}</p>
+                            <Clock size={13} style={{ color: '#f59e0b' }} />
+                        </div>
+                        <p className="text-[32px] font-black leading-none tabular-nums" style={{ color: 'var(--txt-1)' }}>{stats.total_orders}</p>
+                        <div className="flex items-center gap-4">
+                            {[...Array(8)].map((_, i) => (
+                                <div key={i} className="flex-1 h-1.5 rounded-full"
+                                    style={{ background: i < Math.min(stats.total_orders, 8) ? '#f59e0b' : 'var(--surface)' }} />
+                            ))}
+                        </div>
+                        <p className="text-[10.5px] font-semibold" style={{ color: 'var(--txt-3)' }}>
+                            · {t('Status')} · {t('Active')}
+                        </p>
+                    </div>
+
+                    {/* Delivered */}
+                    <div className="card p-4 flex flex-col gap-2" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Delivered (30d)')}</p>
+                            <CheckCircle2 size={13} style={{ color: '#34d399' }} />
+                        </div>
+                        <p className="text-[32px] font-black leading-none tabular-nums" style={{ color: 'var(--txt-1)' }}>{stats.completed_orders}</p>
+                        <div style={{ height: 32 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={chartData.slice(-8)}>
+                                    <Line type="monotone" dataKey="orders" stroke="#34d399" strokeWidth={1.5} dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Revenue */}
+                    <div className="card p-4 flex flex-col gap-2" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Revenue (MAD)')}</p>
+                            <DollarSign size={13} style={{ color: '#60ddc6' }} />
+                        </div>
+                        <p className="text-[28px] font-black leading-none tabular-nums" style={{ color: 'var(--txt-1)' }}>{fmtCurrency(stats.total_spend)}</p>
+                        <div style={{ height: 32 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={chartData.slice(-8)}>
+                                    <Line type="monotone" dataKey="spend" stroke="#60ddc6" strokeWidth={1.5} dot={false} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Expenditure Visualization */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="glass-card rounded-[2rem] p-8 border-none overflow-hidden relative group">
-                            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
-                                <TrendingUp className="w-64 h-64 text-blue-500" />
-                            </div>
+                {/* ── Middle Row: Chart + Action Center ─────────────────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-                            <div className="flex items-center justify-between mb-8">
-                                <div>
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('Operational Insight')}</h3>
-                                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">{t('Network Traffic & Expenditure')}</p>
-                                </div>
-                                <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-blue-500">
-                                    <Activity className="w-6 h-6" />
-                                </div>
+                    {/* Dual-axis chart */}
+                    <div className="card lg:col-span-7 p-5 flex flex-col gap-3" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-[13.5px] font-bold" style={{ color: 'var(--txt-1)' }}>{t('Clinic Activity & Financial Trend')}</p>
+                                <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                    {new Date(filters.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} —&nbsp;
+                                    {new Date(filters.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </p>
                             </div>
-
-                            <div className="h-80 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" strokeOpacity={0.4} />
-                                        <XAxis
-                                            dataKey="name"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
-                                            dy={10}
-                                        />
-                                        <YAxis
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
-                                        />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="spend"
-                                            stroke="#3b82f6"
-                                            strokeWidth={4}
-                                            fillOpacity={1}
-                                            fill="url(#colorSpend)"
-                                            animationDuration={2000}
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
+                            <div className="flex items-center gap-3 text-[11px]">
+                                <span className="flex items-center gap-1.5" style={{ color: '#818cf8' }}>
+                                    <span className="w-4 h-0.5 rounded" style={{ background: '#818cf8', display: 'inline-block' }} />
+                                    {t('Order Count')}
+                                </span>
+                                <span className="flex items-center gap-1.5" style={{ color: '#60ddc6' }}>
+                                    <span className="w-4 h-0.5 rounded" style={{ background: '#60ddc6', display: 'inline-block' }} />
+                                    {t('Revenue')}
+                                </span>
                             </div>
                         </div>
 
-                        {/* Order Management Table */}
-                        <div className="glass-card rounded-[2rem] border-none overflow-hidden relative">
-                            <div className="p-8 border-b border-slate-100 dark:border-slate-800/50 flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('Active Operations')}</h3>
-                                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">{t('Real-time Tracking')}</p>
-                                </div>
-                                <Link
-                                    href={route('clinic.orders.index')}
-                                    className="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl font-black text-[10px] uppercase tracking-widest transition-colors"
-                                >
-                                    {t('Network Registry')}
-                                </Link>
-                            </div>
+                        <div style={{ height: 200 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="gOrders" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#818cf8" stopOpacity={0.2} />
+                                            <stop offset="100%" stopColor="#818cf8" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="gSpend" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#60ddc6" stopOpacity={0.2} />
+                                            <stop offset="100%" stopColor="#60ddc6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false}
+                                        tick={{ fill: 'var(--txt-3)', fontSize: 10 }} dy={8} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--txt-3)', fontSize: 10 }} />
+                                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.06)', strokeWidth: 1 }} />
+                                    <Area type="monotone" dataKey="orders" stroke="#818cf8" strokeWidth={1.5}
+                                        fillOpacity={1} fill="url(#gOrders)" dot={false}
+                                        activeDot={{ r: 3, fill: '#818cf8', strokeWidth: 0 }} />
+                                    <Area type="monotone" dataKey="spend" stroke="#60ddc6" strokeWidth={1.5}
+                                        fillOpacity={1} fill="url(#gSpend)" dot={false}
+                                        activeDot={{ r: 3, fill: '#60ddc6', strokeWidth: 0 }} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
 
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-slate-50/50 dark:bg-slate-800/20">
-                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('ID')}</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('Registry Name')}</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('Service Type')}</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('Due Date')}</th>
-                                            <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('State')}</th>
-                                            <th className="px-8 py-5"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                                        {recent_orders.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={6} className="px-8 py-12 text-center">
-                                                    <div className="flex flex-col items-center gap-3 opacity-20">
-                                                        <Activity className="w-12 h-12" />
-                                                        <span className="font-black text-sm uppercase tracking-widest">{t('No active processes')}</span>
-                                                    </div>
+                    {/* Action Center */}
+                    <div className="card lg:col-span-5 p-5 flex flex-col gap-4" style={{ background: 'var(--bg-raised)' }}>
+                        <div>
+                            <p className="text-[13.5px] font-bold" style={{ color: 'var(--txt-1)' }}>{t('Clinic Action Center')}</p>
+                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>{t('Quick actions & initialization tools')}</p>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2.5">
+                            {actions.map(({ label, sub, icon: Icon, color, bg, href }) => (
+                                <Link key={label} href={route(href as any)}
+                                    className="flex flex-col items-start gap-2 p-3 rounded-xl border transition-all duration-200 group"
+                                    style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.borderColor = `${color}40`;
+                                        e.currentTarget.style.background = bg;
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.borderColor = 'var(--border)';
+                                        e.currentTarget.style.background = 'var(--surface)';
+                                    }}>
+                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
+                                        style={{ background: bg, color }}>
+                                        <Icon size={14} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[11.5px] font-bold leading-tight" style={{ color: 'var(--txt-1)' }}>{t(label)}</p>
+                                        <p className="text-[9.5px] uppercase tracking-widest font-bold mt-0.5" style={{ color: 'var(--txt-3)' }}>{t(sub)}</p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Alerts Row ────────────────────────────────────────── */}
+                {stats.pending_orders > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                            style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
+                                <AlertTriangle size={15} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[12px] font-bold truncate" style={{ color: '#f59e0b' }}>{t('Pending Orders')}</p>
+                                <p className="text-[10.5px] truncate" style={{ color: 'var(--txt-3)' }}>
+                                    {stats.pending_orders} {t('orders awaiting action')}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                            style={{ background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)' }}>
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(248,113,113,0.12)', color: '#f87171' }}>
+                                <Clock size={15} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[12px] font-bold truncate" style={{ color: '#f87171' }}>{t('Due Soon')}</p>
+                                <p className="text-[10.5px] truncate" style={{ color: 'var(--txt-3)' }}>
+                                    {t('Review needed')} ({new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                            style={{ background: 'rgba(129,140,248,0.06)', border: '1px solid rgba(129,140,248,0.2)' }}>
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(129,140,248,0.12)', color: '#818cf8' }}>
+                                <Bell size={15} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[12px] font-bold truncate" style={{ color: '#818cf8' }}>{t('Notifications')}</p>
+                                <p className="text-[10.5px] truncate" style={{ color: 'var(--txt-3)' }}>{t('Check your messages')}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Active Operations Registry ─────────────────────────── */}
+                <div className="card overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
+                    <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border)' }}>
+                        <div>
+                            <p className="text-[13.5px] font-bold" style={{ color: 'var(--txt-1)' }}>{t('Active Operations Registry')}</p>
+                        </div>
+                        <Link href={route('clinic.orders.index')}
+                            className="flex items-center gap-1.5 text-[11.5px] font-semibold transition-opacity hover:opacity-70"
+                            style={{ color: '#60ddc6' }}>
+                            {t('Network Registry')} <ExternalLink size={11} />
+                        </Link>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>{t('Order ID')}</th>
+                                    <th>{t('Priority')}</th>
+                                    <th>{t('Patient Name')}</th>
+                                    <th className="hidden md:table-cell">{t('Service Type')}</th>
+                                    <th className="hidden lg:table-cell">{t('Estimated Finish')}</th>
+                                    <th>{t('Status')}</th>
+                                    <th className="w-16" />
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {recent_orders.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="text-center py-12" style={{ color: 'var(--txt-3)' }}>
+                                            {t('No active processes')}
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    recent_orders.map(order => {
+                                        const pri = getPriority(order);
+                                        return (
+                                            <tr key={order.id}
+                                                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface)')}
+                                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                                                <td>
+                                                    <span className="font-bold tabular-nums" style={{ color: '#60ddc6' }}>
+                                                        #{order.id}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span className="text-[10.5px] font-black uppercase px-2 py-0.5 rounded-md"
+                                                        style={{ background: pri.bg, color: pri.color }}>
+                                                        {pri.label}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span className="font-semibold text-[12.5px]" style={{ color: 'var(--txt-1)' }}>
+                                                        {order.patient_name}
+                                                    </span>
+                                                </td>
+                                                <td className="hidden md:table-cell">
+                                                    <span className="text-[12px]" style={{ color: 'var(--txt-2)' }}>
+                                                        {order.service_name}
+                                                    </span>
+                                                </td>
+                                                <td className="hidden lg:table-cell">
+                                                    <span className="text-[12px]" style={{ color: 'var(--txt-2)' }}>
+                                                        {order.due_date ? fmtDate(order.due_date) : '—'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <StatusPill status={order.status} t={t} />
+                                                </td>
+                                                <td className="text-right">
+                                                    <Link href={route('clinic.orders.show', order.id)}
+                                                        className="w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all hover:scale-110"
+                                                        style={{ color: 'var(--txt-3)' }}
+                                                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = '#60ddc6'; }}
+                                                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--txt-3)'; }}>
+                                                        <ChevronRight size={13} />
+                                                    </Link>
                                                 </td>
                                             </tr>
-                                        ) : (
-                                            recent_orders.map((order) => (
-                                                <tr key={order.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                                    <td className="px-8 py-5 font-black text-sm text-slate-400 tracking-tighter">#{order.id}</td>
-                                                    <td className="px-8 py-5">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-blue-500/20">
-                                                                {order.patient_name.substring(0, 2).toUpperCase()}
-                                                            </div>
-                                                            <span className="font-bold text-slate-900 dark:text-white tracking-tight">{order.patient_name}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-5">
-                                                        <div className="flex items-center gap-2 font-black text-xs text-slate-600 dark:text-slate-400 uppercase tracking-tighter">
-                                                            <Zap className="w-4 h-4 text-blue-500" />
-                                                            {order.service_name}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-8 py-5 font-bold text-xs text-slate-500 dark:text-slate-500 tracking-tight">
-                                                        {new Date(order.due_date).toLocaleDateString()}
-                                                    </td>
-                                                    <td className="px-8 py-5">
-                                                        <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${statusBadges[order.status] || 'bg-slate-100 text-slate-800'}`}>
-                                                            {t(order.status.replace('_', ' '))}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-8 py-5 text-right">
-                                                        <Link
-                                                            href={route('clinic.orders.show', order.id)}
-                                                            className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all border border-transparent hover:border-blue-500/20"
-                                                        >
-                                                            <ArrowRight className="w-5 h-5" />
-                                                        </Link>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Sidebar Area */}
-                    <div className="space-y-8">
-                        {/* Quick Action Matrix */}
-                        <div className="glass-card rounded-[2rem] p-8 border-none relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
-                                <Zap className="w-24 h-24 text-blue-500" />
-                            </div>
-
-                            <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-6">{t('Command Matrix')}</h3>
-
-                            <div className="space-y-3">
-                                <Link
-                                    href={route('clinic.orders.create')}
-                                    className="flex items-center gap-4 w-full p-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:shadow-2xl hover:shadow-blue-500/30 text-white rounded-[1.5rem] transition-all duration-300 group"
-                                >
-                                    <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white ring-8 ring-white/5">
-                                        <Package className="w-5 h-5" />
-                                    </div>
-                                    <div className="text-left">
-                                        <span className="block font-black tracking-tight text-sm">{t('New Protocol')}</span>
-                                        <span className="block text-[10px] uppercase font-black opacity-60 tracking-widest mt-0.5">{t('Initialize Order')}</span>
-                                    </div>
-                                </Link>
-
-                                <Link
-                                    href={route('clinic.patients.create')}
-                                    className="flex items-center gap-4 w-full p-5 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] transition-all group"
-                                >
-                                    <div className="w-10 h-10 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-blue-500">
-                                        <Users className="w-5 h-5" />
-                                    </div>
-                                    <div className="text-left">
-                                        <span className="block font-black tracking-tight text-sm text-slate-900 dark:text-white">{t('Patient Intake')}</span>
-                                        <span className="block text-[10px] uppercase font-black text-slate-400 tracking-widest mt-0.5">{t('Registry Entry')}</span>
-                                    </div>
-                                </Link>
-
-                                <Link
-                                    href={route('clinic.orders.index')}
-                                    className="flex items-center gap-4 w-full p-5 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] transition-all group"
-                                >
-                                    <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-500">
-                                        <Calendar className="w-5 h-5" />
-                                    </div>
-                                    <div className="text-left">
-                                        <span className="block font-black tracking-tight text-sm text-slate-900 dark:text-white">{t('Operational Log')}</span>
-                                        <span className="block text-[10px] uppercase font-black text-slate-400 tracking-widest mt-0.5">{t('Full Audit')}</span>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Support Channel */}
-                        <div className="glass-card rounded-[2rem] p-8 border-none relative overflow-hidden bg-gradient-to-br from-indigo-500/10 to-transparent">
-                            <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-[0.2em] mb-4">{t('Direct Transmission')}</h3>
-                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                                {t('Need technical intervention or have protocol queries? Connect directly with our lab technocrats.')}
-                            </p>
-                            <button className="flex items-center gap-3 w-full p-4 bg-white dark:bg-slate-800 rounded-2xl text-slate-900 dark:text-white font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-md transition-all group">
-                                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                    <MessageSquare className="w-4 h-4" />
-                                </div>
-                                {t('Open Support Channel')}
-                            </button>
-                        </div>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

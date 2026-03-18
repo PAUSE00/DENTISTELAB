@@ -1,28 +1,20 @@
 import ClinicLayout from '@/Layouts/ClinicLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { Save, Building2, Mail, Phone, MapPin, Image as ImageIcon } from 'lucide-react';
+import { Save, Building2, Mail, Phone, MapPin, Image as ImageIcon, Settings } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import UpdatePasswordForm from '@/Pages/Profile/Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from '@/Pages/Profile/Partials/UpdateProfileInformationForm';
+import useTranslation from '@/Hooks/useTranslation';
 
 interface Clinic {
-    id: number;
-    name: string;
-    email: string | null;
-    phone: string | null;
-    address: string | null;
-    logo_path: string | null;
+    id: number; name: string; email: string | null; phone: string | null; address: string | null; logo_path: string | null;
 }
-
-interface Props extends PageProps {
-    clinic: Clinic;
-    mustVerifyEmail: boolean;
-    status?: string;
-}
+interface Props extends PageProps { clinic: Clinic; mustVerifyEmail: boolean; status?: string; }
 
 export default function SettingsIndex({ auth, clinic, mustVerifyEmail, status }: Props) {
     const { flash } = usePage().props as any;
+    const { t } = useTranslation();
     const [toast, setToast] = useState<string | null>(null);
 
     const { data, setData, post, processing, errors, isDirty } = useForm({
@@ -31,14 +23,14 @@ export default function SettingsIndex({ auth, clinic, mustVerifyEmail, status }:
         phone: clinic.phone || '',
         address: clinic.address || '',
         logo: null as File | null,
-        _method: 'PATCH', // For file uploads we need to fake PATCH with POST
+        _method: 'PATCH',
     });
 
     useEffect(() => {
         if (flash?.success) {
             setToast(flash.success);
-            const timer = setTimeout(() => setToast(null), 3000);
-            return () => clearTimeout(timer);
+            const t = setTimeout(() => setToast(null), 3000);
+            return () => clearTimeout(t);
         }
     }, [flash]);
 
@@ -47,164 +39,156 @@ export default function SettingsIndex({ auth, clinic, mustVerifyEmail, status }:
         post(route('clinic.settings.update'));
     };
 
+    const fieldStyle = {
+        background: 'var(--surface)',
+        border: '1px solid var(--border-strong)',
+        color: 'var(--txt-1)',
+        borderRadius: 8,
+        padding: '7px 12px',
+        fontSize: 13,
+        fontFamily: 'inherit',
+        outline: 'none',
+        width: '100%',
+    };
+
+    const labelStyle = {
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase' as const,
+        color: 'var(--txt-3)',
+        marginBottom: 6,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+    };
+
     return (
         <ClinicLayout>
-            <Head title="Settings" />
+            <Head title={t('Settings')} />
 
             {/* Toast */}
             {toast && (
-                <div className="fixed top-20 right-6 z-50 animate-slide-in-right">
-                    <div className="bg-emerald-500 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {toast}
-                    </div>
+                <div className="fixed top-20 right-6 z-50 px-4 py-3 rounded-xl text-[13px] font-semibold flex items-center gap-2 shadow-lg"
+                    style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }}>
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {toast}
                 </div>
             )}
 
-            <div className="max-w-3xl mx-auto animate-fade-in space-y-6">
+            <div className="max-w-2xl mx-auto flex flex-col gap-5 pb-10">
+
                 {/* Header */}
-                <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                        Paramètres de la Clinique
-                    </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Gérez les informations de votre clinique
-                    </p>
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: 'rgba(96,221,198,0.1)', color: '#60ddc6' }}>
+                        <Settings size={18} />
+                    </div>
+                    <div>
+                        <h1 className="text-[17px] font-bold tracking-tight" style={{ color: 'var(--txt-1)' }}>
+                            {t('Clinic Settings')}
+                        </h1>
+                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                            {t('Manage your clinic information')}
+                        </p>
+                    </div>
                 </div>
 
-                {/* Settings Form */}
+                {/* Clinic Form */}
                 <form onSubmit={submit} encType="multipart/form-data">
-                    <div className="glass-card rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
-                        <div className="p-6 space-y-6">
+                    <div className="card overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--border)' }}>
+                            <p className="text-[12px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('Clinic Profile')}</p>
+                        </div>
+                        <div className="p-5 flex flex-col gap-5">
+
                             {/* Logo Upload */}
                             <div>
-                                <label className="flex items-center gap-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
-                                    <ImageIcon className="w-4 h-4 text-primary-500" />
-                                    Logo de la clinique
+                                <label style={labelStyle}>
+                                    <ImageIcon size={13} /> {t('Clinic Logo')}
                                 </label>
-                                <div className="flex items-center gap-6">
-                                    <div className="w-24 h-24 rounded-2xl bg-gray-50 dark:bg-slate-900 border-2 border-dashed border-gray-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-                                        {clinic.logo_path ? (
-                                            <img src={`/storage/${clinic.logo_path}`} alt="Clinic Logo" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Building2 className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-                                        )}
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
+                                        style={{ background: 'var(--surface)', border: '2px dashed var(--border-strong)' }}>
+                                        {clinic.logo_path
+                                            ? <img src={`/storage/${clinic.logo_path}`} alt="Logo" className="w-full h-full object-cover" />
+                                            : <Building2 size={20} style={{ color: 'var(--txt-3)' }} />
+                                        }
                                     </div>
                                     <div className="flex-1">
-                                        <input
-                                            type="file"
-                                            onChange={(e) => setData('logo', e.target.files ? e.target.files[0] : null)}
-                                            className="block w-full text-sm text-gray-500 dark:text-gray-400
-                                            file:mr-4 file:py-2 file:px-4
-                                            file:rounded-full file:border-0
-                                            file:text-sm file:font-semibold
-                                            file:bg-primary-50 file:text-primary-700
-                                            dark:file:bg-primary-900/20 dark:file:text-primary-400
-                                            hover:file:bg-primary-100 dark:hover:file:bg-primary-900/40 transition-colors cursor-pointer"
-                                            accept="image/*"
-                                        />
-                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                                            PNG, JPG ou WEBP. Max 2MB.
-                                        </p>
-                                        {errors.logo && <p className="text-red-500 text-xs mt-1">{errors.logo}</p>}
+                                        <input type="file" accept="image/*"
+                                            onChange={e => setData('logo', e.target.files?.[0] ?? null)}
+                                            className="block w-full text-[12px]"
+                                            style={{ color: 'var(--txt-2)' }} />
+                                        <p className="text-[11px] mt-1.5" style={{ color: 'var(--txt-3)' }}>PNG, JPG or WEBP · Max 2MB</p>
+                                        {errors.logo && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.logo}</p>}
                                     </div>
                                 </div>
                             </div>
-                            <hr className="border-gray-100 dark:border-slate-700" />
+
+                            <div style={{ height: 1, background: 'var(--border)' }} />
 
                             {/* Clinic Name */}
                             <div>
-                                <label className="flex items-center gap-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 mt-2">
-                                    <Building2 className="w-4 h-4 text-primary-500" />
-                                    Nom de la clinique
-                                </label>
-                                <input
-                                    type="text"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none text-sm"
-                                    placeholder="Nom de la clinique"
-                                />
-                                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                <label style={labelStyle}><Building2 size={13} /> {t('Clinic Name')}</label>
+                                <input type="text" style={fieldStyle} value={data.name}
+                                    onChange={e => setData('name', e.target.value)}
+                                    onFocus={e => { e.target.style.borderColor = 'var(--teal)'; e.target.style.boxShadow = '0 0 0 3px rgba(96,221,198,0.12)'; }}
+                                    onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+                                    placeholder={t('Clinic name')} />
+                                {errors.name && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.name}</p>}
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Email */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="flex items-center gap-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
-                                        <Mail className="w-4 h-4 text-emerald-500" />
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        value={data.email}
-                                        onChange={(e) => setData('email', e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none text-sm"
-                                        placeholder="contact@clinique.ma"
-                                    />
-                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                    <label style={labelStyle}><Mail size={13} /> {t('Email')}</label>
+                                    <input type="email" style={fieldStyle} value={data.email}
+                                        onChange={e => setData('email', e.target.value)}
+                                        onFocus={e => { e.target.style.borderColor = 'var(--teal)'; e.target.style.boxShadow = '0 0 0 3px rgba(96,221,198,0.12)'; }}
+                                        onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+                                        placeholder="contact@clinic.ma" />
+                                    {errors.email && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.email}</p>}
                                 </div>
-
-                                {/* Phone */}
                                 <div>
-                                    <label className="flex items-center gap-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
-                                        <Phone className="w-4 h-4 text-orange-500" />
-                                        Téléphone
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        value={data.phone}
-                                        onChange={(e) => setData('phone', e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none text-sm"
-                                        placeholder="0522-123456"
-                                    />
-                                    {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                                    <label style={labelStyle}><Phone size={13} /> {t('Phone')}</label>
+                                    <input type="tel" style={fieldStyle} value={data.phone}
+                                        onChange={e => setData('phone', e.target.value)}
+                                        onFocus={e => { e.target.style.borderColor = 'var(--teal)'; e.target.style.boxShadow = '0 0 0 3px rgba(96,221,198,0.12)'; }}
+                                        onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+                                        placeholder="0522-123456" />
+                                    {errors.phone && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.phone}</p>}
                                 </div>
                             </div>
 
-                            {/* Address */}
                             <div>
-                                <label className="flex items-center gap-2 text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 mt-2">
-                                    <MapPin className="w-4 h-4 text-blue-500" />
-                                    Adresse
-                                </label>
-                                <textarea
+                                <label style={labelStyle}><MapPin size={13} /> {t('Address')}</label>
+                                <textarea rows={3} style={{ ...fieldStyle, resize: 'none' }}
                                     value={data.address}
-                                    onChange={(e) => setData('address', e.target.value)}
-                                    rows={3}
-                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all outline-none text-sm resize-none"
-                                    placeholder="Adresse complète de la clinique"
-                                />
-                                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                                    onChange={e => setData('address', e.target.value)}
+                                    onFocus={e => { e.target.style.borderColor = 'var(--teal)'; e.target.style.boxShadow = '0 0 0 3px rgba(96,221,198,0.12)'; }}
+                                    onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+                                    placeholder={t('Full clinic address')} />
+                                {errors.address && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.address}</p>}
                             </div>
                         </div>
 
-                        {/* Footer */}
-                        <div className="px-6 py-4 bg-gray-50/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-700/50 flex justify-end backdrop-blur-sm">
-                            <button
-                                type="submit"
-                                disabled={processing || !isDirty}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-xl shadow-lg shadow-primary-500/30 hover:-translate-y-0.5 transition-all duration-300 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Save className="w-4 h-4" />
-                                {processing ? 'Enregistrement...' : 'Enregistrer'}
+                        <div className="px-5 py-3.5 border-t flex justify-end" style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                            <button type="submit" disabled={processing || !isDirty} className="btn-primary disabled:opacity-50">
+                                <Save size={13} />
+                                {processing ? t('Saving...') : t('Save Changes')}
                             </button>
                         </div>
                     </div>
                 </form>
 
-                {/* Account / User Settings */}
-                <div className="glass-card rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden p-6 sm:p-8">
-                    <UpdateProfileInformationForm
-                        mustVerifyEmail={mustVerifyEmail}
-                        status={status}
-                        className="max-w-xl"
-                    />
+                {/* Account Settings */}
+                <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
+                    <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} className="max-w-xl" />
                 </div>
 
-                <div className="glass-card rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden p-6 sm:p-8">
+                <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
                     <UpdatePasswordForm className="max-w-xl" />
                 </div>
             </div>

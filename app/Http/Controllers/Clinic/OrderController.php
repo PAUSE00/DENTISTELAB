@@ -84,10 +84,12 @@ class OrderController extends Controller
 
         // Get only labs connected to this clinic
         $labs = Auth::user()->clinic->labs()->with('services')->get();
+        $templates = \App\Models\OrderTemplate::where('clinic_id', Auth::user()->clinic_id)->get();
 
         return Inertia::render('Clinic/Orders/Create', [
             'patients' => $patients,
             'labs' => $labs,
+            'templates' => $templates,
         ]);
     }
 
@@ -228,10 +230,12 @@ class OrderController extends Controller
             });
 
         $labs = Auth::user()->clinic->labs()->with('services')->get();
+        $templates = \App\Models\OrderTemplate::where('clinic_id', Auth::user()->clinic_id)->get();
 
         return Inertia::render('Clinic/Orders/Create', [
             'patients' => $patients,
             'labs' => $labs,
+            'templates' => $templates,
             'duplicate' => [
                 'patient_id' => $order->patient_id,
                 'lab_id' => $order->lab_id,

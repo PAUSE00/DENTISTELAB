@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Clinic;
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class PatientController extends Controller
@@ -56,6 +57,9 @@ class PatientController extends Controller
             'email' => 'nullable|email|max:255',
             'external_id' => 'nullable|string|max:50',
             'medical_notes' => 'nullable|string',
+            'allergies' => 'nullable|string',
+            'medical_history' => 'nullable|string',
+            'blood_group' => 'nullable|string|max:5',
         ]);
 
         $request->user()->clinic->patients()->create($validated);
@@ -70,11 +74,16 @@ class PatientController extends Controller
     public function show(Patient $patient)
     {
         // Ensure the patient belongs to the user's clinic
-        if ($patient->clinic_id !== auth()->user()->clinic_id) {
+        if ($patient->clinic_id !== Auth::user()->clinic_id) {
             abort(403);
         }
 
-        $patient->load('orders.lab', 'orders.service', 'orders.history.user');
+        $patient->load([
+            'orders.lab', 
+            'orders.service', 
+            'appointments.doctor', 
+            'clinicalNotes.author'
+        ]);
 
         // Compute stats
         $orders = $patient->orders;
@@ -87,10 +96,70 @@ class PatientController extends Controller
             'cancelled' => $orders->whereIn('status', ['cancelled', 'rejected'])->count(),
         ];
 
+        // Merge all into a timeline
+        /** @var \Illuminate\Support\Collection $timeline */
+        $timeline = collect();
+
+        foreach ($orders as $order) {
+            $timeline->push([
+                'id' => 'order-' . $order->id,
+                'date' => $order->created_at,
+                'type' => 'order',
+                'title' => 'New Order: ' . $order->service->name,
+                'status' => $order->status,
+                'lab' => $order->lab->name,
+                'price' => $order->final_price ?: $order->price,
+            ]);
+        }
+
+        foreach ($patient->appointments as $app) {
+            $timeline->push([
+                'id' => 'app-' . $app->id,
+                'date' => $app->start_time,
+                'type' => 'appointment',
+                'title' => 'Appointment: ' . $app->status,
+                'doctor' => $app->doctor->name,
+                'status' => $app->status,
+                'notes' => $app->notes,
+            ]);
+        }
+
+        foreach ($patient->clinicalNotes as $note) {
+            $timeline->push([
+                'id' => 'note-' . $note->id,
+                'date' => $note->created_at,
+                'type' => 'clinical_note',
+                'title' => 'Clinical Note (' . ucfirst($note->type) . ')',
+                'author' => $note->author->name,
+                'content' => $note->content,
+            ]);
+        }
+
         return Inertia::render('Clinic/Patients/Show', [
             'patient' => $patient,
             'stats' => $stats,
+            'timeline' => $timeline->sortByDesc('date')->values(),
         ]);
+    }
+
+    public function storeNote(Request $request, Patient $patient)
+    {
+        if ($patient->clinic_id !== Auth::user()->clinic_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|string|in:general,prescription,diagnostic',
+            'content' => 'required|string',
+        ]);
+
+        $patient->clinicalNotes()->create([
+            'type' => $validated['type'],
+            'content' => $validated['content'],
+            'author_id' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Clinical note added.');
     }
 
     /**
@@ -98,7 +167,7 @@ class PatientController extends Controller
      */
     public function edit(Patient $patient)
     {
-        if ($patient->clinic_id !== auth()->user()->clinic_id) {
+        if ($patient->clinic_id !== Auth::user()->clinic_id) {
             abort(403);
         }
 
@@ -112,7 +181,7 @@ class PatientController extends Controller
      */
     public function update(Request $request, Patient $patient)
     {
-        if ($patient->clinic_id !== auth()->user()->clinic_id) {
+        if ($patient->clinic_id !== Auth::user()->clinic_id) {
             abort(403);
         }
 
@@ -124,6 +193,9 @@ class PatientController extends Controller
             'email' => 'nullable|email|max:255',
             'external_id' => 'nullable|string|max:50',
             'medical_notes' => 'nullable|string',
+            'allergies' => 'nullable|string',
+            'medical_history' => 'nullable|string',
+            'blood_group' => 'nullable|string|max:5',
         ]);
 
         $patient->update($validated);
@@ -137,7 +209,7 @@ class PatientController extends Controller
      */
     public function destroy(Patient $patient)
     {
-        if ($patient->clinic_id !== auth()->user()->clinic_id) {
+        if ($patient->clinic_id !== Auth::user()->clinic_id) {
             abort(403);
         }
 

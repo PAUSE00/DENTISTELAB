@@ -23,7 +23,7 @@ Route::post('/invitation/{token}/accept', [\App\Http\Controllers\InvitationContr
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         /** @var \App\Models\User $user */
-        $user = auth()->user();
+        $user = \Illuminate\Support\Facades\Auth::user();
         if ($user->role === 'lab_owner' || $user->role === 'lab_tech') {
             return redirect()->route('lab.dashboard');
         } elseif ($user->role === 'dentist' || $user->role === 'clinic_staff') {
@@ -40,8 +40,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ════════════════════════════════════════════════════════════
     Route::middleware('role:dentist|clinic_staff')->prefix('clinic')->name('clinic.')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Clinic\DashboardController::class, 'index'])->name('dashboard');
+        Route::post('patients/{patient}/notes', [\App\Http\Controllers\Clinic\PatientController::class, 'storeNote'])->name('patients.store-note');
         Route::resource('patients', \App\Http\Controllers\Clinic\PatientController::class);
         Route::resource('orders', \App\Http\Controllers\Clinic\OrderController::class);
+        Route::resource('appointments', \App\Http\Controllers\Clinic\AppointmentController::class);
+        Route::get('analytics', [\App\Http\Controllers\Clinic\AnalyticsController::class, 'index'])->name('analytics.index');
+        
+        Route::get('explore', [\App\Http\Controllers\Clinic\ExploreController::class, 'index'])->name('explore.index');
+        Route::get('explore/lab/{lab}', [\App\Http\Controllers\Clinic\ExploreController::class, 'show'])->name('explore.show');
+        
+        Route::get('billing', [\App\Http\Controllers\Clinic\BillingController::class, 'index'])->name('billing.index');
+        Route::get('billing/invoices/{invoice}', [\App\Http\Controllers\Clinic\BillingController::class, 'showInvoice'])->name('billing.invoice.show');
+        
+        Route::get('analytics', [\App\Http\Controllers\Clinic\AnalyticsController::class, 'index'])->name('analytics.index');
+        
+        Route::get('templates', [\App\Http\Controllers\Clinic\TemplateController::class, 'index'])->name('templates.index');
+        Route::post('templates', [\App\Http\Controllers\Clinic\TemplateController::class, 'store'])->name('templates.store');
+        Route::put('templates/{template}', [\App\Http\Controllers\Clinic\TemplateController::class, 'update'])->name('templates.update');
+        Route::delete('templates/{template}', [\App\Http\Controllers\Clinic\TemplateController::class, 'destroy'])->name('templates.destroy');
+        
         Route::post('orders/{order}/upload', [\App\Http\Controllers\Clinic\OrderController::class, 'uploadFile'])->name('orders.upload');
         Route::delete('orders/{order}/files/{file}', [\App\Http\Controllers\Clinic\OrderController::class, 'deleteFile'])->name('orders.delete-file');
         Route::post('orders/{order}/duplicate', [\App\Http\Controllers\Clinic\OrderController::class, 'duplicate'])->name('orders.duplicate');
@@ -99,6 +116,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Settings
         Route::get('settings', [\App\Http\Controllers\Lab\SettingsController::class, 'index'])->name('settings.index')->middleware('role:lab_owner');
         Route::patch('settings', [\App\Http\Controllers\Lab\SettingsController::class, 'update'])->name('settings.update')->middleware('role:lab_owner');
+
+        // Invoices
+        Route::middleware('role:lab_owner')->group(function () {
+            Route::get('invoices', [\App\Http\Controllers\Lab\InvoiceController::class, 'index'])->name('invoices.index');
+            Route::get('invoices/create', [\App\Http\Controllers\Lab\InvoiceController::class, 'create'])->name('invoices.create');
+            Route::get('invoices/clinics/{clinic}/orders', [\App\Http\Controllers\Lab\InvoiceController::class, 'getClinicsOrders'])->name('invoices.clinic-orders');
+            Route::post('invoices', [\App\Http\Controllers\Lab\InvoiceController::class, 'store'])->name('invoices.store');
+            Route::get('invoices/{invoice}', [\App\Http\Controllers\Lab\InvoiceController::class, 'show'])->name('invoices.show');
+            Route::patch('invoices/{invoice}/status', [\App\Http\Controllers\Lab\InvoiceController::class, 'updateStatus'])->name('invoices.update-status');
+        });
 
         // CSV Export
         Route::get('export/orders', [\App\Http\Controllers\Lab\ExportController::class, 'orders'])->name('export.orders');

@@ -7,12 +7,22 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { useState, FormEventHandler, useRef } from 'react';
-import { Check, ChevronRight, Upload, FileText, AlertCircle, User, Building, Activity, Calendar, File as FileIcon, X, ArrowLeft, Loader2 } from 'lucide-react';
+import { Check, ChevronRight, Upload, FileText, AlertCircle, User, Building, Activity, Calendar, File as FileIcon, X, ArrowLeft, Loader2, Bookmark } from 'lucide-react';
 import Odontogram from '@/Components/Odontogram';
+import useTranslation from '@/Hooks/useTranslation';
 
 // Types
 interface Patient { id: number; name: string; }
 interface Lab { id: number; name: string; services: any[] }
+
+interface Template {
+    id: number;
+    name: string;
+    lab_id: number | null;
+    service_id: number | null;
+    teeth_data: number[] | null;
+    notes: string | null;
+}
 
 interface DuplicateData {
     patient_id: number;
@@ -28,12 +38,14 @@ interface DuplicateData {
 interface Props extends PageProps {
     patients: Patient[];
     labs: Lab[];
+    templates: Template[];
     duplicate?: DuplicateData;
 }
 
-export default function Create({ auth, patients, labs, duplicate }: Props) {
+export default function Create({ auth, patients, labs, templates, duplicate }: Props) {
     const [step, setStep] = useState(1);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { t } = useTranslation();
 
     const { data, setData, post, processing, errors } = useForm({
         // Step 1
@@ -53,17 +65,16 @@ export default function Create({ auth, patients, labs, duplicate }: Props) {
         files: [] as File[],
     });
 
+    const applyTemplate = (template: Template) => {
+        if (template.lab_id) setData('lab_id', template.lab_id.toString());
+        // Wait for lab selection to propagate if service depends on it? 
+        // In this UI it's separate state, so we just set it.
+        if (template.service_id) setData('service_id', template.service_id.toString());
+        if (template.teeth_data) setData('teeth', template.teeth_data);
+        if (template.notes) setData('instructions', template.notes);
+    };
+
     const nextStep = () => {
-        // Simple validation before proceeding
-        if (step === 1) {
-            if (!data.patient_id || !data.lab_id || !data.service_id || !data.due_date) {
-                // In a real app, we'd show errors here. For now, we rely on HTML validation or just block.
-                // Let's force a "touch" to show errors if we were using a library like React Hook Form, 
-                // but with Inertia helper we essentially rely on backend validation or manual checks.
-                // We'll just let them proceed for now or checking manually:
-                // For better UX, we could set a "touched" state.
-            }
-        }
         setStep(step + 1);
     };
 
@@ -73,16 +84,6 @@ export default function Create({ auth, patients, labs, duplicate }: Props) {
         e.preventDefault();
         post(route('clinic.orders.store'));
     };
-
-    // Filter services based on selected lab
-    const selectedLab = labs.find(l => l.id.toString() === data.lab_id);
-    const availableServices = selectedLab ? selectedLab.services : [];
-
-    const steps = [
-        { id: 1, name: 'Patient & Service', icon: User },
-        { id: 2, name: 'Clinical Details', icon: Activity },
-        { id: 3, name: 'Files & Review', icon: FileText },
-    ];
 
     const removeFile = (indexToRemove: number) => {
         setData('files', data.files.filter((_, index) => index !== indexToRemove));
@@ -96,20 +97,49 @@ export default function Create({ auth, patients, labs, duplicate }: Props) {
         }
     };
 
+    // Filter services based on selected lab
+    const selectedLab = labs.find(l => l.id.toString() === data.lab_id);
+    const availableServices = selectedLab ? selectedLab.services : [];
+
+    const steps = [
+        { id: 1, name: 'Patient & Service', icon: User },
+        { id: 2, name: 'Clinical Details', icon: Activity },
+        { id: 3, name: 'Files & Review', icon: FileText },
+    ];
+
     return (
         <ClinicLayout>
             <Head title="New Order" />
 
             <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-8">
-                    <button onClick={() => window.history.back()} className="p-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">Create New Order</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Step {step} of 3: {steps[step - 1].name}</p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => window.history.back()} className="p-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">Create New Order</h1>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Step {step} of 3: {steps[step - 1].name}</p>
+                        </div>
                     </div>
+
+                    {/* Quick Templates Toggle */}
+                    {templates.length > 0 && (
+                        <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar max-w-md">
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-40 shrink-0">{t('Smart Presets')}:</span>
+                            {templates.map(tmp => (
+                                <button 
+                                    key={tmp.id} 
+                                    type="button"
+                                    onClick={() => applyTemplate(tmp)}
+                                    className="px-3 py-1.5 rounded-lg border border-indigo-500/20 bg-indigo-500/5 text-indigo-400 text-[10px] font-bold hover:bg-indigo-500/10 transition-all shrink-0 flex items-center gap-1.5"
+                                >
+                                    <Bookmark size={10} /> {tmp.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Stepper */}

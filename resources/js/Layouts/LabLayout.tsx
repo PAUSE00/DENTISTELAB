@@ -48,42 +48,42 @@ export default function LabLayout({ children, header, fullBleed }: Props) {
     const isActive = (p: string) => route().current(p);
 
     const getPageTitle = () => {
-        if (isActive('lab.dashboard'))       return t('Dashboard');
-        if (isActive('lab.analytics.*'))     return t('Analytics');
-        if (isActive('lab.orders.*'))        return t('Orders');
-        if (isActive('lab.kanban.*'))        return t('Production Board');
-        if (isActive('lab.calendar.*'))      return t('Schedule');
-        if (isActive('lab.inbox.*'))         return t('Messages');
-        if (isActive('lab.reports.*'))       return t('Reports');
-        if (isActive('lab.services.*'))      return t('Service Catalog');
-        if (isActive('lab.clients.*'))       return t('Clients');
-        if (isActive('lab.finance.*'))       return t('Finance');
-        if (isActive('lab.team.*'))          return t('My Team');
-        if (isActive('lab.settings.*'))      return t('Settings');
-        if (isActive('notifications.*'))     return t('Notifications');
+        if (isActive('lab.dashboard')) return t('Dashboard');
+        if (isActive('lab.analytics.*')) return t('Analytics');
+        if (isActive('lab.orders.*')) return t('Orders');
+        if (isActive('lab.kanban.*')) return t('Production Board');
+        if (isActive('lab.calendar.*')) return t('Schedule');
+        if (isActive('lab.inbox.*')) return t('Messages');
+        if (isActive('lab.reports.*')) return t('Reports');
+        if (isActive('lab.services.*')) return t('Service Catalog');
+        if (isActive('lab.clients.*')) return t('Clients');
+        if (isActive('lab.finance.*')) return t('Finance');
+        if (isActive('lab.team.*')) return t('My Team');
+        if (isActive('lab.settings.*')) return t('Settings');
+        if (isActive('notifications.*')) return t('Notifications');
         return t('Lab Portal');
     };
 
     const mainLinks = [
-        { path: 'lab.dashboard',      pat: 'lab.dashboard',    label: 'Dashboard',        Icon: LayoutDashboard },
-        { path: 'lab.orders.index',   pat: 'lab.orders.*',     label: 'Orders',           Icon: ClipboardList },
-        { path: 'lab.inbox.index',    pat: 'lab.inbox.*',      label: 'Messages',         Icon: MessageSquare },
-        { path: 'lab.kanban.index',   pat: 'lab.kanban.*',     label: 'Production Board', Icon: Kanban },
-        { path: 'lab.calendar.index', pat: 'lab.calendar.*',   label: 'Schedule',         Icon: CalendarDays },
-        { path: 'lab.services.index', pat: 'lab.services.*',   label: 'Service Catalog',  Icon: Package },
+        { path: 'lab.dashboard', pat: 'lab.dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+        { path: 'lab.orders.index', pat: 'lab.orders.*', label: 'Orders', Icon: ClipboardList },
+        { path: 'lab.inbox.index', pat: 'lab.inbox.*', label: 'Messages', Icon: MessageSquare },
+        { path: 'lab.kanban.index', pat: 'lab.kanban.*', label: 'Production Board', Icon: Kanban },
+        { path: 'lab.calendar.index', pat: 'lab.calendar.*', label: 'Schedule', Icon: CalendarDays },
+        { path: 'lab.services.index', pat: 'lab.services.*', label: 'Service Catalog', Icon: Package },
         ...(user.role === 'lab_owner'
             ? [{ path: 'lab.analytics.index', pat: 'lab.analytics.*', label: 'Analytics', Icon: BarChart3 }]
             : []),
     ];
 
     const mgmtLinks = [
-        { path: 'lab.clients.index',  pat: 'lab.clients.*',  label: 'Clients',        Icon: Users },
-        { path: 'lab.finance.index',  pat: 'lab.finance.*',  label: 'Finance',        Icon: DollarSign },
-        { path: 'notifications.index',pat: 'notifications.*',label: 'Notifications',  Icon: BellRing },
-        { path: 'lab.team.index',     pat: 'lab.team.*',     label: 'My Team',        Icon: Shield },
+        { path: 'lab.clients.index', pat: 'lab.clients.*', label: 'Clients', Icon: Users },
+        { path: 'lab.finance.index', pat: 'lab.finance.*', label: 'Finance', Icon: DollarSign },
+        { path: 'notifications.index', pat: 'notifications.*', label: 'Notifications', Icon: BellRing },
+        { path: 'lab.team.index', pat: 'lab.team.*', label: 'My Team', Icon: Shield },
         ...(user.role === 'lab_owner' ? [
-            { path: 'lab.reports.index',  pat: 'lab.reports.*',  label: 'Reports',        Icon: FileBarChart2 },
-            { path: 'lab.settings.index', pat: 'lab.settings.*', label: 'Settings',       Icon: Settings },
+            { path: 'lab.reports.index', pat: 'lab.reports.*', label: 'Reports', Icon: FileBarChart2 },
+            { path: 'lab.settings.index', pat: 'lab.settings.*', label: 'Settings', Icon: Settings },
         ] : []),
     ];
 

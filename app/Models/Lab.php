@@ -49,4 +49,19 @@ class Lab extends Model
     {
         return $this->belongsToMany(Clinic::class)->withPivot('status')->withTimestamps();
     }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function orderTemplates()
+    {
+        return $this->hasMany(OrderTemplate::class);
+    }
 }
