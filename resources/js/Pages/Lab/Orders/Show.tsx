@@ -17,16 +17,8 @@ import OrderTimeline from '@/Components/Orders/OrderTimeline';
 import OrderAttachments from '@/Components/Orders/OrderAttachments';
 import OrderNotes from '@/Components/Orders/OrderNotes';
 import OrderActions from '@/Components/Orders/OrderActions';
-import { OrderFile, AllowedTransition, OrderHistoryEntry, OrderNote } from '@/types/order';
-
-interface Order {
-    id: number; status: string; priority: string; due_date: string; created_at: string;
-    teeth: number[]; shade: string; material: string; instructions: string | null;
-    patient: { id: number; first_name: string; last_name: string };
-    clinic: { id: number; name: string };
-    service: { id: number; name: string };
-    files: OrderFile[]; history: OrderHistoryEntry[]; notes: OrderNote[];
-}
+import OrderPaymentSection from '@/Components/Orders/OrderPaymentSection';
+import { Order, AllowedTransition } from '@/types/order';
 
 interface Props extends PageProps {
     order: Order;
@@ -222,6 +214,11 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
                             {/* RIGHT: FILES & NOTES + ACTIONS */}
                             <div className="flex flex-col gap-6">
                                 
+                                {/* New: Payment Section */}
+                                <div className="rounded-xl shadow-sm border p-6 flex flex-col" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                    <OrderPaymentSection order={order} canRecord={auth.user.role === 'lab_owner' || auth.user.role === 'lab_tech'} />
+                                </div>
+
                                 <div className="flex flex-col gap-3">
                                     <h2 className="text-[11px] font-bold uppercase tracking-[0.08em] ml-1" style={{ color: 'var(--txt-3)' }}>
                                         {t('Files & Notes')}
@@ -277,15 +274,8 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
                              </div>
                          )}
                          {sidebarTab === 'chat' && (
-                             <div className="absolute inset-0 flex flex-col bg-[var(--surface)]">
-                                 <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
-                                    <div className="flex items-center gap-2 font-bold text-[10.5px] uppercase tracking-wider" style={{ color: 'var(--teal-10)' }}>
-                                        <span className="w-2 h-2 rounded-full bg-[#4ade80] animate-pulse" /> {t('Clinic Chat · Live')}
-                                    </div>
-                                 </div>
-                                 <div className="flex-1 overflow-hidden">
-                                     <ChatBox orderId={order.id} compact className="border-none shadow-none h-full !bg-transparent" />
-                                 </div>
+                             <div className="absolute inset-0 flex flex-col">
+                                 <ChatBox orderId={order.id} compact={false} className="h-full" />
                              </div>
                          )}
                     </div>
@@ -310,7 +300,7 @@ export default function Show({ auth, order, allowedTransitions }: Props) {
                      )}
                      {sidebarTab === 'chat' && (
                          <div className="flex-1 flex flex-col">
-                             <ChatBox orderId={order.id} compact className="border-none shadow-none h-full !bg-transparent" />
+                             <ChatBox orderId={order.id} compact={false} className="h-full" />
                          </div>
                      )}
                 </div>

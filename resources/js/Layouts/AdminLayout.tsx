@@ -99,22 +99,24 @@ export default function AdminLayout({ children, header }: Props) {
     ];
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans antialiased text-sm">
+        <div className="min-h-screen transition-colors duration-300 font-sans antialiased text-sm" style={{ background: 'var(--bg-color)', color: 'var(--txt-1)' }}>
             {/* Sidebar */}
             <aside
-                className={`fixed left-0 top-0 h-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 z-50 transform transition-all duration-300 shadow-[0_0_40px_rgba(0,0,0,0.03)] dark:shadow-[0_0_40px_rgba(0,0,0,0.2)] flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                className={`fixed left-0 top-0 h-full z-50 transform transition-all duration-300 flex flex-col border-r ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                     } ${isSidebarCollapsed ? 'w-[88px]' : 'w-64'}`}
+                style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}
             >
                 {/* Desktop Collapse Toggle */}
                 <button
                     onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                    className="hidden lg:flex absolute -right-3.5 top-8 w-7 h-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full items-center justify-center text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 z-50 shadow-sm transition-all hover:scale-110"
+                    className="hidden lg:flex absolute -right-3.5 top-8 w-7 h-7 rounded-full items-center justify-center z-50 shadow-sm transition-all hover:scale-110 border"
+                    style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--txt-3)' }}
                 >
                     {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                 </button>
 
                 {/* Brand */}
-                <div className={`relative flex flex-col items-center gap-3 border-b border-slate-100 dark:border-slate-800/50 overflow-hidden group/brand shrink-0 transition-all ${isSidebarCollapsed ? 'p-5' : 'p-6'}`}>
+                <div className={`relative flex flex-col items-center gap-3 border-b overflow-hidden group/brand shrink-0 transition-all ${isSidebarCollapsed ? 'p-5' : 'p-6'}`} style={{ borderColor: 'var(--border)' }}>
                     <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 to-transparent pointer-events-none" />
 
                     <div className={`relative rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold shadow-xl shadow-indigo-500/20 group-hover/brand:scale-105 group-hover/brand:rotate-3 transition-all duration-500 z-10 ${isSidebarCollapsed ? 'w-11 h-11' : 'w-14 h-14'}`}>
@@ -123,53 +125,55 @@ export default function AdminLayout({ children, header }: Props) {
 
                     {!isSidebarCollapsed && (
                         <div className="relative z-10 text-center animate-fade-in w-full">
-                            <h1 className="font-bold text-lg tracking-tight text-slate-900 dark:text-white truncate">
+                            <h1 className="font-bold text-lg tracking-tight truncate" style={{ color: 'var(--txt-1)' }}>
                                 <span>DentalLab<span className="text-indigo-500">Pro</span></span>
                             </h1>
-                            <p className="text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 font-bold mt-0.5 truncate">{t('Administration')}</p>
+                            <p className="text-[10px] uppercase tracking-widest font-bold mt-0.5 truncate" style={{ color: 'var(--txt-3)' }}>{t('Administration')}</p>
                         </div>
                     )}
                 </div>
 
                 {/* Navigation */}
                 <nav className={`flex-1 overflow-y-auto no-scrollbar pb-6 ${isSidebarCollapsed ? 'p-3' : 'p-3'}`}>
-                    {mainNavLinks.map((item) => (
-                        <Link
-                            key={item.routePath}
-                            href={route(item.routePath)}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative mb-1 ${route().current(item.activePattern)
-                                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 active-glow'
-                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-indigo-500'
-                                } ${isSidebarCollapsed ? 'justify-center px-0 mx-1' : ''}`}
-                            title={isSidebarCollapsed ? t(item.label) : undefined}
-                        >
-                            <item.Icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110`} />
-                            {!isSidebarCollapsed && <span className="font-medium truncate">{t(item.label)}</span>}
-                            {route().current(item.activePattern) && !isSidebarCollapsed && (
-                                <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white/50 backdrop-blur-md" />
-                            )}
-                        </Link>
-                    ))}
+                    {mainNavLinks.map((item) => {
+                        const active = route().current(item.activePattern);
+                        return (
+                            <Link
+                                key={item.routePath}
+                                href={route(item.routePath)}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative mb-1 ${active ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'hover:bg-black/5 dark:hover:bg-white/5 hover:text-indigo-500'} ${isSidebarCollapsed ? 'justify-center px-0 mx-1' : ''}`}
+                                style={!active ? { color: 'var(--txt-3)' } : {}}
+                                title={isSidebarCollapsed ? t(item.label) : undefined}
+                            >
+                                <item.Icon className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110`} />
+                                {!isSidebarCollapsed && <span className="font-medium truncate">{t(item.label)}</span>}
+                                {active && !isSidebarCollapsed && (
+                                    <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white/50 backdrop-blur-md" />
+                                )}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
                 {/* Footer User Profile */}
-                <div className="p-4 border-t border-slate-100 dark:border-slate-800/50 bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm shrink-0">
-                    <div className={`flex items-center gap-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 p-2.5 border border-slate-100 dark:border-slate-700/50 transition-all group ${isSidebarCollapsed ? 'flex-col p-2 justify-center' : ''}`}>
-                        <div className={`shrink-0 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold ring-2 ring-white dark:ring-slate-700 shadow-sm ${isSidebarCollapsed ? 'w-8 h-8 text-xs' : 'w-9 h-9 text-sm'}`}>
+                <div className="p-4 border-t shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-raised)' }}>
+                    <div className={`flex items-center gap-3 rounded-2xl p-2.5 border transition-all group ${isSidebarCollapsed ? 'flex-col p-2 justify-center' : ''}`} style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                        <div className={`shrink-0 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold ring-2 shadow-sm ${isSidebarCollapsed ? 'w-8 h-8 text-xs' : 'w-9 h-9 text-sm'}`} style={{ '--tw-ring-color': 'var(--bg-raised)' } as React.CSSProperties}>
                             {getInitials(user.name)}
                         </div>
 
                         {!isSidebarCollapsed && (
                             <div className="flex-1 min-w-0">
-                                <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{user.name}</p>
-                                <p className="text-[10px] uppercase font-bold text-indigo-500 dark:text-indigo-400 truncate">{t(user.role.replace('_', ' '))}</p>
+                                <p className="font-bold text-xs truncate" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
+                                <p className="text-[10px] uppercase font-bold text-indigo-500 truncate">{t(user.role.replace('_', ' '))}</p>
                             </div>
                         )}
                         <Link
                             href={route('logout')}
                             method="post"
                             as="button"
-                            className={`rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all p-2`}
+                            className={`rounded-lg hover:text-rose-500 hover:bg-rose-500/10 transition-all p-2`}
+                            style={{ color: 'var(--txt-3)' }}
                             title={t('Log Out')}
                         >
                             <LogOut className="w-4 h-4" />
@@ -179,7 +183,7 @@ export default function AdminLayout({ children, header }: Props) {
             </aside>
 
             {/* Mobile Toggle */}
-            <button onClick={toggleSidebar} className="lg:hidden fixed top-4 right-4 z-[60] p-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+            <button onClick={toggleSidebar} className="lg:hidden fixed top-4 right-4 z-[60] p-2 rounded-xl shadow-xl border" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', color: 'var(--txt-1)' }}>
                 {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
@@ -187,23 +191,23 @@ export default function AdminLayout({ children, header }: Props) {
             <main className={`min-h-screen transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-[88px]' : 'lg:ml-64'}`}>
 
                 {/* Top Header */}
-                <header className="sticky top-0 z-40 bg-[#f8fafc]/80 dark:bg-[#0f172a]/80 backdrop-blur-md px-6 py-4 h-20 flex items-center justify-between border-b border-transparent">
+                <header className="sticky top-0 z-40 px-6 py-4 h-20 flex items-center justify-between border-b" style={{ background: 'var(--bg-color)', borderColor: 'var(--border)' }}>
                     <div className="flex flex-col">
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-1">
+                        <h2 className="text-2xl font-black tracking-tight leading-none mb-1" style={{ color: 'var(--txt-1)' }}>
                             {header || getPageTitle()}
                         </h2>
-                        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             {new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="hidden sm:block bg-white dark:bg-slate-800 rounded-xl border border-slate-200/50 dark:border-slate-700/50 p-1 shadow-sm">
+                        <div className="hidden sm:block rounded-xl border p-1" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                             <LanguageSwitcher />
                         </div>
-                        <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/50 dark:border-slate-700/50 p-1 shadow-sm">
-                             <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400 hover:text-indigo-500">
+                        <div className="flex items-center gap-1 rounded-xl border p-1" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+                             <button onClick={toggleTheme} className="p-2 rounded-lg transition-colors hover:text-indigo-500" style={{ color: 'var(--txt-3)' }}>
                                 {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                             </button>
                             <NotificationBell />

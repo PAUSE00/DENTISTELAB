@@ -34,9 +34,9 @@ interface Props extends PageProps {
     invoices: Invoice[];
     transactions: Transaction[];
     stats: {
-        total_spent: number;
+        total_paid: number;
         outstanding: number;
-        last_month_growth: number;
+        total_ordered: number;
     };
 }
 
@@ -44,7 +44,7 @@ export default function Index({ auth, invoices, transactions, stats }: Props) {
     const { t } = useTranslation();
 
     const formatCurrency = (val: number) => 
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+        new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 2 }).format(val);
 
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -67,50 +67,56 @@ export default function Index({ auth, invoices, transactions, stats }: Props) {
                     <p className="text-sm font-bold opacity-50 uppercase tracking-widest">{t('Track your cash payments and outstanding invoices')}</p>
                 </div>
 
-                {/* Grid Stats */}
+                {/* Focus on Debt and Paid amounts */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Account Balance */}
-                    <div className="card p-6 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)' }}>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500 opacity-10 blur-[60px] -mr-16 -mt-16" />
+                    {/* Outstanding Debt - Primary Focus */}
+                    <div className="card p-6 relative overflow-hidden flex flex-col justify-between" style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(153, 27, 27, 0.4) 100%)', borderColor: 'var(--border)' }}>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500 opacity-20 blur-[60px] -mr-16 -mt-16" />
                         <div className="relative z-10 flex flex-col gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-emerald-200">
-                                <DollarSign size={20} />
+                            <div className="w-10 h-10 rounded-xl bg-rose-500/20 shadow-lg shadow-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-500">
+                                <AlertCircle size={20} />
                             </div>
                             <div>
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-200/60">{t('Account Balance')}</span>
-                                <h3 className="text-3xl font-black text-white mt-1">{formatCurrency(2450.00)}</h3>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-200">{t('Total Outstanding Debt')}</span>
+                                <h3 className="text-4xl font-black text-white mt-1 drop-shadow-sm">{formatCurrency(stats.outstanding)}</h3>
                             </div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
-                                <CheckCircle2 size={14} /> {t('Cash payment system')}
+                            <div className="flex items-center gap-2 text-[12px] font-bold text-rose-300">
+                                {invoices.filter(i => i.status === 'sent').length} {t('Unpaid / Partial Invoices')}
                             </div>
                         </div>
                     </div>
 
-                    {/* Total Spent */}
-                    <div className="card p-6 flex flex-col gap-4" style={{ background: 'var(--bg-raised)' }}>
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500">
-                            <ArrowUpRight size={20} />
-                        </div>
-                        <div>
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--txt-4)' }}>{t('Total Spent')}</span>
-                            <h3 className="text-3xl font-black mt-1" style={{ color: 'var(--txt-1)' }}>{formatCurrency(stats.total_spent)}</h3>
-                        </div>
-                        <div className="text-xs font-bold" style={{ color: 'var(--txt-3)' }}>
-                            {t('Across')} {transactions.length} {t('transactions')}
+                    {/* Total Cash Paid */}
+                    <div className="card p-6 flex flex-col justify-between relative overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-[#60ddc6] opacity-10 blur-[50px] pointer-events-none" />
+                        <div className="relative z-10 flex flex-col gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-[#60ddc6]/10 border border-[#60ddc6]/20 flex items-center justify-center" style={{ color: '#60ddc6' }}>
+                                <Wallet size={20} />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--txt-4)' }}>{t('Total Cash Paid')}</span>
+                                <h3 className="text-3xl font-black mt-1" style={{ color: 'var(--txt-1)' }}>{formatCurrency(stats.total_paid)}</h3>
+                            </div>
+                            <div className="text-xs font-bold" style={{ color: 'var(--txt-3)' }}>
+                                {t('Across')} {transactions.length} {t('registered payments')}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Outstanding */}
-                    <div className="card p-6 flex flex-col gap-4" style={{ background: 'var(--bg-raised)' }}>
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
-                            <Clock size={20} />
-                        </div>
-                        <div>
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--txt-4)' }}>{t('Outstanding')}</span>
-                            <h3 className="text-3xl font-black mt-1" style={{ color: 'var(--txt-1)' }}>{formatCurrency(stats.outstanding)}</h3>
-                        </div>
-                        <div className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
-                            <AlertCircle size={14} /> {invoices.filter(i => i.status === 'sent').length} {t('Pending invoices')}
+                    {/* Total Value Ordered */}
+                    <div className="card p-6 flex flex-col justify-between relative overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-[#818cf8] opacity-10 blur-[60px] pointer-events-none" />
+                        <div className="relative z-10 flex flex-col gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-[#818cf8]/10 border border-[#818cf8]/20 flex items-center justify-center text-[#818cf8]">
+                                <ArrowUpRight size={20} />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--txt-4)' }}>{t('Total Value Ordered')}</span>
+                                <h3 className="text-3xl font-black mt-1" style={{ color: 'var(--txt-1)' }}>{formatCurrency(stats.total_ordered)}</h3>
+                            </div>
+                            <div className="text-[11px] font-bold uppercase tracking-widest opacity-30 mt-1">
+                                {t('Lifetime sum of all orders')}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -124,7 +130,6 @@ export default function Index({ auth, invoices, transactions, stats }: Props) {
                             <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--txt-1)' }}>
                                 <FileText size={20} className="text-indigo-500" /> {t('Recent Invoices')}
                             </h3>
-                            <button className="text-xs font-bold text-indigo-500 hover:underline">{t('View All')}</button>
                         </div>
 
                         <div className="flex flex-col gap-3">
@@ -155,9 +160,20 @@ export default function Index({ auth, invoices, transactions, stats }: Props) {
                                             <Link href={route('clinic.billing.invoice.show', invoice.id)} className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition-all">
                                                 <ExternalLink size={16} />
                                             </Link>
-                                            <button className="p-2 rounded-lg bg-gray-500/10 text-gray-500 hover:bg-gray-500/20 transition-all" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                                                <Download size={16} />
-                                            </button>
+                                            {invoice.order ? (
+                                                <a 
+                                                    href={route('orders.invoice', invoice.order.id)} 
+                                                    className="p-2 rounded-lg bg-gray-500/10 text-gray-500 hover:bg-gray-500/20 transition-all" 
+                                                    style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+                                                    target="_blank"
+                                                >
+                                                    <Download size={16} />
+                                                </a>
+                                            ) : (
+                                                <button disabled className="p-2 rounded-lg opacity-30 cursor-not-allowed" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                                    <Download size={16} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

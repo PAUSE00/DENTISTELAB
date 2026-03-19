@@ -5,8 +5,8 @@ import { FormEventHandler, useRef } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import useTranslation from '@/Hooks/useTranslation';
 
-const LABEL = "block text-[10px] uppercase font-bold tracking-widest mb-2 opacity-70";
-const INPUT_BASE = "w-full px-4 py-2.5 rounded-lg text-[13px] border border-[#312e81] focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-[rgba(15,23,42,0.2)] text-[var(--txt-1)] placeholder-white/30";
+const LABEL = "block text-[10px] uppercase font-black tracking-widest mb-2 opacity-70";
+const INPUT_BASE = "app-input w-full";
 
 export default function UpdatePasswordForm({
     className = '',
@@ -55,7 +55,7 @@ export default function UpdatePasswordForm({
         <form onSubmit={updatePassword} className={`space-y-6 ${className}`}>
             
             {/* Box exactly like reference image */}
-            <div className="rounded-xl border p-6 flex flex-col gap-6 relative" style={{ borderColor: '#312e81', background: 'transparent' }}>
+            <div className="card p-6 flex flex-col gap-6 relative" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Current */}
@@ -131,14 +131,7 @@ export default function UpdatePasswordForm({
                 <button 
                     type="submit" 
                     disabled={processing}
-                    className="px-6 py-2.5 rounded-lg border text-[13px] font-bold transition-all disabled:opacity-50"
-                    style={{
-                        borderColor: '#4338ca', // indigo-700
-                        color: 'var(--txt-1)',
-                        background: 'transparent'
-                    }}
-                    onMouseEnter={e => { if (!processing) e.currentTarget.style.background = 'rgba(67, 56, 202, 0.1)' }}
-                    onMouseLeave={e => { if (!processing) e.currentTarget.style.background = 'transparent' }}
+                    className="btn-primary px-8 py-2.5 rounded-xl text-[13px] font-bold shadow-lg shadow-indigo-500/20 disabled:opacity-50"
                 >
                     {t('Update Password')}
                 </button>

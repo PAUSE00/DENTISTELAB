@@ -1,7 +1,7 @@
 import LabLayout from '@/Layouts/LabLayout';
-import { Head, router } from '@inertiajs/react';
+import { Link, Head, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, Search, Download } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, Search, Download, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
 
@@ -11,7 +11,7 @@ interface Stats {
 }
 interface Order {
     id: number; status: string; payment_status: string; price: number;
-    final_price: number | null; created_at: string;
+    final_price: number | null; created_at: string; paid_amount: number;
     patient?: { first_name: string; last_name: string };
     clinic?: { name: string };
     service?: { name: string };
@@ -176,25 +176,32 @@ export default function FinanceIndex({ auth, stats, clinic_balances, orders, fil
                                 <th>#</th>
                                 <th>{t('Clinic')}</th>
                                 <th>{t('Patient')}</th>
-                                <th>{t('Service')}</th>
-                                <th className="text-right">{t('Amount')}</th>
-                                <th>{t('Payment')}</th>
-                                <th>{t('Update')}</th>
+                                <th className="text-right">{t('Total Price')}</th>
+                                <th className="text-right text-emerald-500">{t('Paid')}</th>
+                                <th className="text-right text-rose-500">{t('Balance')}</th>
+                                <th>{t('Status')}</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             {orders.data.map(order => {
                                 const ps = PAYMENT[order.payment_status] ?? PAYMENT.unpaid;
+                                const total = order.final_price ?? order.price;
+                                const remaining = total - (order.paid_amount || 0);
+
                                 return (
                                     <tr key={order.id}>
-                                        <td><span className="tabular-nums" style={{ color: 'var(--txt-accent)' }}>#{order.id}</span></td>
+                                        <td><span className="tabular-nums font-bold" style={{ color: 'var(--txt-accent)' }}>#{order.id}</span></td>
                                         <td><span style={{ color: 'var(--txt-2)' }}>{order.clinic?.name || '—'}</span></td>
                                         <td><span style={{ color: 'var(--txt-2)' }}>{order.patient ? `${order.patient.first_name} ${order.patient.last_name}` : '—'}</span></td>
-                                        <td><span style={{ color: 'var(--txt-2)' }}>{order.service?.name || '—'}</span></td>
                                         <td className="text-right">
-                                            <span className="font-semibold" style={{ color: 'var(--txt-1)' }}>
-                                                {fmt(order.final_price ?? order.price)}
-                                            </span>
+                                            <span style={{ color: 'var(--txt-1)' }}>{fmt(total)}</span>
+                                        </td>
+                                        <td className="text-right font-bold text-emerald-500">
+                                            {fmt(order.paid_amount || 0)}
+                                        </td>
+                                        <td className="text-right font-black" style={{ color: remaining > 0 ? '#f87171' : 'var(--txt-3)' }}>
+                                            {fmt(remaining)}
                                         </td>
                                         <td>
                                             <span className="status-pill" style={{ background: ps.bg, color: ps.text, borderColor: 'transparent' }}>
@@ -203,13 +210,9 @@ export default function FinanceIndex({ auth, stats, clinic_balances, orders, fil
                                             </span>
                                         </td>
                                         <td>
-                                            <select value={order.payment_status}
-                                                onChange={e => handlePaymentUpdate(order.id, e.target.value)}
-                                                className="app-input" style={{ width: 'auto', paddingTop: '4px', paddingBottom: '4px', fontSize: '12px' }}>
-                                                <option value="unpaid">{t('Unpaid')}</option>
-                                                <option value="partial">{t('Partial')}</option>
-                                                <option value="paid">{t('Paid')}</option>
-                                            </select>
+                                            <Link href={route('lab.orders.show', order.id)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors" style={{ color: 'var(--txt-3)' }}>
+                                                <ExternalLink size={14} />
+                                            </Link>
                                         </td>
                                     </tr>
                                 );

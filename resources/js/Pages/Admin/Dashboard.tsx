@@ -83,21 +83,21 @@ export default function Dashboard({ auth, stats, orderVolumeTrend, recentUsers, 
         };
 
         return (
-            <div className={`bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 relative group hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-indigo-500/10 transition-all duration-500 ${colorMap[color]}`}>
+            <div className={`card overflow-hidden p-6 relative group hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-indigo-500/10 transition-all duration-500 ${colorMap[color]}`} style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                 <div className="flex items-start justify-between relative z-10">
                     <div className={`p-3 rounded-2xl bg-gradient-to-br ${colorMap[color]} shadow-sm group-hover:scale-110 transition-transform duration-500`}>
                         <Icon className="w-6 h-6" />
                     </div>
                     {trend && (
-                        <span className={`text-[10px] font-black py-1 px-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 uppercase tracking-widest`}>
+                        <span className={`text-[10px] font-black py-1 px-2.5 rounded-lg bg-emerald-500/10 text-emerald-500 uppercase tracking-widest`}>
                             {trend}
                         </span>
                     )}
                 </div>
                 <div className="mt-6 relative z-10 text-left">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{label}</p>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter italic">
-                        {value} {unit && <span className="text-xs font-bold text-slate-400 not-italic ml-1">{unit}</span>}
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--txt-3)' }}>{label}</p>
+                    <h3 className="text-2xl font-black tracking-tighter italic" style={{ color: 'var(--txt-1)' }}>
+                        {value} {unit && <span className="text-xs font-bold not-italic ml-1" style={{ color: 'var(--txt-3)' }}>{unit}</span>}
                     </h3>
                 </div>
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-transparent to-slate-200/5 dark:to-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full -mr-16 -mt-16 pointer-events-none" />
@@ -192,15 +192,15 @@ export default function Dashboard({ auth, stats, orderVolumeTrend, recentUsers, 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Trend Chart */}
                     <div className="lg:col-span-2 space-y-8">
-                        <section className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                        <section className="card p-8 relative overflow-hidden group shadow-sm" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                             <div className="flex items-center justify-between mb-10 relative z-10">
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight italic underline decoration-indigo-500/30">{t('Order Volume Trend')}</h3>
-                                    <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-widest">{t('30 Day Activity Analytics')}</p>
+                                    <h3 className="text-xl font-black uppercase tracking-tight italic underline decoration-indigo-500/30" style={{ color: 'var(--txt-1)' }}>{t('Order Volume Trend')}</h3>
+                                    <p className="text-xs font-bold mt-2 uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('30 Day Activity Analytics')}</p>
                                 </div>
-                                <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                                    <button className="px-4 py-1.5 rounded-lg bg-white dark:bg-slate-700 shadow-sm text-[10px] font-black uppercase tracking-wider text-indigo-500">{t('Daily')}</button>
-                                    <button className="px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">{t('Weekly')}</button>
+                                <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'var(--surface)' }}>
+                                    <button className="px-4 py-1.5 rounded-lg shadow-sm text-[10px] font-black uppercase tracking-wider text-indigo-500" style={{ background: 'var(--bg-raised)' }}>{t('Daily')}</button>
+                                    <button className="px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ color: 'var(--txt-3)' }}>{t('Weekly')}</button>
                                 </div>
                             </div>
 
@@ -246,9 +246,9 @@ export default function Dashboard({ auth, stats, orderVolumeTrend, recentUsers, 
                         </section>
 
                         {/* Recent Orders Table */}
-                        <section className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none">
-                            <div className="px-8 py-6 flex items-center justify-between border-b border-slate-50 dark:border-slate-800">
-                                <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-3 italic uppercase tracking-tight underline decoration-indigo-500/30">
+                        <section className="card overflow-hidden" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+                            <div className="px-8 py-6 flex items-center justify-between border-b" style={{ borderColor: 'var(--border)' }}>
+                                <h3 className="font-black flex items-center gap-3 italic uppercase tracking-tight underline decoration-indigo-500/30" style={{ color: 'var(--txt-1)' }}>
                                     <Clock className="w-5 h-5 text-indigo-500" />
                                     {t('Real-time Operations')}
                                 </h3>
@@ -256,33 +256,32 @@ export default function Dashboard({ auth, stats, orderVolumeTrend, recentUsers, 
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest font-black text-slate-400">
+                                    <thead style={{ background: 'var(--surface)' }}>
+                                        <tr className="text-[10px] uppercase tracking-widest font-black" style={{ color: 'var(--txt-3)' }}>
                                             <th className="px-8 py-5 tracking-tighter">{t('Order Reference')}</th>
                                             <th className="px-6 py-5 tracking-tighter">{t('Involved Entities')}</th>
                                             <th className="px-6 py-5 tracking-tighter">{t('Financials')}</th>
                                             <th className="px-6 py-5 tracking-tighter">{t('Progress Status')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                                    <tbody className="divide-y" style={{ borderColor: 'var(--surface)' }}>
                                         {recentOrders.map((order) => (
-                                            <tr key={order.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all duration-300">
+                                            <tr key={order.id} className="group hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-300">
                                                 <td className="px-8 py-5 group-hover:translate-x-1 transition-transform">
-                                                    <p className="font-black text-slate-900 dark:text-white tracking-tighter">ORD-{order.id.toString().padStart(4, '0')}</p>
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{order.patient.first_name} {order.patient.last_name}</p>
+                                                    <p className="font-black tracking-tighter" style={{ color: 'var(--txt-1)' }}>ORD-{order.id.toString().padStart(4, '0')}</p>
+                                                    <p className="text-[10px] font-bold uppercase mt-1" style={{ color: 'var(--txt-3)' }}>{order.patient.first_name} {order.patient.last_name}</p>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-2">
                                                         <Building2 className="w-3 h-3 text-indigo-400" />
-                                                        <span className="font-bold text-slate-700 dark:text-slate-300 text-xs">{order.clinic.name}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <Activity className="w-3 h-3 text-purple-400" />
-                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{order.lab.name}</span>
+                                                        <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--txt-3)' }}>{order.lab.name}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-5">
-                                                    <span className="font-black text-slate-900 dark:text-white text-xs tracking-tight">{order.price.toLocaleString()} MAD</span>
+                                                    <span className="font-black text-xs tracking-tight" style={{ color: 'var(--txt-1)' }}>{order.price.toLocaleString()} MAD</span>
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
@@ -300,63 +299,63 @@ export default function Dashboard({ auth, stats, orderVolumeTrend, recentUsers, 
                     {/* Sidebar Area */}
                     <div className="space-y-6">
                         {/* Summary Card */}
-                        <div className="glass-card rounded-3xl p-8 border border-gray-100 dark:border-slate-800 shadow-sm bg-primary-50/30 dark:bg-slate-800/30">
-                            <ShieldCheck className="w-10 h-10 text-primary-500 mb-6" />
-                            <h3 className="text-xl font-bold text-gray-800 dark:text-white uppercase tracking-tight font-black leading-tight italic underline decoration-primary-500/30">{t('System Overview')}</h3>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
-                                {t('The platform is currently hosting')} <span className="text-primary-600 dark:text-primary-400 font-bold">{stats.total_users} active users</span>.
-                                {t('Average daily order volume is')} <span className="text-gray-900 dark:text-white font-bold">{(stats.total_orders / 30).toFixed(1)}</span>.
+                        <div className="card p-8 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                            <ShieldCheck className="w-10 h-10 text-indigo-500 mb-6" />
+                            <h3 className="text-xl font-bold uppercase tracking-tight font-black leading-tight italic underline decoration-indigo-500/30" style={{ color: 'var(--txt-1)' }}>{t('System Overview')}</h3>
+                            <p className="text-sm font-medium mt-3 leading-relaxed" style={{ color: 'var(--txt-2)' }}>
+                                {t('The platform is currently hosting')} <span className="text-indigo-500 font-bold">{stats.total_users} active users</span>.
+                                {t('Average daily order volume is')} <span className="font-bold" style={{ color: 'var(--txt-1)' }}>{(stats.total_orders / 30).toFixed(1)}</span>.
                             </p>
                             
                             <div className="mt-8 space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                                <div className="flex items-center justify-between p-4 rounded-2xl shadow-sm" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                                     <div className="flex items-center gap-3">
                                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('Server Health')}</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Server Health')}</span>
                                     </div>
                                     <span className="text-xs font-black text-emerald-500 uppercase tracking-widest">99.9%</span>
                                 </div>
-                                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                                <div className="flex items-center justify-between p-4 rounded-2xl shadow-sm" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-primary-500" />
-                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t('Queue Status')}</span>
+                                        <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                                        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Queue Status')}</span>
                                     </div>
-                                    <span className="text-xs font-black text-primary-500 uppercase tracking-widest">{t('Idle')}</span>
+                                    <span className="text-xs font-black text-indigo-500 uppercase tracking-widest">{t('Idle')}</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Recent Users List */}
-                        <div className="glass-card rounded-3xl overflow-hidden border border-gray-100 dark:border-slate-800 shadow-sm">
-                            <div className="px-6 py-6 border-b border-gray-50 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
-                                <h3 className="font-bold text-gray-800 dark:text-white uppercase font-black italic tracking-tighter italic underline decoration-primary-500/30">
+                        <div className="card overflow-hidden shadow-sm" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+                            <div className="px-6 py-6 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+                                <h3 className="font-bold uppercase font-black italic tracking-tighter underline decoration-indigo-500/30" style={{ color: 'var(--txt-1)' }}>
                                     {t('New Registrations')}
                                 </h3>
                             </div>
                             <div className="p-4 space-y-3">
                                 {recentUsers.map((user) => (
-                                    <div key={user.id} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all border border-transparent hover:border-gray-100 dark:hover:border-slate-700 group">
-                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-dental-500 text-white flex items-center justify-center font-black text-xs shadow-md shadow-primary-500/20 group-hover:scale-105 transition-transform shrink-0 uppercase tracking-tight">
+                                    <div key={user.id} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-black/5 dark:hover:bg-white/5 transition-all group">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform shrink-0 uppercase tracking-tight">
                                             {user.name.substring(0, 2).toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-gray-800 dark:text-white truncate text-sm uppercase tracking-tight leading-none mb-1">{user.name}</p>
+                                            <p className="font-bold truncate text-sm uppercase tracking-tight leading-none mb-1" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-black py-0.5 px-2 bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 rounded-md uppercase tracking-widest shrink-0">
+                                                <span className="text-[10px] font-black py-0.5 px-2 rounded-md uppercase tracking-widest shrink-0" style={{ background: 'var(--surface)', color: 'var(--txt-2)' }}>
                                                     {user.role.replace('_', ' ')}
                                                 </span>
-                                                <span className="text-[10px] text-gray-400 font-medium truncate">{user.clinic?.name || user.lab?.name || user.email}</span>
+                                                <span className="text-[10px] font-medium truncate" style={{ color: 'var(--txt-3)' }}>{user.clinic?.name || user.lab?.name || user.email}</span>
                                             </div>
                                         </div>
                                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Link href={route('admin.users.index')} className="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 hover:bg-primary-100 transition-colors">
+                                            <Link href={route('admin.users.index')} className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition-colors">
                                                 <ArrowUpRight className="w-4 h-4" />
                                             </Link>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <Link href={route('admin.users.index')} className="block w-full py-4 text-center text-xs font-black text-gray-400 uppercase tracking-widest hover:text-primary-500 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all border-t border-gray-50 dark:border-slate-800">
+                            <Link href={route('admin.users.index')} className="block w-full py-4 text-center text-xs font-black uppercase tracking-widest transition-all border-t hover:bg-black/5 dark:hover:bg-white/5" style={{ color: 'var(--txt-3)', borderColor: 'var(--border)' }}>
                                 {t('View all users')}
                             </Link>
                         </div>

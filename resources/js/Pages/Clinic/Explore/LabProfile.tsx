@@ -37,7 +37,7 @@ export default function LabProfile({ auth, lab }: Props) {
     const { t } = useTranslation();
 
     const formatCurrency = (val: number) => 
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD' }).format(val);
 
     return (
         <ClinicLayout>

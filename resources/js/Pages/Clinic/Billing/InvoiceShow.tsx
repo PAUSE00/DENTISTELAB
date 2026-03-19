@@ -24,10 +24,10 @@ interface Invoice {
         address: string;
         city: string;
     };
-    order: {
+    order?: {
         id: number;
-        patient: { first_name: string; last_name: string };
-        service: { name: string; price: number };
+        patient?: { first_name: string; last_name: string };
+        service?: { name: string; price: number };
     };
 }
 
@@ -39,7 +39,7 @@ export default function InvoiceShow({ auth, invoice }: Props) {
     const { t } = useTranslation();
 
     const formatCurrency = (val: number) => 
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD' }).format(val);
 
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -140,14 +140,18 @@ export default function InvoiceShow({ auth, invoice }: Props) {
                                     <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
                                         <tr style={{ color: 'var(--txt-1)' }}>
                                             <td className="px-6 py-8">
-                                                <div className="font-bold">{invoice.order.service.name}</div>
+                                                <div className="font-bold">{invoice.order?.service?.name || t('Lab Services')}</div>
                                                 <div className="text-xs font-medium mt-1 opacity-50">
-                                                    {t('Patient')}: {invoice.order.patient.first_name} {invoice.order.patient.last_name} • {t('Order ID')}: #{invoice.order.id}
+                                                    {invoice.order ? (
+                                                        <>{t('Patient')}: {invoice.order.patient?.first_name} {invoice.order.patient?.last_name} • {t('Order ID')}: #{invoice.order.id}</>
+                                                    ) : (
+                                                        <>{t('General Invoice')} • {invoice.invoice_number}</>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-8 text-center font-bold">1</td>
-                                            <td className="px-6 py-8 text-right font-black">{formatCurrency(invoice.order.service.price)}</td>
-                                            <td className="px-6 py-8 text-right font-black">{formatCurrency(invoice.order.service.price)}</td>
+                                            <td className="px-6 py-8 text-right font-black">{formatCurrency(invoice.order?.service?.price || invoice.amount)}</td>
+                                            <td className="px-6 py-8 text-right font-black">{formatCurrency(invoice.order?.service?.price || invoice.amount)}</td>
                                         </tr>
                                     </tbody>
                                 </table>

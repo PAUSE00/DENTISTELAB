@@ -4,7 +4,7 @@ import {
     LayoutDashboard, ClipboardList, Users,
     Shield, ShieldPlus, LogOut, Menu, Moon, Sun,
     X, Settings, ChevronLeft, ChevronRight, CalendarDays,
-    TrendingUp, Compass, DollarSign, Bookmark
+    TrendingUp, Compass, DollarSign, Bookmark, MessageSquare, Archive, Stethoscope
 } from 'lucide-react';
 import NotificationBell from '@/Components/NotificationBell';
 import { useNotifications } from '@/Hooks/useNotifications';
@@ -14,9 +14,10 @@ import LanguageSwitcher from '@/Components/LanguageSwitcher';
 
 interface Props extends PropsWithChildren {
     header?: ReactNode;
+    fullBleed?: boolean;
 }
 
-export default function ClinicLayout({ children, header }: Props) {
+export default function ClinicLayout({ children, header, fullBleed }: Props) {
     const user = usePage().props.auth.user;
     useNotifications();
     const { t } = useTranslation();
@@ -52,17 +53,22 @@ export default function ClinicLayout({ children, header }: Props) {
         if (isActive('clinic.patients.*'))          return t('My Patients');
         if (isActive('clinic.team.*'))              return t('Team');
         if (isActive('clinic.settings.*'))          return t('Settings');
+        if (isActive('clinic.inbox.*'))             return t('Inbox');
         return t('Clinic Portal');
     };
 
     const mainLinks = [
         { path: 'clinic.dashboard',          pat: 'clinic.dashboard',            label: 'Dashboard',    Icon: LayoutDashboard },
         { path: 'clinic.explore.index',      pat: 'clinic.explore.*',            label: 'Explore Labs', Icon: Compass },
+        { path: 'clinic.inbox.index',        pat: 'clinic.inbox.*',              label: 'Inbox',        Icon: MessageSquare },
         { path: 'clinic.appointments.index', pat: 'clinic.appointments.index',   label: 'Appointments', Icon: CalendarDays },
         { path: 'clinic.orders.index',       pat: 'clinic.orders.*',             label: 'My Orders',    Icon: ClipboardList },
         { path: 'clinic.patients.index',     pat: 'clinic.patients.*',           label: 'My Patients',  Icon: Users },
-        { path: 'clinic.templates.index',    pat: 'clinic.templates.*',          label: 'Templates',    Icon: Bookmark },
-        { path: 'clinic.billing.index',      pat: 'clinic.billing.*',            label: 'Billing',      Icon: DollarSign },
+        { path: 'clinic.treatment-plans.index', pat: 'clinic.treatment-plans.*', label: 'Treatment Plans', Icon: Stethoscope },
+        { path: 'clinic.patient-invoices.index', pat: 'clinic.patient-invoices.*', label: 'Patient Billing', Icon: DollarSign },
+        { path: 'clinic.billing.index',      pat: 'clinic.billing.index',        label: 'Lab Billing',      Icon: Archive },
+        { path: 'clinic.inventory.index',    pat: 'clinic.inventory.*',          label: 'Inventory',    Icon: Bookmark },
+
     ];
 
     const analyticsLinks = [
@@ -186,7 +192,7 @@ export default function ClinicLayout({ children, header }: Props) {
             )}
 
             {/* ── Main layout ──────────────────────────────────────────── */}
-            <main className={`transition-all duration-200 ${collapsed ? 'lg:ml-[52px]' : 'lg:ml-[250px]'} min-h-screen flex flex-col`}>
+            <main className={`transition-all duration-200 ${collapsed ? 'lg:ml-[52px]' : 'lg:ml-[250px]'} h-screen overflow-hidden flex flex-col`}>
 
                 {/* Header */}
                 <header className="app-header sticky top-0 z-40 h-14 flex items-center justify-between px-5">
@@ -234,11 +240,17 @@ export default function ClinicLayout({ children, header }: Props) {
                 </header>
 
                 {/* Content */}
-                <div className="flex-1 p-5">
-                    <div className="max-w-[1400px] mx-auto">
+                {fullBleed ? (
+                    <div className="flex-1 overflow-hidden">
                         {children}
                     </div>
-                </div>
+                ) : (
+                    <div className="flex-1 overflow-auto p-5">
+                        <div className="max-w-[1400px] mx-auto">
+                            {children}
+                        </div>
+                    </div>
+                )}
             </main>
 
             <ToastContainer />

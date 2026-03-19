@@ -21,24 +21,19 @@ class FinanceController extends Controller
         $labId = Auth::user()->lab_id;
 
         // ── Summary Stats ────────────────────────────────────
-        $totalRevenue = Order::where('lab_id', $labId)
-            ->where('payment_status', PaymentStatus::Paid)
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(final_price, price)')) ?: 0;
-
-        $pendingAmount = Order::where('lab_id', $labId)
-            ->whereIn('payment_status', [PaymentStatus::Unpaid, PaymentStatus::Partial])
+        $revenueStats = Order::where('lab_id', $labId)
             ->whereNotIn('status', [OrderStatus::Rejected, OrderStatus::Archived])
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(final_price, price)')) ?: 0;
+            ->selectRaw('SUM(paid_amount) as total_revenue, SUM(COALESCE(final_price, price) - paid_amount) as pending_amount')
+            ->first();
 
         $monthlyRevenue = Order::where('lab_id', $labId)
-            ->where('payment_status', PaymentStatus::Paid)
             ->whereMonth('updated_at', now()->month)
             ->whereYear('updated_at', now()->year)
-            ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(final_price, price)')) ?: 0;
+            ->sum('paid_amount') ?: 0;
 
         $stats = [
-            'total_revenue' => (float) $totalRevenue,
-            'pending_amount' => (float) $pendingAmount,
+            'total_revenue' => (float) ($revenueStats->total_revenue ?? 0),
+            'pending_amount' => (float) ($revenueStats->pending_amount ?? 0),
             'monthly_revenue' => (float) $monthlyRevenue,
             'unpaid_count' => Order::where('lab_id', $labId)->where('payment_status', PaymentStatus::Unpaid)->count(),
             'partial_count' => Order::where('lab_id', $labId)->where('payment_status', PaymentStatus::Partial)->count(),
@@ -57,8 +52,8 @@ class FinanceController extends Controller
                 return [
                     'clinic_id' => $clinicId,
                     'clinic_name' => $clinic ? $clinic->name : 'Unknown',
-                    'open_balance' => $orders->sum(function ($order) {
-                        return $order->final_price ?? $order->price;
+                    'open_balance' => (float) $orders->sum(function ($order) {
+                        return ($order->final_price ?? $order->price) - $order->paid_amount;
                     }),
                     'orders_count' => $orders->count(),
                 ];
@@ -102,7 +97,10 @@ class FinanceController extends Controller
             ->where('clinic_id', $clinic->id)
             ->whereIn('payment_status', [PaymentStatus::Unpaid, PaymentStatus::Partial])
             ->whereNotIn('status', [OrderStatus::Rejected, OrderStatus::Archived])
-            ->update(['payment_status' => PaymentStatus::Paid]);
+            ->update([
+                'paid_amount' => \Illuminate\Support\Facades\DB::raw('COALESCE(final_price, price)'),
+                'payment_status' => PaymentStatus::Paid
+            ]);
 
         return redirect()->back()->with('success', 'Clinic balance marked as paid.');
     }

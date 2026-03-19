@@ -25,10 +25,14 @@ class BillingController extends Controller
             ->take(10)
             ->get();
 
+        $orders = \App\Models\Order::where('clinic_id', $clinic->id)->get();
+
         $stats = [
-            'total_spent' => $transactions->where('type', 'debit')->sum('amount'),
-            'outstanding' => $invoices->where('status', 'sent')->sum('total'),
-            'last_month_growth' => 12.5, // Mock
+            'total_ordered' => (float) $orders->sum(function ($o) {
+                return $o->final_price ?: $o->price;
+            }),
+            'total_paid' => (float) $orders->sum('paid_amount'),
+            'outstanding' => (float) $orders->sum('remaining_balance'),
         ];
 
         return Inertia::render('Clinic/Billing/Index', [

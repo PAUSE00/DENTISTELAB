@@ -51,7 +51,34 @@ export default function OrderAttachments({ orderId, files, uploadRoute, deleteRo
 
     return (
         <>
-            <div className="glass-card rounded-2xl p-6 animate-fade-in animate-delay-400 hover:shadow-lg transition-shadow">
+            <div 
+                className="glass-card rounded-2xl p-6 animate-fade-in animate-delay-400 transition-all border-2"
+                style={{ borderColor: 'transparent' }}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor = 'var(--teal)';
+                    e.currentTarget.style.background = 'var(--teal-10)';
+                }}
+                onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor = 'transparent';
+                    e.currentTarget.style.background = '';
+                }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor = 'transparent';
+                    e.currentTarget.style.background = '';
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) {
+                        setProcessing(true);
+                        router.post(uploadRoute, { file }, {
+                            preserveScroll: true,
+                            forceFormData: true,
+                            onFinish: () => setProcessing(false)
+                        });
+                    }
+                }}
+            >
                 <div className="flex justify-between items-center mb-5">
                     <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 flex items-center gap-2 uppercase tracking-wider">
                         <Paperclip className="w-4 h-4 text-primary-500" />
@@ -109,8 +136,9 @@ export default function OrderAttachments({ orderId, files, uploadRoute, deleteRo
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-8">
-                        <p className="text-xs text-gray-400 italic">{t('No attachments found.')}</p>
+                    <div className="text-center py-8 pointer-events-none">
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{t('No attachments found.')}</p>
+                        <p className="text-[10px] text-gray-400 mt-2">{t('Drag files here to upload')}</p>
                     </div>
                 )}
             </div>

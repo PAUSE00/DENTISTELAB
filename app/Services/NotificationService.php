@@ -3,88 +3,49 @@
 namespace App\Services;
 
 use App\Models\Notification;
-use App\Models\Order;
 use App\Models\User;
-use App\Events\NotificationCreated;
 
 class NotificationService
 {
     /**
-     * Create a notification when a new message is received in chat.
+     * Notify a user.
      */
-    public function newMessage(Order $order, User $sender): void
+    public static function notifyUser(int $userId, string $type, string $title, string $body, array $data = []): Notification
     {
-        // Find the other party
-        if ($sender->isClinicMember()) {
-            $recipients = User::where('lab_id', $order->lab_id)->get();
-        } else {
-            $recipients = User::where('clinic_id', $order->clinic_id)->get();
-        }
+        return Notification::create([
+            'user_id' => $userId,
+            'type' => $type,
+            'title' => $title,
+            'body' => $body,
+            'data' => $data,
+        ]);
+    }
 
-        foreach ($recipients as $user) {
-            if ($user->id === $sender->id) {
-                continue;
-            }
+    /**
+     * Notify all users with specific roles in a clinic.
+     */
+    public static function notifyClinic(int $clinicId, string $type, string $title, string $body, array $data = []): void
+    {
+        $users = User::where('clinic_id', $clinicId)
+            ->whereIn('role', ['dentist', 'clinic_staff'])
+            ->get();
 
-            $notification = Notification::create([
-                'user_id' => $user->id,
-                'type' => 'new_message',
-                'title' => __('notifications.new_message.title'),
-                'body' => __('notifications.new_message.body', [
-                    'sender' => $sender->name,
-                    'order_id' => $order->id,
-                ]),
-                'data' => [
-                    'order_id' => $order->id,
-                    'sender_name' => $sender->name,
-                ],
-            ]);
-
-            event(new NotificationCreated($notification));
+        foreach ($users as $user) {
+            self::notifyUser($user->id, $type, $title, $body, $data);
         }
     }
 
     /**
-     * Create a notification when a clinic invitation is accepted.
+     * Notify all users with specific roles in a lab.
      */
-    public function invitationAccepted(string $labId, string $clinicName): void
+    public static function notifyLab(int $labId, string $type, string $title, string $body, array $data = []): void
     {
-        $labUsers = User::where('lab_id', $labId)->get();
+        $users = User::where('lab_id', $labId)
+            ->whereIn('role', ['lab_owner', 'lab_tech'])
+            ->get();
 
-        foreach ($labUsers as $user) {
-            $notification = Notification::create([
-                'user_id' => $user->id,
-                'type' => 'invitation_accepted',
-                'title' => __('notifications.invitation_accepted.title'),
-                'body' => __('notifications.invitation_accepted.body', [
-                    'clinic_name' => $clinicName,
-                ]),
-                'data' => ['clinic_name' => $clinicName],
-            ]);
-
-            event(new NotificationCreated($notification));
-        }
-    }
-
-    /**
-     * Create a notification when a clinic receives an invitation (in-app).
-     */
-    public function invitationReceived(string $clinicId, string $labName): void
-    {
-        $clinicUsers = User::where('clinic_id', $clinicId)->get();
-
-        foreach ($clinicUsers as $user) {
-            $notification = Notification::create([
-                'user_id' => $user->id,
-                'type' => 'invitation_received',
-                'title' => __('notifications.invitation_received.title'),
-                'body' => __('notifications.invitation_received.body', [
-                    'lab_name' => $labName,
-                ]),
-                'data' => ['lab_name' => $labName],
-            ]);
-
-            event(new NotificationCreated($notification));
+        foreach ($users as $user) {
+            self::notifyUser($user->id, $type, $title, $body, $data);
         }
     }
 }

@@ -83,41 +83,62 @@ export default function Show({ auth, patient, stats, timeline }: Props) {
 
             <div className="flex flex-col gap-6 pb-12 animate-in fade-in duration-500">
                 
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <Link href={route('clinic.patients.index')} className="p-2 rounded-xl border hover:bg-white/5 transition-all" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+                {/* Premium Banner Section */}
+                <div className="relative overflow-hidden rounded-3xl p-6 lg:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
+                    style={{ background: 'linear-gradient(135deg, rgba(129,140,248,0.06) 0%, rgba(96,221,198,0.05) 100%)', border: '1px solid var(--border)' }}>
+                    
+                    {/* Background abstract blurs for premium feel */}
+                    <div className="absolute -top-10 -right-10 w-64 h-64 rounded-full opacity-20 pointer-events-none blur-[80px]" style={{ background: '#818cf8' }} />
+                    <div className="absolute -bottom-10 -left-10 w-64 h-64 rounded-full opacity-20 pointer-events-none blur-[80px]" style={{ background: '#60ddc6' }} />
+
+                    <div className="relative z-10 flex items-center gap-5">
+                        <Link href={route('clinic.patients.index')} 
+                            className="p-2.5 rounded-2xl border transition-all hover:bg-white/10" 
+                            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--txt-1)' }}>
                             <ArrowLeft size={18} />
                         </Link>
+
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#818cf8] to-[#6638b4] flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-indigo-500/20">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#818cf8] to-[#6638b4] flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-indigo-500/30">
                                 {patient.first_name[0]}{patient.last_name[0]}
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
-                                    <h1 className="text-[22px] font-bold" style={{ color: 'var(--txt-1)' }}>
+                                    <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--txt-1)' }}>
                                         {patient.first_name} {patient.last_name}
                                     </h1>
-                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider" style={{ background: 'var(--surface)', color: 'var(--txt-3)', border: '1px solid var(--border)' }}>
+                                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider" 
+                                        style={{ background: 'var(--surface)', color: 'var(--txt-3)', border: '1px solid var(--border)' }}>
                                         #{patient.id}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-3 mt-1 text-[12px]" style={{ color: 'var(--txt-3)' }}>
-                                    <span className="flex items-center gap-1.5"><Phone size={12} /> {patient.phone}</span>
+                                <div className="flex items-center gap-3 text-[12.5px] font-medium" style={{ color: 'var(--txt-3)' }}>
+                                    <span className="flex items-center gap-1.5"><Phone size={13} /> {patient.phone || 'N/A'}</span>
                                     <span style={{ color: 'var(--border-strong)' }}>|</span>
-                                    <span className="flex items-center gap-1.5 uppercase font-bold tracking-tighter" style={{ color: '#60ddc6' }}>
-                                        <ShieldAlert size={12} /> {patient.blood_group || 'N/A'}
-                                    </span>
+                                    <span className="flex items-center gap-1.5"><Mail size={13} /> {patient.email || 'N/A'}</span>
+                                    {patient.blood_group && (
+                                        <>
+                                            <span style={{ color: 'var(--border-strong)' }}>|</span>
+                                            <span className="flex items-center gap-1.5 uppercase font-bold tracking-tighter" style={{ color: '#f87171' }}>
+                                                <Heart size={13} /> {patient.blood_group}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Link href={route('clinic.orders.create', { patient_id: patient.id })} className="btn-primary flex items-center gap-2">
-                            <Plus size={14} /> {t('New Treatment')}
-                        </Link>
-                        <Link href={route('clinic.patients.edit', patient.id)} className="px-4 py-2.5 rounded-xl border text-[13px] font-bold transition-all hover:bg-white/5" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', color: 'var(--txt-2)' }}>
+                    
+                    <div className="relative z-10 flex items-center gap-2.5">
+                        <Link href={route('clinic.patients.edit', patient.id)} 
+                            className="px-5 py-2.5 rounded-xl border text-[13px] font-bold transition-all" 
+                            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--txt-2)' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--txt-1)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--txt-2)'; }}>
                             {t('Edit Profile')}
+                        </Link>
+                        <Link href={route('clinic.orders.create', { patient_id: patient.id })} className="btn-primary flex items-center gap-2 px-5 py-2.5 shadow-lg shadow-teal-500/20">
+                            <Plus size={15} /> {t('New Treatment')}
                         </Link>
                     </div>
                 </div>
@@ -282,14 +303,14 @@ export default function Show({ auth, patient, stats, timeline }: Props) {
                                     <div className="flex justify-center">
                                         <div className="max-w-[500px] w-full">
                                             <Odontogram 
-                                                selectedTeeth={patient.orders?.map((o: any) => o.clinical_data?.tooth_number).filter(Boolean)} 
+                                                selectedTeeth={patient.orders?.flatMap((o: any) => o.teeth || [])} 
                                                 readOnly={true} 
                                             />
                                         </div>
                                     </div>
                                     <div className="mt-6 flex items-center gap-4 justify-center">
                                         <div className="flex items-center gap-2 text-[11px] font-bold">
-                                            <div className="w-3 h-3 rounded bg-indigo-500" />
+                                            <div className="w-3 h-3 rounded bg-[#60ddc6]" />
                                             <span>{t('Active Treatments')}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-[11px] font-bold opacity-30">
@@ -316,7 +337,7 @@ export default function Show({ auth, patient, stats, timeline }: Props) {
                                             <div className="flex justify-between items-center">
                                                 <span className="text-[13px]" style={{ color: 'var(--txt-3)' }}>{t('Age')}</span>
                                                 <span className="text-[14px] font-bold" style={{ color: 'var(--txt-1)' }}>
-                                                    {new Date().getFullYear() - new Date(patient.dob).getFullYear()} {t('years')}
+                                                    {patient.dob ? new Date().getFullYear() - new Date(patient.dob).getFullYear() + ' ' + t('years') : 'N/A'}
                                                 </span>
                                             </div>
                                         </div>
@@ -333,12 +354,89 @@ export default function Show({ auth, patient, stats, timeline }: Props) {
                         )}
 
                         {activeTab === 'analytics' && (
-                            <div className="card p-10 flex flex-col items-center justify-center text-center opacity-30" style={{ background: 'var(--bg-raised)' }}>
-                                <TrendingUp size={48} className="mb-4" />
-                                <h3 className="text-lg font-bold">{t('Patient Analytics')}</h3>
-                                <p className="text-sm mt-2 max-w-[300px]">
-                                    {t('Detailed spending and treatment effectiveness charts will appear here as more data is collected.')}
-                                </p>
+                            <div className="card p-8 flex flex-col gap-8 animate-in fade-in" style={{ background: 'var(--bg-raised)' }}>
+                                <div className="flex items-center gap-4 mb-2">
+                                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#818cf8]/10 text-[#818cf8]">
+                                        <TrendingUp size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold">{t('Patient Analytics Overview')}</h3>
+                                        <p className="text-[12px]" style={{ color: 'var(--txt-3)' }}>{t('Insights based on order and treatment history')}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Order Status Breakdown */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-50">{t('Order Status Distribution')}</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex justify-between text-[12px] font-bold">
+                                                    <span style={{ color: 'var(--txt-2)' }}>{t('Completed')}</span>
+                                                    <span>{stats.completed}</span>
+                                                </div>
+                                                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${stats.total_orders > 0 ? (stats.completed / (stats.total_orders || 1)) * 100 : 0}%` }}></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex justify-between text-[12px] font-bold">
+                                                    <span style={{ color: 'var(--txt-2)' }}>{t('In Progress')}</span>
+                                                    <span>{stats.in_progress}</span>
+                                                </div>
+                                                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                                                    <div className="h-full bg-[#818cf8] rounded-full" style={{ width: `${stats.total_orders > 0 ? (stats.in_progress / (stats.total_orders || 1)) * 100 : 0}%` }}></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex justify-between text-[12px] font-bold">
+                                                    <span style={{ color: 'var(--txt-2)' }}>{t('Pending')}</span>
+                                                    <span>{stats.pending}</span>
+                                                </div>
+                                                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                                                    <div className="h-full bg-amber-500 rounded-full" style={{ width: `${stats.total_orders > 0 ? (stats.pending / (stats.total_orders || 1)) * 100 : 0}%` }}></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex justify-between text-[12px] font-bold">
+                                                    <span style={{ color: 'var(--txt-2)' }}>{t('Cancelled / Rejected')}</span>
+                                                    <span>{stats.cancelled}</span>
+                                                </div>
+                                                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                                                    <div className="h-full bg-rose-500 rounded-full" style={{ width: `${stats.total_orders > 0 ? (stats.cancelled / (stats.total_orders || 1)) * 100 : 0}%` }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Financial & Activity Summary */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-50">{t('Key Metrics')}</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-4 rounded-xl border border-white/5 bg-white/5 flex flex-col gap-1">
+                                                <span className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Avg Order Value')}</span>
+                                                <span className="text-xl font-bold" style={{ color: '#60ddc6' }}>
+                                                    {stats.total_orders > 0 ? (stats.total_spent / stats.total_orders).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0} DH
+                                                </span>
+                                            </div>
+                                            <div className="p-4 rounded-xl border border-white/5 bg-white/5 flex flex-col gap-1">
+                                                <span className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Completion Rate')}</span>
+                                                <span className="text-xl font-bold" style={{ color: '#818cf8' }}>
+                                                    {stats.total_orders > 0 ? Math.round((stats.completed / stats.total_orders) * 100) : 0}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 rounded-xl border border-white/5 bg-white/5 flex flex-col gap-1 w-full mt-4">
+                                            <span className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Total Lifetime Value')}</span>
+                                            <span className="text-3xl font-black mt-1" style={{ color: 'var(--txt-1)' }}>
+                                                {stats.total_spent.toLocaleString()} DH
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

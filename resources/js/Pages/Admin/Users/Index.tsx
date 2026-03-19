@@ -68,10 +68,10 @@ export default function Index({ auth, users, filters }: Props) {
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                        <h2 className="text-3xl font-black tracking-tight leading-tight" style={{ color: 'var(--txt-1)' }}>
                             {t('Platform')} <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">{t('Users')}</span>
                         </h2>
-                        <p className="text-slate-400 font-medium text-sm mt-1">{t('Manage accounts, roles and access permissions.')}</p>
+                        <p className="font-medium text-sm mt-1" style={{ color: 'var(--txt-3)' }}>{t('Manage accounts, roles and access permissions.')}</p>
                     </div>
                     <Link
                         href={route('admin.users.create')}
@@ -83,15 +83,15 @@ export default function Index({ auth, users, filters }: Props) {
                 </div>
 
                 {/* Filters & Search */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4">
+                <div className="card rounded-[2.5rem] p-4 shadow-sm flex flex-col md:flex-row gap-4" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                     <form onSubmit={handleSearch} className="flex-1 relative">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: 'var(--txt-3)' }} />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder={t('Search by name, email or ID...')}
-                            className="w-full pl-14 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-[1.5rem] focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-slate-200 transition-all font-medium placeholder:text-slate-400"
+                            className="w-full pl-14 pr-6 py-4 app-input rounded-[1.5rem]"
                         />
                     </form>
                     <div className="flex gap-2">
@@ -100,7 +100,7 @@ export default function Index({ auth, users, filters }: Props) {
                             onChange={(e) => {
                                 router.get(route('admin.users.index'), { search, role: e.target.value }, { preserveState: true, replace: true });
                             }}
-                            className="px-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-[1.5rem] focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-slate-200 font-bold text-sm appearance-none min-w-[180px]"
+                            className="px-6 py-4 app-input rounded-[1.5rem] font-bold text-sm min-w-[180px]"
                         >
                             <option value="">{t('All Roles')}</option>
                             <option value="super_admin">{t('Super Admin')}</option>
@@ -111,7 +111,8 @@ export default function Index({ auth, users, filters }: Props) {
                         </select>
                         <button 
                             onClick={() => { setSearch(''); router.get(route('admin.users.index')); }}
-                            className="p-4 bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-500 rounded-[1.5rem] transition-colors"
+                            className="p-4 transition-colors hover:text-indigo-500 rounded-[1.5rem]"
+                            style={{ background: 'var(--surface)', color: 'var(--txt-3)' }}
                             title={t('Clear Filters')}
                         >
                             <FilterX className="w-6 h-6" />
@@ -120,11 +121,11 @@ export default function Index({ auth, users, filters }: Props) {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-2xl shadow-slate-200/50 dark:shadow-none">
+                <div className="card rounded-[2.5rem] overflow-hidden shadow-2xl dark:shadow-none" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50/50 dark:bg-slate-800/50">
-                                <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                            <thead style={{ background: 'var(--surface)' }}>
+                                <tr className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--txt-3)' }}>
                                     <th className="px-8 py-6">{t('Identity')}</th>
                                     <th className="px-6 py-6">{t('Status & Role')}</th>
                                     <th className="px-6 py-6">{t('Entity Association')}</th>
@@ -132,29 +133,29 @@ export default function Index({ auth, users, filters }: Props) {
                                     <th className="px-8 py-6 text-right">{t('System Actions')}</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                            <tbody className="divide-y" style={{ borderColor: 'var(--surface)' }}>
                                 {users.data.length > 0 ? (
                                     users.data.map((user) => {
                                         const style = roleStyles[user.role] || roleStyles.clinic_staff;
                                         const RoleIcon = style.icon;
                                         
                                         return (
-                                            <tr key={user.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all duration-300">
+                                            <tr key={user.id} className="group transition-all duration-300 hover:bg-black/5 dark:hover:bg-white/5">
                                                 <td className="px-8 py-5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="relative">
                                                             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px] shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-500">
-                                                                <div className="w-full h-full rounded-[14px] bg-white dark:bg-slate-900 flex items-center justify-center font-black text-indigo-500 italic">
+                                                                <div className="w-full h-full rounded-[14px] flex items-center justify-center font-black text-indigo-500 italic" style={{ background: 'var(--bg-raised)' }}>
                                                                     {user.name.charAt(0).toUpperCase()}
                                                                 </div>
                                                             </div>
-                                                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${user.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 ${user.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} style={{ borderColor: 'var(--bg-raised)' }} />
                                                         </div>
                                                         <div>
-                                                            <p className="font-black text-slate-900 dark:text-white tracking-tight">{user.name}</p>
+                                                            <p className="font-black tracking-tight" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
                                                             <div className="flex items-center gap-2 mt-1">
-                                                                <Mail className="w-3 h-3 text-slate-400" />
-                                                                <span className="text-[10px] text-slate-400 font-bold uppercase">{user.email}</span>
+                                                                <Mail className="w-3 h-3" style={{ color: 'var(--txt-3)' }} />
+                                                                <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--txt-3)' }}>{user.email}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -173,23 +174,23 @@ export default function Index({ auth, users, filters }: Props) {
                                                             <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
                                                                 <Building2 className="w-3.5 h-3.5" />
                                                             </div>
-                                                            <span className="font-bold text-slate-700 dark:text-slate-300 text-xs">{user.clinic.name}</span>
+                                                            <span className="font-bold text-xs" style={{ color: 'var(--txt-2)' }}>{user.clinic.name}</span>
                                                         </div>
                                                     ) : user.lab ? (
                                                         <div className="flex items-center gap-3">
                                                             <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
                                                                 <Activity className="w-3.5 h-3.5" />
                                                             </div>
-                                                            <span className="font-bold text-slate-700 dark:text-slate-300 text-xs">{user.lab.name}</span>
+                                                            <span className="font-bold text-xs" style={{ color: 'var(--txt-2)' }}>{user.lab.name}</span>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{t('Independent')}</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Independent')}</span>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-5">
                                                     <div className="flex items-center gap-2">
-                                                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">
+                                                        <Calendar className="w-3.5 h-3.5" style={{ color: 'var(--txt-3)' }} />
+                                                        <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--txt-3)' }}>
                                                             {new Date(user.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
                                                         </span>
                                                     </div>
@@ -199,21 +200,21 @@ export default function Index({ auth, users, filters }: Props) {
                                                         <button
                                                             onClick={() => router.patch(route('admin.users.toggle-active', user.id), {}, { preserveScroll: true })}
                                                             className={`p-2.5 rounded-xl transition-all shadow-sm border ${user.is_active 
-                                                                ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-500 border-amber-100 dark:border-amber-500/20 hover:bg-amber-100' 
-                                                                : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 border-emerald-100 dark:border-emerald-500/20 hover:bg-emerald-100'}`}
+                                                                ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20' 
+                                                                : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'}`}
                                                             title={user.is_active ? t('Deactivate') : t('Activate')}
                                                         >
                                                             <Power className="w-4 h-4" />
                                                         </button>
                                                         <Link
                                                             href={route('admin.users.edit', user.id)}
-                                                            className="p-2.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 rounded-xl border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-100 transition-all shadow-sm"
+                                                            className="p-2.5 bg-indigo-500/10 text-indigo-500 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all shadow-sm"
                                                         >
                                                             <Edit2 className="w-4 h-4" />
                                                         </Link>
                                                         <button
                                                             onClick={() => setUserToDelete(user.id)}
-                                                            className="p-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-500 rounded-xl border border-rose-100 dark:border-rose-500/20 hover:bg-rose-100 transition-all shadow-sm"
+                                                            className="p-2.5 bg-rose-500/10 text-rose-500 rounded-xl border border-rose-500/20 hover:bg-rose-500/20 transition-all shadow-sm"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
@@ -226,11 +227,11 @@ export default function Index({ auth, users, filters }: Props) {
                                     <tr>
                                         <td colSpan={5} className="px-8 py-20 text-center">
                                             <div className="flex flex-col items-center">
-                                                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                                                    <UserIcon className="w-10 h-10 text-slate-300" />
+                                                <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--surface)' }}>
+                                                    <UserIcon className="w-10 h-10" style={{ color: 'var(--txt-3)' }} />
                                                 </div>
-                                                <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('No Database Matches')}</h3>
-                                                <p className="text-slate-400 font-medium text-xs mt-1">{t('Adjust your query parameters and try again.')}</p>
+                                                <h3 className="font-black uppercase tracking-tight" style={{ color: 'var(--txt-1)' }}>{t('No Database Matches')}</h3>
+                                                <p className="font-medium text-xs mt-1" style={{ color: 'var(--txt-3)' }}>{t('Adjust your query parameters and try again.')}</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -238,8 +239,8 @@ export default function Index({ auth, users, filters }: Props) {
                             </tbody>
                         </table>
                     </div>
-                    <div className="px-8 py-6 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('Showing Database Index')}</p>
+                    <div className="px-8 py-6 flex justify-between items-center border-t border-slate-100/10" style={{ background: 'var(--surface)' }}>
+                        <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Showing Database Index')}</p>
                         <Pagination links={users.links} />
                     </div>
                 </div>

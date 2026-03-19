@@ -53,12 +53,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('billing/invoices/{invoice}', [\App\Http\Controllers\Clinic\BillingController::class, 'showInvoice'])->name('billing.invoice.show');
         
         Route::get('analytics', [\App\Http\Controllers\Clinic\AnalyticsController::class, 'index'])->name('analytics.index');
-        
-        Route::get('templates', [\App\Http\Controllers\Clinic\TemplateController::class, 'index'])->name('templates.index');
-        Route::post('templates', [\App\Http\Controllers\Clinic\TemplateController::class, 'store'])->name('templates.store');
-        Route::put('templates/{template}', [\App\Http\Controllers\Clinic\TemplateController::class, 'update'])->name('templates.update');
-        Route::delete('templates/{template}', [\App\Http\Controllers\Clinic\TemplateController::class, 'destroy'])->name('templates.destroy');
-        
+        Route::get('inbox', [\App\Http\Controllers\Clinic\InboxController::class, 'index'])->name('inbox.index');
+        Route::resource('inventory', \App\Http\Controllers\Clinic\InventoryController::class);
+
+        // Patient-to-Clinic Billing & Treatment
+        Route::resource('patient-invoices', \App\Http\Controllers\Clinic\PatientInvoiceController::class);
+        Route::post('patient-invoices/{patient_invoice}/payments', [\App\Http\Controllers\Clinic\PatientInvoiceController::class, 'storePayment'])->name('patient-invoices.payments.store');
+        Route::resource('treatment-plans', \App\Http\Controllers\Clinic\TreatmentPlanController::class);
+        Route::patch('treatment-plans/{plan}/steps/{step}/status', [\App\Http\Controllers\Clinic\TreatmentPlanController::class, 'updateStepStatus'])->name('treatment-plans.steps.status');
+
+
         Route::post('orders/{order}/upload', [\App\Http\Controllers\Clinic\OrderController::class, 'uploadFile'])->name('orders.upload');
         Route::delete('orders/{order}/files/{file}', [\App\Http\Controllers\Clinic\OrderController::class, 'deleteFile'])->name('orders.delete-file');
         Route::post('orders/{order}/duplicate', [\App\Http\Controllers\Clinic\OrderController::class, 'duplicate'])->name('orders.duplicate');
@@ -88,6 +92,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('orders/{order}/payment', [\App\Http\Controllers\Lab\OrderController::class, 'updatePaymentStatus'])->name('orders.update-payment')->middleware('role:lab_owner');
         Route::post('orders/{order}/upload', [\App\Http\Controllers\Lab\OrderController::class, 'uploadFile'])->name('orders.upload');
         Route::delete('orders/{order}/files/{file}', [\App\Http\Controllers\Lab\OrderController::class, 'deleteFile'])->name('orders.delete-file');
+        Route::post('orders/{order}/payments', [\App\Http\Controllers\Lab\PaymentController::class, 'store'])->name('orders.payments.store');
 
         // Bulk Operations
         Route::post('orders/bulk-status', [\App\Http\Controllers\Lab\OrderController::class, 'bulkUpdateStatus'])->name('orders.bulk-status');

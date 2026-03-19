@@ -35,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Patient::class, PatientPolicy::class);
         Gate::policy(Service::class, ServicePolicy::class);
 
+        // ── Observers ──────────────────────────────────────
+        Order::observe(\App\Observers\OrderObserver::class);
+
+
         // ── Rate Limiting ────────────────────────────────────
         \Illuminate\Support\Facades\RateLimiter::for('chat', function (\Illuminate\Http\Request $request) {
             return \Illuminate\Cache\RateLimiting\Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());

@@ -45,15 +45,15 @@ export default function Index({ auth, clinics, filters }: Props) {
         <AdminLayout
             header={
                 <div className="flex justify-between items-center w-full pr-4">
-                    <h2 className="font-bold text-2xl bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                        Clinic Management
+                    <h2 className="text-3xl font-black tracking-tight leading-tight" style={{ color: 'var(--txt-1)' }}>
+                        Clinic <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">Management</span>
                     </h2>
                     <Link
                         href={route('admin.clinics.create')}
-                        className="btn-primary"
+                        className="group flex items-center gap-2 px-6 py-3.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl shadow-[0_10px_30px_rgba(99,102,241,0.3)] transition-all duration-300 transform active:scale-95"
                     >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add New Clinic
+                        <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+                        <span className="font-bold tracking-tight">Add New Clinic</span>
                     </Link>
                 </div>
             }
@@ -62,7 +62,7 @@ export default function Index({ auth, clinics, filters }: Props) {
 
             <div className="animate-fade-in space-y-6">
                 {/* Filters */}
-                <div className="glass-card p-4 flex gap-4">
+                <div className="card p-4 flex gap-4" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                     <form onSubmit={handleSearch} className="flex-1 flex gap-2">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -71,88 +71,90 @@ export default function Index({ auth, clinics, filters }: Props) {
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Search clinics by name, address, or owner..."
-                                className="w-full pl-10 border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 rounded-xl"
+                                className="w-full pl-10 app-input rounded-xl"
                             />
                         </div>
                     </form>
                 </div>
 
                 {/* Clinics Table */}
-                <div className="glass-card overflow-hidden">
+                <div className="card overflow-hidden shadow-2xl dark:shadow-none" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-100 dark:divide-slate-700/50">
-                            <thead className="bg-gray-50/50 dark:bg-slate-800/50 flex-col">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Clinic Name</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Owner</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Contact Info</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Linked Labs</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        <table className="w-full text-left">
+                            <thead style={{ background: 'var(--surface)' }}>
+                                <tr className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--txt-3)' }}>
+                                    <th className="px-8 py-6">Clinic Name</th>
+                                    <th className="px-6 py-6">Owner</th>
+                                    <th className="px-6 py-6">Contact Info</th>
+                                    <th className="px-6 py-6">Linked Labs</th>
+                                    <th className="px-6 py-6">Status</th>
+                                    <th className="px-8 py-6 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-slate-700/50">
+                            <tbody className="divide-y" style={{ borderColor: 'var(--surface)' }}>
                                 {clinics.data.length > 0 ? (
                                     clinics.data.map((clinic) => (
-                                        <tr key={clinic.id} className="hover:bg-hover dark:hover:bg-hover transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                        <tr key={clinic.id} className="group transition-all duration-300 hover:bg-black/5 dark:hover:bg-white/5">
+                                            <td className="px-8 py-5 whitespace-nowrap">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
                                                         <Building2 className="w-5 h-5" />
                                                     </div>
-                                                    <div className="text-sm font-medium text-text dark:text-text">{clinic.name}</div>
+                                                    <div className="font-black tracking-tight" style={{ color: 'var(--txt-1)' }}>{clinic.name}</div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-5 whitespace-nowrap">
                                                 {clinic.owner ? (
-                                                    <div className="flex items-center gap-2 text-sm text-text dark:text-text">
-                                                        <User className="w-4 h-4 text-sub" />
+                                                    <div className="flex items-center gap-2 font-bold text-xs" style={{ color: 'var(--txt-1)' }}>
+                                                        <User className="w-4 h-4" style={{ color: 'var(--txt-3)' }} />
                                                         {clinic.owner.name}
                                                     </div>
                                                 ) : (
-                                                    <span className="text-sm text-sub italic">No Owner Assigned</span>
+                                                    <span className="text-xs font-bold italic" style={{ color: 'var(--txt-3)' }}>No Owner Assigned</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col gap-1 text-sm text-gray-500 dark:text-gray-400">
+                                            <td className="px-6 py-5">
+                                                <div className="flex flex-col gap-1 text-[10px] uppercase font-bold tracking-widest" style={{ color: 'var(--txt-3)' }}>
                                                     <div className="flex items-center gap-2">
                                                         <Phone className="w-3.5 h-3.5" />
                                                         {clinic.phone}
                                                     </div>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 border-t mt-1 pt-1" style={{ borderColor: 'var(--surface)' }}>
                                                         <MapPin className="w-3.5 h-3.5" />
                                                         <span className="truncate max-w-[200px]" title={clinic.address}>{clinic.address}</span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-700/10 dark:ring-blue-400/20">
+                                            <td className="px-6 py-5 whitespace-nowrap">
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-500 border border-blue-500/20">
                                                     {clinic.labs?.length || 0} Connected
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full ring-1 ring-inset ${clinic.is_active ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 ring-green-600/20' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 ring-red-600/10'}`}>
+                                            <td className="px-6 py-5 whitespace-nowrap">
+                                                <span className={`px-2.5 py-1 inline-flex text-[10px] uppercase font-black tracking-widest rounded-xl border ${clinic.is_active ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>
                                                     {clinic.is_active ? 'Active' : 'Inactive'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex justify-end gap-2">
+                                            <td className="px-8 py-5 whitespace-nowrap text-right">
+                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-x-2 group-hover:translate-x-0">
                                                     <button
                                                         onClick={() => router.patch(route('admin.clinics.toggle-active', clinic.id), {}, { preserveScroll: true })}
                                                         title={clinic.is_active ? "Deactivate Clinic" : "Activate Clinic"}
-                                                        className={`${clinic.is_active ? 'text-amber-600 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50' : 'text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'} p-2 rounded-lg transition-colors ring-1 ring-inset ring-opacity-10`}
+                                                        className={`p-2.5 rounded-xl transition-all shadow-sm border ${clinic.is_active 
+                                                            ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20' 
+                                                            : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'}`}
                                                     >
                                                         <Power className="w-4 h-4" />
                                                     </button>
                                                     <Link
                                                         href={route('admin.clinics.edit', clinic.id)}
-                                                        className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 bg-primary-50 dark:bg-primary-900/30 p-2 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors ring-1 ring-inset ring-primary-600/10"
+                                                        className="p-2.5 bg-indigo-500/10 text-indigo-500 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all shadow-sm"
                                                     >
                                                         <Edit2 className="w-4 h-4" />
                                                     </Link>
                                                     <button
                                                         onClick={() => handleDelete(clinic.id)}
-                                                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 bg-red-50 dark:bg-red-900/30 p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors ring-1 ring-inset ring-red-600/10"
+                                                        className="p-2.5 bg-rose-500/10 text-rose-500 rounded-xl border border-rose-500/20 hover:bg-rose-500/20 transition-all shadow-sm"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -162,17 +164,21 @@ export default function Index({ auth, clinics, filters }: Props) {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                                            <Building2 className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-                                            <p className="text-lg font-medium text-gray-900 dark:text-white">No clinics found</p>
-                                            <p className="text-sm">Try adjusting your search terms</p>
+                                        <td colSpan={6} className="px-8 py-20 text-center">
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--surface)' }}>
+                                                    <Building2 className="w-10 h-10" style={{ color: 'var(--txt-3)' }} />
+                                                </div>
+                                                <h3 className="font-black uppercase tracking-tight" style={{ color: 'var(--txt-1)' }}>No Clinics Found</h3>
+                                                <p className="font-medium text-xs mt-1" style={{ color: 'var(--txt-3)' }}>Try adjusting your search terms</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
-                    <div className="p-4 border-t border-gray-100 dark:border-slate-700/50">
+                    <div className="px-8 py-6 flex justify-between items-center border-t border-slate-100/10" style={{ background: 'var(--surface)' }}>
                         <Pagination links={clinics.links} />
                     </div>
                 </div>

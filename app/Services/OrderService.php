@@ -58,6 +58,7 @@ class OrderService
 
         $order = Order::create([
             'clinic_id' => $clinicId,
+            'user_id' => $userId,
             'lab_id' => $validated['lab_id'],
             'patient_id' => $validated['patient_id'],
             'service_id' => $validated['service_id'],

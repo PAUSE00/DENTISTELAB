@@ -14,6 +14,7 @@ class Order extends Model
 
     protected $fillable = [
         'clinic_id',
+        'user_id',
         'lab_id',
         'patient_id',
         'service_id',
@@ -26,6 +27,7 @@ class Order extends Model
         'instructions',
         'price',
         'final_price',
+        'paid_amount', // Added
         'payment_status',
         'rejection_reason',
         'invoice_id',
@@ -36,6 +38,7 @@ class Order extends Model
         'teeth' => 'array',
         'price' => 'decimal:2',
         'final_price' => 'decimal:2',
+        'paid_amount' => 'decimal:2', // Added
         'status' => OrderStatus::class,
         'payment_status' => PaymentStatus::class,
     ];
@@ -43,9 +46,16 @@ class Order extends Model
     protected $appends = [
         'is_overdue',
         'days_remaining',
+        'remaining_balance', // Added
+        'is_fully_paid', // Added
     ];
 
     // ─── Relationships ────────────────────────────────────
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 
     public function clinic()
     {
@@ -121,9 +131,42 @@ class Order extends Model
         return $this->daysRemaining();
     }
 
+    public function getRemainingBalanceAttribute(): float
+    {
+        return (float) ($this->price - $this->paid_amount);
+    }
+
+    public function getIsFullyPaidAttribute(): bool
+    {
+        return $this->payment_status === PaymentStatus::Paid;
+    }
+
     /**
-     * Check if this order can transition to the given status.
+     * Register a payment for this order.
      */
+    public function registerPayment(float $amount, string $paidAt, int $recordedByUserId, ?string $notes = null): Payment
+    {
+        $payment = $this->payments()->create([
+            'amount' => $amount,
+            'clinic_id' => $this->clinic_id,
+            'lab_id' => $this->lab_id,
+            'paid_at' => $paidAt,
+            'recorded_by_id' => $recordedByUserId,
+            'notes' => $notes,
+        ]);
+
+        $this->paid_amount += $amount;
+
+        if ($this->paid_amount >= $this->price) {
+            $this->payment_status = PaymentStatus::Paid;
+        } elseif ($this->paid_amount > 0) {
+            $this->payment_status = PaymentStatus::Partial;
+        }
+
+        $this->save();
+
+        return $payment;
+    }
     public function canTransitionTo(OrderStatus $target): bool
     {
         return $this->status->canTransitionTo($target);

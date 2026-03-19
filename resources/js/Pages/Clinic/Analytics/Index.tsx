@@ -17,6 +17,9 @@ interface ChartData {
     spendingTrend: { name: string; total: number }[];
     labDistribution: { name: string; value: number }[];
     orderVolumeTrend: { month: string; orders: number }[];
+    treatmentTrends: { name: string; count: number }[];
+    turnaroundTimes: { lab: string; days: number }[];
+    dentistPerformance: { name: string; orders: number; revenue: number }[];
 }
 
 interface Props extends PageProps {
@@ -35,7 +38,7 @@ export default function Index({ auth, stats, chartData }: Props) {
     const { t } = useTranslation();
 
     const formatCurrency = (val: number) => 
-        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'MAD' }).format(val);
 
     return (
         <ClinicLayout>
@@ -118,7 +121,7 @@ export default function Index({ auth, stats, chartData }: Props) {
                     </div>
                 </div>
 
-                {/* Charts Section */}
+                {/* Main Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
                     {/* Spending Trend (Area Chart) */}
@@ -151,70 +154,124 @@ export default function Index({ auth, stats, chartData }: Props) {
                         </div>
                     </div>
 
-                    {/* Lab Distribution (Pie Chart) */}
+                    {/* Treatment Trends (Pie Chart) */}
                     <div className="card p-8 flex flex-col gap-6" style={{ background: 'var(--bg-raised)' }}>
                         <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--txt-1)' }}>
-                            <Package size={18} className="text-[#60ddc6]" /> {t('Lab Distribution')}
+                            <Package size={18} className="text-[#60ddc6]" /> {t('Treatment Trends')}
                         </h3>
-                        <div className="h-[300px] w-full relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={chartData.labDistribution}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {chartData.labDistribution.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip 
-                                        contentStyle={{ background: '#1e1b4b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                                        itemStyle={{ color: '#fff', fontSize: '12px' }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div className="flex flex-col gap-2 mt-2">
-                            {chartData.labDistribution.map((entry, index) => (
-                                <div key={index} className="flex items-center justify-between text-xs font-bold">
-                                    <div className="flex items-center gap-2" style={{ color: 'var(--txt-3)' }}>
-                                        <div className="w-3 h-3 rounded-full" style={{ background: COLORS[index % COLORS.length] }} />
-                                        {entry.name}
-                                    </div>
-                                    <span style={{ color: 'var(--txt-2)' }}>{entry.value} {t('Orders')}</span>
+                        {chartData.treatmentTrends.length > 0 ? (
+                            <>
+                                <div className="h-[230px] w-full relative">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={chartData.treatmentTrends}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                paddingAngle={5}
+                                                dataKey="count"
+                                            >
+                                                {chartData.treatmentTrends.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip 
+                                                contentStyle={{ background: '#1e1b4b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                                                itemStyle={{ color: '#fff', fontSize: '12px' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="flex flex-col gap-2 mt-2">
+                                    {chartData.treatmentTrends.map((entry, index) => (
+                                        <div key={index} className="flex items-center justify-between text-xs font-bold">
+                                            <div className="flex items-center gap-2" style={{ color: 'var(--txt-3)' }}>
+                                                <div className="w-3 h-3 rounded-full" style={{ background: COLORS[index % COLORS.length] }} />
+                                                {entry.name}
+                                            </div>
+                                            <span style={{ color: 'var(--txt-2)' }}>{entry.count} {t('Orders')}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                             <div className="flex-1 flex items-center justify-center h-[300px] text-xs font-bold italic opacity-30">
+                                No treatment data yet
+                             </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Bottom Row: Volume Trend */}
-                <div className="grid grid-cols-1 gap-6">
+                {/* Turnaround & Dentist Performance Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+                    
+                    {/* Lab Turnaround Times */}
                     <div className="card p-8 flex flex-col gap-6" style={{ background: 'var(--bg-raised)' }}>
                          <div className="flex items-center justify-between">
                             <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--txt-1)' }}>
-                                <Calendar size={18} className="text-orange-500" /> {t('Volume Flux')}
+                                <Calendar size={18} className="text-orange-500" /> {t('Lab Turnaround Times')}
                             </h3>
-                            <div className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]">{t('Order Volume by Month')}</div>
+                            <div className="text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">{t('Avg Days')}</div>
                         </div>
-                        <div className="h-[250px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData.orderVolumeTrend}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                                    <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
-                                    <Tooltip 
-                                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                        contentStyle={{ background: '#1e1b4b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                                    />
-                                    <Bar dataKey="orders" fill="#60ddc6" radius={[6, 6, 0, 0]} barSize={40} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                        {chartData.turnaroundTimes.length > 0 ? (
+                            <div className="h-[250px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartData.turnaroundTimes} layout="vertical" margin={{ left: 40 }}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.05)" />
+                                        <XAxis type="number" stroke="rgba(255,255,255,0.3)" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis dataKey="lab" type="category" stroke="var(--txt-2)" fontSize={11} fontWeight="bold" tickLine={false} axisLine={false} />
+                                        <Tooltip 
+                                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                            contentStyle={{ background: '#1e1b4b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                                        />
+                                        <Bar dataKey="days" fill="#f59e0b" radius={[0, 6, 6, 0]} barSize={20} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                             <div className="flex-1 flex items-center justify-center p-8 text-xs font-bold italic opacity-30">
+                                No delivered orders to calculate turnaround
+                             </div>
+                        )}
+                    </div>
+
+                    {/* Dentist Performance Table */}
+                    <div className="card p-8 flex flex-col gap-6" style={{ background: 'var(--bg-raised)' }}>
+                         <div className="flex items-center justify-between">
+                            <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--txt-1)' }}>
+                                <Users size={18} className="text-[#818cf8]" /> {t('Dentist Performance')}
+                            </h3>
+                            <div className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em]">{t('By Value')}</div>
+                        </div>
+                        
+                        <div className="flex flex-col">
+                            <div className="grid grid-cols-12 text-[10px] font-bold uppercase tracking-widest opacity-40 pb-3 border-b border-[rgba(255,255,255,0.05)]">
+                                <div className="col-span-6">{t('Physician')}</div>
+                                <div className="col-span-3 text-right">{t('Volume')}</div>
+                                <div className="col-span-3 text-right">{t('Revenue')}</div>
+                            </div>
+                            
+                            <div className="flex flex-col gap-1 pt-3">
+                                {chartData.dentistPerformance.map((dentist, i) => (
+                                    <div key={i} className="grid grid-cols-12 items-center text-sm font-bold py-3 hover:bg-[rgba(255,255,255,0.02)] rounded-xl px-2 -mx-2 transition-colors">
+                                        <div className="col-span-6 flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] bg-[#818cf8]/20 text-[#818cf8]">
+                                                {dentist.name.substring(0,2).toUpperCase()}
+                                            </div>
+                                            <span style={{ color: 'var(--txt-1)' }}>Dr. {dentist.name}</span>
+                                        </div>
+                                        <div className="col-span-3 text-right" style={{ color: 'var(--txt-2)' }}>{dentist.orders}</div>
+                                        <div className="col-span-3 text-right text-emerald-400">{formatCurrency(dentist.revenue)}</div>
+                                    </div>
+                                ))}
+                                {chartData.dentistPerformance.length === 0 && (
+                                    <div className="text-center p-8 text-xs font-bold italic opacity-30">
+                                        No active dentists
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

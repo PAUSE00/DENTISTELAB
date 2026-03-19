@@ -29,17 +29,17 @@ export default function Index({ auth, patients, filters }: Props) {
             <div className="flex flex-col gap-5 pb-10">
 
                 {/* Header */}
-                <div className="flex items-center justify-between gap-4">
+                <div className="card p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--bg-raised)' }}>
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                             style={{ background: 'rgba(129,140,248,0.1)', color: '#818cf8' }}>
-                            <Users size={18} />
+                            <Users size={20} />
                         </div>
                         <div>
-                            <h1 className="text-[17px] font-bold tracking-tight" style={{ color: 'var(--txt-1)' }}>
+                            <h1 className="text-[18.5px] font-extrabold tracking-tight" style={{ color: 'var(--txt-1)' }}>
                                 {t('Patient Registry')}
                             </h1>
-                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                            <p className="text-[12px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
                                 {t('Manage patient records, history and contact information.')}
                             </p>
                         </div>

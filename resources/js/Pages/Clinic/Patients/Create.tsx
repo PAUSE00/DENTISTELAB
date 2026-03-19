@@ -32,40 +32,40 @@ export default function Create({ auth }: PageProps) {
         <ClinicLayout>
             <Head title="Add Patient" />
 
-            <div className="max-w-4xl mx-auto animate-fade-in space-y-6">
+            <div className="max-w-4xl mx-auto animate-fade-up space-y-6">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     <Link
                         href={route('clinic.patients.index')}
-                        className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/80 text-gray-500 dark:text-gray-400 transition-all shadow-sm hover:shadow"
+                        className="p-2.5 rounded-xl transition-colors hover:bg-white/5" style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--txt-2)' }}
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </Link>
                     <div>
-                        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">Add New Patient</h2>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Register a new patient to your clinic</p>
+                        <h2 className="text-2xl font-bold" style={{ color: 'var(--txt-1)' }}>Add New Patient</h2>
+                        <p className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-60" style={{ color: 'var(--txt-2)' }}>Register a new patient to your clinic</p>
                     </div>
                 </div>
 
-                <div className="glass-card rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div className="card overflow-hidden transition-all duration-300">
                     <div className="p-8">
                         <form onSubmit={submit} className="space-y-8">
                             {/* Personal Information Section */}
                             <div className="space-y-6">
-                                <h3 className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-slate-700/50 pb-3 flex items-center gap-2">
-                                    <User className="w-4 h-4 text-primary-500" /> Personal Information
+                                <h3 className="text-[11px] font-bold uppercase tracking-widest border-b pb-3 flex items-center gap-2" style={{ color: 'var(--txt-2)', borderColor: 'var(--border)' }}>
+                                    <User className="w-4 h-4" style={{ color: 'var(--teal)' }} /> Personal Information
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* First Name */}
                                     <div>
-                                        <InputLabel htmlFor="first_name" value="First Name" />
-                                        <TextInput
+                                        <label htmlFor="first_name" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>First Name</label>
+                                        <input
                                             id="first_name"
-                                            className="mt-1 block w-full"
+                                            className="app-input w-full"
                                             value={data.first_name}
                                             onChange={(e) => setData('first_name', e.target.value)}
                                             required
-                                            isFocused
+                                            autoFocus
                                             autoComplete="given-name"
                                         />
                                         <InputError className="mt-2" message={errors.first_name} />
@@ -73,10 +73,10 @@ export default function Create({ auth }: PageProps) {
 
                                     {/* Last Name */}
                                     <div>
-                                        <InputLabel htmlFor="last_name" value="Last Name" />
-                                        <TextInput
+                                        <label htmlFor="last_name" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>Last Name</label>
+                                        <input
                                             id="last_name"
-                                            className="mt-1 block w-full"
+                                            className="app-input w-full"
                                             value={data.last_name}
                                             onChange={(e) => setData('last_name', e.target.value)}
                                             required
@@ -87,11 +87,11 @@ export default function Create({ auth }: PageProps) {
 
                                     {/* DOB */}
                                     <div>
-                                        <InputLabel htmlFor="dob" value="Date of Birth" />
-                                        <TextInput
+                                        <label htmlFor="dob" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>Date of Birth</label>
+                                        <input
                                             id="dob"
                                             type="date"
-                                            className="mt-1 block w-full"
+                                            className="app-input w-full"
                                             value={data.dob}
                                             onChange={(e) => setData('dob', e.target.value)}
                                             required
@@ -102,18 +102,18 @@ export default function Create({ auth }: PageProps) {
                             </div>
 
                             {/* Contact Information Section */}
-                            <div className="space-y-6">
-                                <h3 className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-slate-700/50 pb-3 flex items-center gap-2 mt-4">
-                                    <Phone className="w-4 h-4 text-emerald-500" /> Contact & Additional Info
+                            <div className="space-y-6 mt-8">
+                                <h3 className="text-[11px] font-bold uppercase tracking-widest border-b pb-3 flex items-center gap-2" style={{ color: 'var(--txt-2)', borderColor: 'var(--border)' }}>
+                                    <Phone className="w-4 h-4" style={{ color: 'var(--purple)' }} /> Contact & Additional Info
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Phone */}
                                     <div>
-                                        <InputLabel htmlFor="phone" value="Phone Number" />
-                                        <TextInput
+                                        <label htmlFor="phone" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>Phone Number</label>
+                                        <input
                                             id="phone"
                                             type="tel"
-                                            className="mt-1 block w-full"
+                                            className="app-input w-full"
                                             value={data.phone}
                                             onChange={(e) => setData('phone', e.target.value)}
                                             required
@@ -124,11 +124,11 @@ export default function Create({ auth }: PageProps) {
 
                                     {/* Email (Optional) */}
                                     <div>
-                                        <InputLabel htmlFor="email" value="Email (Optional)" />
-                                        <TextInput
+                                        <label htmlFor="email" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>Email (Optional)</label>
+                                        <input
                                             id="email"
                                             type="email"
-                                            className="mt-1 block w-full"
+                                            className="app-input w-full"
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
                                             autoComplete="email"
@@ -137,13 +137,13 @@ export default function Create({ auth }: PageProps) {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                                     {/* Blood Group */}
                                     <div>
-                                        <InputLabel htmlFor="blood_group" value="Blood Group" />
+                                        <label htmlFor="blood_group" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>Blood Group</label>
                                         <select
                                             id="blood_group"
-                                            className="mt-1 block w-full border-gray-300 dark:border-slate-600 dark:bg-slate-700/50 dark:text-gray-300 focus:border-primary-500 rounded-xl shadow-sm"
+                                            className="app-input w-full appearance-none"
                                             value={data.blood_group}
                                             onChange={(e) => setData('blood_group', e.target.value)}
                                         >
@@ -162,10 +162,10 @@ export default function Create({ auth }: PageProps) {
 
                                     {/* Medical History */}
                                     <div className="md:col-span-2">
-                                        <InputLabel htmlFor="medical_history" value="Medical History" />
-                                        <TextInput
+                                        <label htmlFor="medical_history" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>Medical History</label>
+                                        <input
                                             id="medical_history"
-                                            className="mt-1 block w-full"
+                                            className="app-input w-full"
                                             value={data.medical_history}
                                             onChange={(e) => setData('medical_history', e.target.value)}
                                             placeholder="e.g. Diabetes, Hypertension..."
@@ -175,11 +175,11 @@ export default function Create({ auth }: PageProps) {
                                 </div>
 
                                 {/* Allergies */}
-                                <div>
-                                    <InputLabel htmlFor="allergies" value="Allergies" />
-                                    <TextInput
+                                <div className="mt-4">
+                                    <label htmlFor="allergies" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>Allergies</label>
+                                    <input
                                         id="allergies"
-                                        className="mt-1 block w-full"
+                                        className="app-input w-full"
                                         value={data.allergies}
                                         onChange={(e) => setData('allergies', e.target.value)}
                                         placeholder="e.g. Penicillin, Latex..."
@@ -188,11 +188,11 @@ export default function Create({ auth }: PageProps) {
                                 </div>
 
                                 {/* Medical Notes */}
-                                <div>
-                                    <InputLabel htmlFor="medical_notes" value="Medical Notes (Optional)" />
+                                <div className="mt-4">
+                                    <label htmlFor="medical_notes" className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--txt-2)' }}>Medical Notes (Optional)</label>
                                     <textarea
                                         id="medical_notes"
-                                        className="mt-1 block w-full border-gray-300 dark:border-slate-600 dark:bg-slate-700/50 dark:text-gray-300 focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500 dark:focus:ring-primary-500 rounded-xl shadow-sm transition-colors"
+                                        className="app-input w-full resize-none"
                                         value={data.medical_notes}
                                         onChange={(e) => setData('medical_notes', e.target.value)}
                                         rows={4}
@@ -202,17 +202,17 @@ export default function Create({ auth }: PageProps) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 dark:border-slate-700/50">
-                                <Link href={route('clinic.patients.index')}>
-                                    <SecondaryButton>Cancel</SecondaryButton>
+                            <div className="flex items-center justify-end gap-3 pt-6 mt-8 border-t" style={{ borderColor: 'var(--border)' }}>
+                                <Link href={route('clinic.patients.index')} className="btn-ghost" style={{ textDecoration: 'none' }}>
+                                    Cancel
                                 </Link>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-xl shadow-lg shadow-primary-500/30 hover:-translate-y-0.5 transition-all duration-300 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="btn-primary"
                                 >
                                     <Save className="w-4 h-4" />
-                                    Save Patient
+                                    <span className="font-bold">Save Patient</span>
                                 </button>
                             </div>
                         </form>

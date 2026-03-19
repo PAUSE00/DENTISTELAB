@@ -46,4 +46,14 @@ class Patient extends Model
     {
         return $this->hasMany(PatientClinicalNote::class);
     }
+
+    public function invoices()
+    {
+        return $this->hasMany(PatientInvoice::class);
+    }
+
+    public function treatmentPlans()
+    {
+        return $this->hasMany(TreatmentPlan::class);
+    }
 }

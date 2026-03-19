@@ -66,4 +66,19 @@ class Clinic extends Model
     {
         return $this->hasMany(OrderTemplate::class);
     }
+
+    public function inventoryItems()
+    {
+        return $this->hasMany(InventoryItem::class);
+    }
+
+    public function patientInvoices()
+    {
+        return $this->hasMany(PatientInvoice::class);
+    }
+
+    public function treatmentPlans()
+    {
+        return $this->hasMany(TreatmentPlan::class);
+    }
 }

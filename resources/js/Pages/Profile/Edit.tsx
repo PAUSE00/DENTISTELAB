@@ -43,8 +43,8 @@ export default function Edit({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                     {/* Navigation Sidebar (Fake for visual consistent) */}
                     <div className="lg:col-span-3 space-y-4">
-                        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 border border-slate-100 dark:border-slate-800 shadow-sm sticky top-8">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 px-2">{t('Vault Sections')}</h4>
+                        <div className="card rounded-[2.5rem] p-6 shadow-sm sticky top-8" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-6 px-2" style={{ color: 'var(--txt-3)' }}>{t('Vault Sections')}</h4>
                             <div className="space-y-1">
                                 {[
                                     { id: 'info', label: t('Identity'), icon: User, active: true },
@@ -53,7 +53,8 @@ export default function Edit({
                                 ].map((item) => (
                                     <button 
                                         key={item.id}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${item.active ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 font-black' : 'text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${item.active ? 'bg-indigo-500/10 text-indigo-500 font-black' : 'font-bold hover:bg-black/5 dark:hover:bg-white/5'}`}
+                                        style={!item.active ? { color: 'var(--txt-2)' } : undefined}
                                     >
                                         <item.icon className="w-4 h-4" />
                                         <span className="text-xs">{item.label}</span>
@@ -66,12 +67,12 @@ export default function Edit({
                     {/* Forms Content */}
                     <div className="lg:col-span-9 space-y-12">
                         {/* Profile Info */}
-                        <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                        <section className="card rounded-[2.5rem] p-10 shadow-sm relative overflow-hidden group" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-700 pointer-events-none">
                                <User className="w-32 h-32" />
                            </div>
                            <div className="relative z-10">
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-8 flex items-center gap-4">
+                                <h3 className="text-xl font-black uppercase tracking-tight mb-8 flex items-center gap-4" style={{ color: 'var(--txt-1)' }}>
                                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
                                          <Shield className="w-5 h-5" />
                                      </div>
@@ -85,12 +86,12 @@ export default function Edit({
                         </section>
 
                         {/* Password */}
-                        <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                        <section className="card rounded-[2.5rem] p-10 shadow-sm relative overflow-hidden group" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
                            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-700 pointer-events-none">
                                <Lock className="w-32 h-32" />
                            </div>
                            <div className="relative z-10">
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-8 flex items-center gap-4">
+                                <h3 className="text-xl font-black uppercase tracking-tight mb-8 flex items-center gap-4" style={{ color: 'var(--txt-1)' }}>
                                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
                                          <Lock className="w-5 h-5" />
                                      </div>

@@ -48,6 +48,18 @@ export interface FilterOption {
     label: string;
 }
 
+export interface OrderPayment {
+    id: number;
+    amount: number;
+    payment_method: string;
+    notes: string | null;
+    paid_at: string;
+    recorded_by?: {
+        id: number;
+        name: string;
+    };
+}
+
 export interface OrderListItem {
     id: number;
     patient: { first_name: string; last_name: string };
@@ -58,6 +70,39 @@ export interface OrderListItem {
     priority: string;
     due_date: string;
     created_at: string;
+    is_overdue: boolean;
+    days_remaining: number;
+    price: number | null;
+    paid_amount: number;
+    payment_status: string;
+    remaining_balance: number;
+}
+
+export interface Order {
+    id: number;
+    status: string;
+    priority: string;
+    due_date: string;
+    created_at: string;
+    teeth: number[] | null;
+    shade: string | null;
+    material: string | null;
+    instructions: string | null;
+    rejection_reason: string | null;
+    patient: { id: number; first_name: string; last_name: string };
+    clinic: { id: number; name: string };
+    lab: { id: number; name: string; email?: string };
+    service: { id: number; name: string; price: number };
+    files: OrderFile[];
+    history: OrderHistoryEntry[];
+    notes: OrderNote[];
+    payments: OrderPayment[];
+    price: number | null;
+    final_price: number | null;
+    paid_amount: number;
+    payment_status: string;
+    remaining_balance: number;
+    is_fully_paid: boolean;
     is_overdue: boolean;
     days_remaining: number;
 }

@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { ChevronRight, Package, X, Zap, AlertTriangle } from 'lucide-react';
+import { ChevronRight, Package, X, Zap, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
 import Pagination from '@/Components/Pagination';
@@ -120,17 +120,17 @@ export default function OrderTable({ orders, selectedOrders, variant, showRoute,
                 </div>
             )}
 
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #312e81', background: 'transparent' }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--bg-raised)' }}>
                 <table className="w-full">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #312e81', background: 'rgba(15,23,42,0.1)' }}>
+                        <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
                             <th className="w-10 px-4 py-2.5">
                                 <input type="checkbox"
                                     checked={selectedOrders.length === orders.data.length && orders.data.length > 0}
                                     onChange={onToggleSelectAll}
                                     style={{ accentColor: 'var(--txt-accent)' }} />
                             </th>
-                            {['#', t('Patient'), `${variant === 'lab' ? t('Clinic') : t('Lab')} / ${t('Service')}`, t('Status'), t('Due Date'), t('Priority'), ''].map((h, i) => (
+                            {['#', t('Patient'), `${variant === 'lab' ? t('Clinic') : t('Lab')} / ${t('Service')}`, t('Status'), t('Payment'), t('Due Date'), t('Priority'), ''].map((h, i) => (
                                 <th key={i} className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide"
                                     style={{ color: 'var(--txt-3)' }}>
                                     {h}
@@ -146,13 +146,21 @@ export default function OrderTable({ orders, selectedOrders, variant, showRoute,
                             const initials = `${order.patient.first_name[0]}${order.patient.last_name[0]}`;
                             const bg = avatarColor(initials);
 
+                            const remaining = order.remaining_balance || 0;
+                            const isPaid = order.payment_status === 'paid';
+                            const isPartial = order.payment_status === 'partial';
+
+                            const formatCurrency = (val: number) => 
+                                new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(val);
+
                             return (
                                 <tr key={order.id}
                                     style={{
-                                        borderBottom: '1px solid #312e81',
+                                        borderBottom: '1px solid var(--border)',
                                         background: isSelected ? 'var(--teal-10)' : 'transparent',
                                     }}
-                                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(15,23,42,0.1)'; }}
+                                    className="group"
+                                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--surface)'; }}
                                     onMouseLeave={e => { e.currentTarget.style.background = isSelected ? 'var(--teal-10)' : 'transparent'; }}>
 
                                     <td className="px-4 py-3">
@@ -194,6 +202,20 @@ export default function OrderTable({ orders, selectedOrders, variant, showRoute,
                                             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.dot, boxShadow: `0 0 5px ${s.dot}` }} />
                                             <span>{t(s.label)}</span>
                                         </span>
+                                    </td>
+
+                                    <td className="px-3 py-3">
+                                        <div className="flex flex-col">
+                                            <div className={`text-[10px] font-black uppercase tracking-tight flex items-center gap-1 ${isPaid ? 'text-emerald-500' : isPartial ? 'text-amber-500' : 'text-rose-500'}`}>
+                                                {isPaid ? <CheckCircle2 size={10} /> : <Clock size={10} />}
+                                                {t(order.payment_status)}
+                                            </div>
+                                            {!isPaid && remaining > 0 && (
+                                                <div className="text-[11px] font-bold mt-0.5" style={{ color: isPartial ? 'var(--txt-2)' : 'var(--rose-500)' }}>
+                                                    {formatCurrency(remaining)} <span className="text-[9px] opacity-40 font-bold uppercase tracking-tighter">{t('left')}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
 
                                     <td className="px-3 py-3">
@@ -246,7 +268,7 @@ export default function OrderTable({ orders, selectedOrders, variant, showRoute,
 
                 {orders.links && orders.links.length > 3 && (
                     <div className="px-4 py-3 border-t flex justify-between items-center"
-                        style={{ borderColor: '#312e81', background: 'transparent' }}>
+                        style={{ borderColor: 'var(--border)', background: 'var(--bg-raised)' }}>
                         <p className="text-[11px]" style={{ color: 'var(--txt-3)' }}>
                             {orders.total} {t('total orders')}
                         </p>

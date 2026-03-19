@@ -35,8 +35,8 @@ export default function OrderFilters({
         borderRadius: '8px',
         fontSize: '12px',
         color: 'var(--txt-1)',
-        background: 'rgba(15,23,42,0.2)',
-        border: '1px solid #312e81',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
         outline: 'none',
         appearance: 'none',
         WebkitAppearance: 'none',
@@ -57,12 +57,12 @@ export default function OrderFilters({
                         onChange={e => onUpdateFilter('search', e.target.value)}
                         className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none transition-colors"
                         style={{
-                            background: 'rgba(15,23,42,0.2)',
-                            border: '1px solid #312e81',
+                            background: 'var(--bg-raised)',
+                            border: '1px solid var(--border)',
                             color: 'var(--txt-1)',
                         }}
-                        onFocus={e => e.currentTarget.style.borderColor = '#4f46e5'}
-                        onBlur={e => e.currentTarget.style.borderColor = '#312e81'}
+                        onFocus={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+                        onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
                     />
                     {localFilters.search && (
                         <button onClick={() => onUpdateFilter('search', '')}
@@ -121,11 +121,11 @@ export default function OrderFilters({
 
             {/* Advanced filter panel */}
             {showFilters && (
-                <div className="rounded-xl overflow-hidden"
-                    style={{ border: '1px solid #312e81', background: 'transparent' }}>
+                <div className="rounded-xl overflow-hidden mt-2"
+                    style={{ border: '1px solid var(--border)', background: 'var(--bg-raised)' }}>
                     {/* Panel header */}
                     <div className="flex items-center justify-between px-4 py-2.5 border-b"
-                        style={{ borderColor: '#312e81', background: 'rgba(15,23,42,0.1)' }}>
+                        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                         <span className="text-[11px] font-semibold uppercase tracking-wider"
                             style={{ color: 'var(--txt-3)' }}>
                             {t('Filter Options')}
@@ -140,14 +140,14 @@ export default function OrderFilters({
                     </div>
 
                     {/* Fields grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x"
-                        style={{ borderColor: '#312e81' }}>
+                    <div className="flex flex-wrap lg:flex-nowrap divide-y lg:divide-y-0 lg:divide-x"
+                        style={{ borderColor: 'var(--border)' }}>
                         {filterFields.map((field, i) => {
                             const isActive = !!localFilters[field.key];
                             return (
-                                <div key={field.key} className="px-4 py-3"
+                                <div key={field.key} className="px-4 py-3 flex-1 min-w-[150px]"
                                     style={{
-                                        borderRight: i < filterFields.length - 1 ? '1px solid #312e81' : 'none',
+                                        borderRight: 'none', // relying on tailwind divide instead
                                     }}>
                                     <label className="block text-[10.5px] font-semibold uppercase tracking-wide mb-1.5"
                                         style={{ color: isActive ? 'var(--txt-accent)' : 'var(--txt-3)' }}>
@@ -162,7 +162,7 @@ export default function OrderFilters({
                                                     style={{
                                                         ...inputStyle,
                                                         color: isActive ? 'var(--txt-1)' : 'var(--txt-3)',
-                                                        borderColor: isActive ? '#4f46e5' : '#312e81',
+                                                        borderColor: isActive ? 'var(--border-strong)' : 'var(--border)',
                                                         paddingRight: '28px',
                                                     }}>
                                                     <option value="">{field.placeholder || t('All')}</option>
@@ -183,7 +183,7 @@ export default function OrderFilters({
                                                 onChange={e => onUpdateFilter(field.key, e.target.value)}
                                                 style={{
                                                     ...inputStyle,
-                                                    borderColor: isActive ? '#4f46e5' : '#312e81',
+                                                    borderColor: isActive ? 'var(--border-strong)' : 'var(--border)',
                                                 }} />
                                         )}
                                     </div>
