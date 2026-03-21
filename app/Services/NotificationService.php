@@ -12,13 +12,17 @@ class NotificationService
      */
     public static function notifyUser(int $userId, string $type, string $title, string $body, array $data = []): Notification
     {
-        return Notification::create([
+        $notification = Notification::create([
             'user_id' => $userId,
             'type' => $type,
             'title' => $title,
             'body' => $body,
             'data' => $data,
         ]);
+
+        \App\Events\NotificationCreated::dispatch($notification);
+
+        return $notification;
     }
 
     /**
@@ -46,6 +50,21 @@ class NotificationService
 
         foreach ($users as $user) {
             self::notifyUser($user->id, $type, $title, $body, $data);
+        }
+    }
+    /**
+     * Notify about a new message.
+     */
+    public static function newMessage(\App\Models\Order $order, \App\Models\User $sender): void
+    {
+        $title = "New Message: Order #{$order->id}";
+        $body = "{$sender->name} sent a new message.";
+        $data = ['order_id' => $order->id, 'action' => 'chat'];
+
+        if (in_array($sender->role, ['dentist', 'clinic_staff'])) {
+            self::notifyLab($order->lab_id, 'info', $title, $body, $data);
+        } else {
+            self::notifyClinic($order->clinic_id, 'info', $title, $body, $data);
         }
     }
 }

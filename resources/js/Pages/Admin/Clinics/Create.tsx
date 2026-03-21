@@ -1,11 +1,9 @@
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import { ArrowLeft, Save, Building2, MapPin, Phone, User } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, Phone, User, Save, X } from 'lucide-react';
 import { FormEventHandler } from 'react';
+import useTranslation from '@/Hooks/useTranslation';
 
 interface Dentist {
     id: number;
@@ -13,7 +11,21 @@ interface Dentist {
     email: string;
 }
 
+const fieldBase = {
+    background: 'var(--surface)',
+    border: '1.5px solid var(--border)',
+    color: 'var(--txt-1)',
+    borderRadius: '12px',
+    padding: '11px 14px 11px 42px',
+    width: '100%',
+    outline: 'none',
+    fontSize: '13px',
+    fontWeight: '500',
+    transition: 'border-color 0.2s',
+} as React.CSSProperties;
+
 export default function Create({ dentists }: { dentists: Dentist[] }) {
+    const { t } = useTranslation();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         address: '',
@@ -28,117 +40,175 @@ export default function Create({ dentists }: { dentists: Dentist[] }) {
     };
 
     return (
-        <AdminLayout
-            header={
-                <div className="flex items-center gap-4 w-full pr-4">
+        <AdminLayout header={t('Create New Clinic')}>
+            <Head title={t('Add New Clinic')} />
+
+            <div className="space-y-8 animate-fade-in pb-12">
+
+                {/* Page Header */}
+                <div className="flex items-center gap-4">
                     <Link
                         href={route('admin.clinics.index')}
-                        className="p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm transition-all"
+                        className="p-2.5 rounded-xl border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                        style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', color: 'var(--txt-3)' }}
                     >
-                        <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                        <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    <h2 className="font-bold text-2xl bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                        Add New Clinic
-                    </h2>
+                    <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <Building2 className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />
+                            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--accent)' }}>{t('Clinic Directory')}</span>
+                        </div>
+                        <h2 className="text-xl font-bold tracking-tight" style={{ color: 'var(--txt-1)' }}>
+                            {t('Add New')} <span style={{ color: 'var(--accent)' }}>{t('Clinic')}</span>
+                        </h2>
+                    </div>
                 </div>
-            }
-        >
-            <Head title="Create Clinic" />
 
-            <div className="animate-fade-in space-y-6 max-w-2xl mx-auto">
-                <form onSubmit={submit} className="glass-card p-6 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-                    {/* Name */}
-                    <div>
-                        <InputLabel htmlFor="name" value="Clinic Name" />
-                        <div className="relative mt-1">
-                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-sub w-5 h-5" />
-                            <TextInput
-                                id="name"
-                                name="name"
-                                value={data.name}
-                                className="pl-10 w-full"
-                                autoComplete="organization"
-                                isFocused={true}
-                                onChange={(e) => setData('name', e.target.value)}
-                                required
-                            />
+                    {/* Left Sidebar */}
+                    <div className="space-y-4">
+
+                        {/* Connection Card */}
+                        <div className="rounded-2xl p-5 border" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+                            <p className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: 'var(--txt-3)' }}>
+                                {t('Connection Status')}
+                            </p>
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                                    <div className="w-2 h-2 rounded-full bg-[#34d399] shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+                                    <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-2)' }}>{t('System Integration Ready')}</span>
+                                </div>
+                                <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                                    <div className="w-2 h-2 rounded-full shadow-[0_0_8px_var(--accent-20)]" style={{ background: 'var(--accent)' }} />
+                                    <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-2)' }}>{t('Data Sync Pending')}</span>
+                                </div>
+                            </div>
                         </div>
-                        <InputError message={errors.name} className="mt-2" />
+
                     </div>
 
-                    {/* Address */}
-                    <div>
-                        <InputLabel htmlFor="address" value="Address" />
-                        <div className="relative mt-1">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-sub w-5 h-5" />
-                            <TextInput
-                                id="address"
-                                name="address"
-                                value={data.address}
-                                className="pl-10 w-full"
-                                onChange={(e) => setData('address', e.target.value)}
-                                required
-                            />
-                        </div>
-                        <InputError message={errors.address} className="mt-2" />
-                    </div>
+                    {/* Main Form */}
+                    <div className="lg:col-span-3">
+                        <form onSubmit={submit} className="rounded-2xl border" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+                            <div className="p-8 space-y-8">
 
-                    {/* Phone */}
-                    <div>
-                        <InputLabel htmlFor="phone" value="Phone Number" />
-                        <div className="relative mt-1">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-sub w-5 h-5" />
-                            <TextInput
-                                id="phone"
-                                name="phone"
-                                value={data.phone}
-                                className="pl-10 w-full"
-                                onChange={(e) => setData('phone', e.target.value)}
-                                required
-                            />
-                        </div>
-                        <InputError message={errors.phone} className="mt-2" />
-                    </div>
+                                {/* Primary Details */}
+                                <section className="space-y-4">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-4 h-px" style={{ background: 'var(--accent)' }} />
+                                        <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--accent)' }}>{t('General Information')}</p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                    {/* Clinic Owner (Dentist) */}
-                    <div>
-                        <InputLabel htmlFor="dentist_id" value="Clinic Owner (Dentist)" />
-                        <div className="relative mt-1">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-sub w-5 h-5" />
-                            <select
-                                id="dentist_id"
-                                name="dentist_id"
-                                value={data.dentist_id}
-                                onChange={(e) => setData('dentist_id', e.target.value)}
-                                className="pl-10 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-brand dark:focus:border-brand focus:ring-brand dark:focus:ring-brand shadow-sm"
-                                required
-                            >
-                                <option value="">Select a dentist...</option>
-                                {dentists.map((dentist) => (
-                                    <option key={dentist.id} value={dentist.id}>
-                                        {dentist.name} ({dentist.email})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <p className="mt-1 text-sm text-sub">Only dentists without an assigned clinic are listed.</p>
-                        <InputError message={errors.dentist_id} className="mt-2" />
-                    </div>
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Clinic Name')}</label>
+                                            <div className="relative">
+                                                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--txt-3)' }} />
+                                                <input
+                                                    id="name"
+                                                    type="text"
+                                                    value={data.name}
+                                                    onChange={e => setData('name', e.target.value)}
+                                                    placeholder="Bright Smiles Clinic"
+                                                    required
+                                                    style={fieldBase}
+                                                />
+                                            </div>
+                                            <InputError message={errors.name} />
+                                        </div>
 
-                    <div className="flex items-center justify-end gap-4 pt-6 mt-6 border-t border-gray-100 dark:border-slate-700/50">
-                        <Link
-                            href={route('admin.clinics.index')}
-                            className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                        >
-                            Cancel
-                        </Link>
-                        <PrimaryButton disabled={processing} className="btn-primary flex items-center gap-2">
-                            <Save className="w-4 h-4" />
-                            Create Clinic
-                        </PrimaryButton>
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Physical Address')}</label>
+                                            <div className="relative">
+                                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--txt-3)' }} />
+                                                <input
+                                                    id="address"
+                                                    type="text"
+                                                    value={data.address}
+                                                    onChange={e => setData('address', e.target.value)}
+                                                    placeholder="123 Dental Way, Suite A"
+                                                    required
+                                                    style={fieldBase}
+                                                />
+                                            </div>
+                                            <InputError message={errors.address} />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Phone Number')}</label>
+                                            <div className="relative">
+                                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--txt-3)' }} />
+                                                <input
+                                                    id="phone"
+                                                    type="text"
+                                                    value={data.phone}
+                                                    onChange={e => setData('phone', e.target.value)}
+                                                    placeholder="+1 (555) 123-4567"
+                                                    required
+                                                    style={fieldBase}
+                                                />
+                                            </div>
+                                            <InputError message={errors.phone} />
+                                        </div>
+
+                                    </div>
+                                </section>
+
+                                {/* Assignment */}
+                                <section className="space-y-4">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-4 h-px" style={{ background: 'var(--accent)' }} />
+                                        <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--accent)' }}>{t('Lead Assignment')}</p>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Clinic Owner (Dentist)')}</label>
+                                        <div className="relative">
+                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--txt-3)' }} />
+                                            <select
+                                                id="dentist_id"
+                                                value={data.dentist_id}
+                                                onChange={e => setData('dentist_id', e.target.value)}
+                                                required
+                                                style={{ ...fieldBase, appearance: 'none', cursor: 'pointer' }}
+                                            >
+                                                <option value="" disabled style={{ color: 'var(--txt-3)' }}>{t('Select a dentist...')}</option>
+                                                {dentists.map(d => (
+                                                    <option key={d.id} value={d.id}>{d.name} ({d.email})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <p className="text-[10px] mt-1.5 ml-1" style={{ color: 'var(--txt-3)' }}>{t('Only dentists without an assigned clinic are listed.')}</p>
+                                        <InputError message={errors.dentist_id} />
+                                    </div>
+                                </section>
+
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-8 py-5 border-t flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+                                <Link
+                                    href={route('admin.clinics.index')}
+                                    className="flex items-center gap-2 text-[12px] font-semibold transition-colors hover:text-[var(--accent)]"
+                                    style={{ color: 'var(--txt-3)' }}
+                                >
+                                    <X className="w-4 h-4" />
+                                    {t('Cancel')}
+                                </Link>
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-white font-bold text-[13px] transition-all hover:opacity-90 disabled:opacity-50"
+                                    style={{ background: '#34d399', color: '#0d1f1a', boxShadow: '0 4px 16px rgba(52,211,153,0.3)' }}
+                                >
+                                    <Save className="w-4 h-4" />
+                                    {processing ? t('Saving...') : t('Save Clinic')}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </AdminLayout>
     );

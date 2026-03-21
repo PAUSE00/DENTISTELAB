@@ -30,8 +30,9 @@ class StoreOrderRequest extends FormRequest
             'priority' => 'required|in:normal,urgent',
 
             // Step 2: Technical Specs
-            'teeth' => 'nullable|array', // Expecting array of tooth numbers
-            'teeth.*' => 'integer|between:11,48', // FDI notation validation
+            // Changed teeth to allow object format: {"46": "Crown"}
+            'teeth' => 'nullable|array',
+            'teeth.*' => 'nullable|string|max:50',
             'shade' => 'required|string|max:50',
             'material' => 'required|string|max:100', // e.g., Zirconia, E-max
             'instructions' => 'nullable|string|max:2000',

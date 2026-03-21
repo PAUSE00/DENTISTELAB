@@ -24,38 +24,51 @@ class DashboardController extends Controller
         $startDate = $request->input('start_date', now()->startOfMonth()->toDateString());
         $endDate   = $request->input('end_date',   now()->endOfMonth()->toDateString());
 
-        // ── Active orders (not terminal) ─────────────────────────────
-        $activeOrders = Order::where('clinic_id', $clinicId)
-            ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Archived, OrderStatus::Cancelled, OrderStatus::Rejected])
-            ->count();
+        // Cache dashboard stats for 60 seconds (Redis)
+        $stats = \Illuminate\Support\Facades\Cache::remember("clinic.{$clinicId}.dashboard.stats", 60, function () use ($clinicId) {
+            return [
+                'activeOrders' => Order::where('clinic_id', $clinicId)
+                    ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Archived, OrderStatus::Cancelled, OrderStatus::Rejected])
+                    ->count(),
 
-        // ── New / awaiting approval ───────────────────────────────────
-        $newOrders = Order::where('clinic_id', $clinicId)
-            ->where('status', OrderStatus::New)
-            ->count();
+                'newOrders' => Order::where('clinic_id', $clinicId)
+                    ->where('status', OrderStatus::New)
+                    ->count(),
 
-        // ── Overdue cases (past due_date, not delivered) ──────────────
-        $overdue = Order::where('clinic_id', $clinicId)
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', today())
-            ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Archived, OrderStatus::Cancelled])
-            ->count();
+                'overdue' => Order::where('clinic_id', $clinicId)
+                    ->whereNotNull('due_date')
+                    ->whereDate('due_date', '<', today())
+                    ->whereNotIn('status', [OrderStatus::Delivered, OrderStatus::Archived, OrderStatus::Cancelled])
+                    ->count(),
 
-        // ── Outstanding balance (unpaid + partial orders) ─────────────
-        $outstanding = Order::where('clinic_id', $clinicId)
-            ->whereIn('payment_status', ['unpaid', 'partial'])
-            ->whereNotIn('status', [OrderStatus::Cancelled, OrderStatus::Rejected])
-            ->selectRaw('SUM(COALESCE(final_price, price) - COALESCE(paid_amount, 0)) as balance')
-            ->value('balance') ?? 0;
+                'outstanding' => Order::where('clinic_id', $clinicId)
+                    ->whereIn('payment_status', ['unpaid', 'partial'])
+                    ->whereNotIn('status', [OrderStatus::Cancelled, OrderStatus::Rejected])
+                    ->selectRaw('SUM(COALESCE(final_price, price) - COALESCE(paid_amount, 0)) as balance')
+                    ->value('balance') ?? 0,
 
-        // ── Patients count ────────────────────────────────────────────
-        $patientCount = Patient::where('clinic_id', $clinicId)->count();
+                'patientCount' => Patient::where('clinic_id', $clinicId)->count(),
 
-        // ── New patients this month ───────────────────────────────────
-        $newPatientsThisMonth = Patient::where('clinic_id', $clinicId)
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
+                'newPatientsThisMonth' => Patient::where('clinic_id', $clinicId)
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->count(),
+
+                'completedThisMonth' => Order::where('clinic_id', $clinicId)
+                    ->where('status', OrderStatus::Delivered)
+                    ->whereMonth('updated_at', now()->month)
+                    ->whereYear('updated_at', now()->year)
+                    ->count(),
+            ];
+        });
+
+        $activeOrders = $stats['activeOrders'];
+        $newOrders = $stats['newOrders'];
+        $overdue = $stats['overdue'];
+        $outstanding = $stats['outstanding'];
+        $patientCount = $stats['patientCount'];
+        $newPatientsThisMonth = $stats['newPatientsThisMonth'];
+        $completedThisMonth = $stats['completedThisMonth'];
 
         // ── Today's appointments ──────────────────────────────────────
         $todayAppointments = Appointment::where('clinic_id', $clinicId)
@@ -71,13 +84,6 @@ class DashboardController extends Controller
                 'start_time'   => $a->start_time,
                 'status'       => $a->status,
             ]);
-
-        // ── Delivered this month (completed cases) ────────────────────
-        $completedThisMonth = Order::where('clinic_id', $clinicId)
-            ->where('status', OrderStatus::Delivered)
-            ->whereMonth('updated_at', now()->month)
-            ->whereYear('updated_at', now()->year)
-            ->count();
 
         // ── Chart: Monthly order counts (last 6 months) ───────────────
         $months = collect();

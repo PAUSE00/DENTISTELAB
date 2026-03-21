@@ -89,15 +89,15 @@ class PatientInvoiceController extends Controller
             $invoice = PatientInvoice::create([
                 'clinic_id' => $clinic->id,
                 'patient_id' => $validated['patient_id'],
-                'appointment_id' => $validated['appointment_id'],
+                'appointment_id' => $validated['appointment_id'] ?? null,
                 'invoice_number' => $invoiceNumber,
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'total' => $total,
                 'status' => 'issued',
                 'payment_status' => 'unpaid',
-                'notes' => $validated['notes'],
-                'due_date' => $validated['due_date'],
+                'notes' => $validated['notes'] ?? null,
+                'due_date' => $validated['due_date'] ?? null,
                 'issued_at' => now(),
             ]);
 
@@ -145,7 +145,7 @@ class PatientInvoiceController extends Controller
                 'amount' => $validated['amount'],
                 'method' => $validated['method'],
                 'paid_at' => $validated['paid_at'],
-                'notes' => $validated['notes'],
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             $patientInvoice->increment('paid_amount', $validated['amount']);

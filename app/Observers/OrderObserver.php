@@ -31,25 +31,41 @@ class OrderObserver
     {
         if ($order->isDirty('status')) {
             $newStatus = $order->status;
-            $statusLabel = $newStatus->label(); // Assuming label() or similar exists on Enums
+            $statusLabel = $newStatus->label();
+            
+            $user = auth()->user();
+            $isClinicUser = $user && in_array($user->role, ['dentist', 'clinic_staff']);
+            $isLabUser = $user && in_array($user->role, ['lab_owner', 'lab_tech']);
 
-            // Notify Clinic when Lab updates status
-            NotificationService::notifyClinic(
-                $order->clinic_id,
-                'order_status_update',
-                "Order Status Updated",
-                "Order #{$order->id} is now: {$statusLabel}.",
-                ['order_id' => $order->id, 'status' => $newStatus->value]
-            );
-
-            // Special case for Shipped status
-            if ($newStatus === OrderStatus::Shipped) {
+            // If lab updates status (or system), notify clinic
+            if (!$isClinicUser) {
                 NotificationService::notifyClinic(
                     $order->clinic_id,
-                    'order_shipped',
-                    "Order En Route",
-                    "A package for Order #{$order->id} has been dispatched by the lab.",
-                    ['order_id' => $order->id]
+                    'order_status_update',
+                    "Order Status Updated",
+                    "Order #{$order->id} is now: {$statusLabel}.",
+                    ['order_id' => $order->id, 'status' => $newStatus->value]
+                );
+
+                if ($newStatus === OrderStatus::Shipped) {
+                    NotificationService::notifyClinic(
+                        $order->clinic_id,
+                        'order_shipped',
+                        "Order En Route",
+                        "A package for Order #{$order->id} has been dispatched by the lab.",
+                        ['order_id' => $order->id]
+                    );
+                }
+            }
+
+            // If clinic updates status (e.g., cancelled), notify lab
+            if (!$isLabUser) {
+                NotificationService::notifyLab(
+                    $order->lab_id,
+                    'order_status_update',
+                    "Order Status Updated",
+                    "Order #{$order->id} is now: {$statusLabel}.",
+                    ['order_id' => $order->id, 'status' => $newStatus->value]
                 );
             }
         }

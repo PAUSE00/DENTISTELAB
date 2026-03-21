@@ -1,189 +1,247 @@
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import TextInput from '@/Components/TextInput';
-import { ArrowLeft, Save, User, Mail, Shield, ChevronRight, Fingerprint, Sparkles, X, Activity } from 'lucide-react';
+import { ArrowLeft, Save, User, Mail, Shield, Fingerprint, Power, X } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import useTranslation from '@/Hooks/useTranslation';
 
 interface UserData {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    is_active: boolean;
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  is_active: boolean;
 }
 
+const fieldBase = {
+  background: 'var(--surface)',
+  border: '1.5px solid var(--border)',
+  color: 'var(--txt-1)',
+  borderRadius: '12px',
+  padding: '11px 14px 11px 42px',
+  width: '100%',
+  outline: 'none',
+  fontSize: '13px',
+  fontWeight: '500',
+  transition: 'border-color 0.2s',
+} as React.CSSProperties;
+
 export default function Edit({ user }: { user: UserData }) {
-    const { t } = useTranslation();
-    const { data, setData, put, processing, errors } = useForm({
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        is_active: user.is_active,
-    });
+  const { t } = useTranslation();
+  const { data, setData, put, processing, errors } = useForm({
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    is_active: user.is_active,
+  });
 
-    const submit: FormEventHandler = (e) => {
-        e.preventDefault();
-        put(route('admin.users.update', user.id));
-    };
+  const submit: FormEventHandler = (e) => {
+    e.preventDefault();
+    put(route('admin.users.update', user.id));
+  };
 
-    return (
-        <AdminLayout header={t('Edit User Account')}>
-            <Head title={`${t('Edit')} ${user.name}`} />
+  const roles = [
+    { value: 'dentist',       label: t('Dentist (Clinic Owner)'), access: t('Clinic Owner') },
+    { value: 'lab_owner',     label: t('Lab Owner'),               access: t('Lab Enterprise') },
+    { value: 'lab_tech',      label: t('Lab Technician'),          access: t('Technician Staff') },
+    { value: 'clinic_staff',  label: t('Clinic Staff'),            access: t('Clinic Staff') },
+    { value: 'super_admin',   label: t('Super Admin'),             access: t('Full Access') },
+  ];
 
-            <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
-                {/* Header Header */}
-                <div className="flex items-center gap-6">
-                    <Link
-                        href={route('admin.users.index')}
-                        className="p-4 rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group"
-                    >
-                        <ArrowLeft className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                    </Link>
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Fingerprint className="w-4 h-4 text-indigo-500" />
-                            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">{t('User Management')}</span>
-                        </div>
-                        <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-                            {t('Modify')} <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">{user.name}</span>
-                        </h2>
-                    </div>
-                </div>
+  return (
+    <AdminLayout header={t('Edit User Account')}>
+      <Head title={`${t('Edit')} ${user.name}`} />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Security Sidebar */}
-                    <div className="space-y-6">
-                        <div className="bg-slate-900 rounded-[2.5rem] p-8 border border-slate-800 relative overflow-hidden group shadow-2xl">
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent" />
-                            <div className="relative z-10">
-                                <Activity className="w-10 h-10 text-indigo-400 mb-6 group-hover:scale-110 transition-transform duration-500" />
-                                <h3 className="text-white font-black text-xl mb-3 leading-tight italic underline decoration-indigo-500/30 uppercase tracking-tight">{t('Access Control')}</h3>
-                                <p className="text-slate-400 font-medium text-sm leading-relaxed mb-6">
-                                    {t('Modifying existing architecture requires administrative override. All changes are logged in the system vault.')}
-                                </p>
-                                <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-2xl border ${data.is_active ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'}`}>
-                                    <div className={`w-2 h-2 rounded-full ${data.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">{data.is_active ? t('Account Enabled') : t('Account Restricted')}</span>
-                                </div>
-                            </div>
-                        </div>
+      <div className="space-y-8 animate-fade-in pb-12">
 
-                        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">{t('Quick Operations')}</h4>
-                            <div className="space-y-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setData('is_active', !data.is_active)}
-                                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${data.is_active 
-                                        ? 'bg-rose-50 dark:bg-rose-500/5 border-rose-100 dark:border-rose-500/20 text-rose-600' 
-                                        : 'bg-emerald-50 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-500/20 text-emerald-600'}`}
-                                >
-                                    <span className="text-[10px] font-black uppercase tracking-widest">{data.is_active ? t('Suspend Access') : t('Restore Access')}</span>
-                                    <Sparkles className="w-4 h-4" />
-                                </button>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter leading-tight text-center px-4">
-                                    {t('Suspending access will prevent the user from performing any system operations until restored.')}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Main Form */}
-                    <div className="lg:col-span-2">
-                        <form onSubmit={submit} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                            <div className="space-y-8 relative z-10">
-                                <section>
-                                    <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                        <div className="w-4 h-[2px] bg-indigo-500" /> {t('Identity Parameters')}
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <InputLabel htmlFor="name" value={t('Registered Name')} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1" />
-                                            <div className="relative group/field">
-                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within/field:text-indigo-500 transition-colors" />
-                                                <TextInput
-                                                    id="name"
-                                                    value={data.name}
-                                                    className="pl-12 w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-white font-bold h-14"
-                                                    onChange={(e) => setData('name', e.target.value)}
-                                                    required
-                                                />
-                                            </div>
-                                            <InputError message={errors.name} />
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <InputLabel htmlFor="email" value={t('Authenticated Email')} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1" />
-                                            <div className="relative group/field">
-                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within/field:text-indigo-500 transition-colors" />
-                                                <TextInput
-                                                    id="email"
-                                                    type="email"
-                                                    value={data.email}
-                                                    className="pl-12 w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-white font-bold h-14"
-                                                    onChange={(e) => setData('email', e.target.value)}
-                                                    required
-                                                />
-                                            </div>
-                                            <InputError message={errors.email} />
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section>
-                                    <h3 className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                        <div className="w-4 h-[2px] bg-indigo-500" /> {t('Role Configuration')}
-                                    </h3>
-                                    <div className="space-y-2">
-                                        <InputLabel htmlFor="role" value={t('System Permission Tier')} className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1" />
-                                        <div className="relative group/field">
-                                            <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within/field:text-indigo-500 transition-colors" />
-                                            <select
-                                                id="role"
-                                                value={data.role}
-                                                onChange={(e) => setData('role', e.target.value)}
-                                                className="w-full pl-12 pr-6 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500/20 text-slate-700 dark:text-white font-bold h-14 appearance-none"
-                                                required
-                                            >
-                                                <option value="dentist">{t('Dentist (Clinic Owner)')}</option>
-                                                <option value="lab_owner">{t('Lab Owner')}</option>
-                                                <option value="lab_tech">{t('Lab Technician')}</option>
-                                                <option value="clinic_staff">{t('Clinic Staff')}</option>
-                                                <option value="super_admin">{t('Super Admin')}</option>
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                                <ChevronRight className="w-4 h-4 rotate-90" />
-                                            </div>
-                                        </div>
-                                        <InputError message={errors.role} />
-                                    </div>
-                                </section>
-
-                                <div className="flex items-center justify-between pt-10 border-t border-slate-50 dark:border-slate-800">
-                                    <Link
-                                        href={route('admin.users.index')}
-                                        className="text-[10px] font-black text-slate-400 hover:text-indigo-500 uppercase tracking-widest transition-colors flex items-center gap-2 px-4 py-2"
-                                    >
-                                        <X className="w-3 h-3" /> {t('Discard Changes')}
-                                    </Link>
-                                    <button 
-                                        type="submit" 
-                                        disabled={processing} 
-                                        className="btn-primary group relative overflow-hidden flex items-center gap-3 px-10 py-5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl shadow-[0_15px_40px_rgba(99,102,241,0.3)] transition-all duration-500 disabled:opacity-50 disabled:grayscale"
-                                    >
-                                        <Save className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                        <span className="font-black tracking-tight">{t('Update Records')}</span>
-                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        {/* Page Header */}
+        <div className="flex items-center gap-4">
+          <Link
+            href={route('admin.users.index')}
+            className="p-2.5 rounded-xl border transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)', color: 'var(--txt-3)' }}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <Fingerprint className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />
+              <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--accent)' }}>{t('User Management')}</span>
             </div>
-        </AdminLayout>
-    );
+            <h2 className="text-xl font-bold tracking-tight" style={{ color: 'var(--txt-1)' }}>
+              {t('Edit')} <span style={{ color: 'var(--accent)' }}>{user.name}</span>
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+          {/* Left Sidebar */}
+          <div className="space-y-4">
+
+            {/* Account Status */}
+            <div className="rounded-2xl p-5 border" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+              <p className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: 'var(--txt-3)' }}>
+                {t('Account Status')}
+              </p>
+              {/* Status indicator */}
+              <div
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4"
+                style={{
+                  background: data.is_active ? 'rgba(52,211,153,0.1)' : 'rgba(244,63,94,0.1)',
+                  border: `1.5px solid ${data.is_active ? 'rgba(52,211,153,0.25)' : 'rgba(244,63,94,0.25)'}`,
+                }}
+              >
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: data.is_active ? '#34d399' : '#f43f5e', boxShadow: data.is_active ? '0 0 6px rgba(52,211,153,0.6)' : 'none' }}
+                />
+                <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: data.is_active ? '#34d399' : '#f43f5e' }}>
+                  {data.is_active ? t('Account Enabled') : t('Account Suspended')}
+                </span>
+              </div>
+
+              {/* Toggle button */}
+              <button
+                type="button"
+                onClick={() => setData('is_active', !data.is_active)}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all"
+                style={{
+                  background: data.is_active ? 'rgba(244,63,94,0.08)' : 'rgba(52,211,153,0.08)',
+                  borderColor: data.is_active ? 'rgba(244,63,94,0.2)' : 'rgba(52,211,153,0.2)',
+                  color: data.is_active ? '#f43f5e' : '#34d399',
+                }}
+              >
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {data.is_active ? t('Suspend Access') : t('Restore Access')}
+                </span>
+                <Power className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Role map */}
+            <div className="rounded-2xl p-5 border" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+              <p className="text-[10px] font-black uppercase tracking-widest mb-4" style={{ color: 'var(--txt-3)' }}>
+                {t('Access Level Map')}
+              </p>
+              <div className="space-y-1">
+                {roles.map(item => (
+                  <div
+                    key={item.value}
+                    className="flex items-center justify-between py-2 px-3 rounded-xl"
+                    style={{ background: data.role === item.value ? 'var(--accent-10)' : 'transparent' }}
+                  >
+                    <span className="text-[12px] font-semibold capitalize" style={{ color: data.role === item.value ? 'var(--accent)' : 'var(--txt-2)' }}>
+                      {item.value.replace('_', ' ')}
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-tight" style={{ color: data.role === item.value ? 'var(--accent)' : 'var(--txt-3)' }}>
+                      {item.access}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Main Form */}
+          <div className="lg:col-span-3">
+            <form onSubmit={submit} className="rounded-2xl border" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+              <div className="p-8 space-y-8">
+
+                {/* Identity */}
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-4 h-px" style={{ background: 'var(--accent)' }} />
+                    <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--accent)' }}>{t('Identity Parameters')}</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Full Name')}</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--txt-3)' }} />
+                        <input
+                          id="name"
+                          type="text"
+                          value={data.name}
+                          onChange={e => setData('name', e.target.value)}
+                          required
+                          style={fieldBase}
+                        />
+                      </div>
+                      <InputError message={errors.name} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Email Address')}</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--txt-3)' }} />
+                        <input
+                          id="email"
+                          type="email"
+                          value={data.email}
+                          onChange={e => setData('email', e.target.value)}
+                          required
+                          style={fieldBase}
+                        />
+                      </div>
+                      <InputError message={errors.email} />
+                    </div>
+
+                  </div>
+                </section>
+
+                {/* Role */}
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-4 h-px" style={{ background: 'var(--accent)' }} />
+                    <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--accent)' }}>{t('Role Configuration')}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Role')}</label>
+                    <div className="relative">
+                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--txt-3)' }} />
+                      <select
+                        id="role"
+                        value={data.role}
+                        onChange={e => setData('role', e.target.value)}
+                        required
+                        style={{ ...fieldBase, appearance: 'none', cursor: 'pointer' }}
+                      >
+                        {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                      </select>
+                    </div>
+                    <InputError message={errors.role} />
+                  </div>
+                </section>
+
+              </div>
+
+              {/* Footer */}
+              <div className="px-8 py-5 border-t flex items-center justify-between" style={{ borderColor: 'var(--border)' }}>
+                <Link
+                  href={route('admin.users.index')}
+                  className="flex items-center gap-2 text-[12px] font-semibold transition-colors hover:text-[var(--accent)]"
+                  style={{ color: 'var(--txt-3)' }}
+                >
+                  <X className="w-4 h-4" />
+                  {t('Discard Changes')}
+                </Link>
+                <button
+                  type="submit"
+                  disabled={processing}
+                  className="flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-white font-bold text-[13px] transition-all hover:opacity-90 disabled:opacity-50"
+                  style={{ background: '#34d399', color: '#0d1f1a', boxShadow: '0 4px 16px rgba(52,211,153,0.3)' }}
+                >
+                  <Save className="w-4 h-4" />
+                  {processing ? t('Saving...') : t('Save Changes')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
+  );
 }

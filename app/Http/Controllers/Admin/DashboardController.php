@@ -10,16 +10,40 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $now = now();
+        $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
+        $lastMonthEnd = $now->copy()->subMonth()->endOfMonth();
+        $thisMonthStart = $now->copy()->startOfMonth();
+
+        // Revenue calculations
+        $totalRevenueThisMonth = \App\Models\Order::whereIn('status', ['delivered', 'archived'])
+            ->where('created_at', '>=', $thisMonthStart)->sum('price');
+            
+        $totalRevenueLastMonth = \App\Models\Order::whereIn('status', ['delivered', 'archived'])
+            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->sum('price');
+            
+        $revenueGrowth = $totalRevenueLastMonth > 0 
+            ? (($totalRevenueThisMonth - $totalRevenueLastMonth) / $totalRevenueLastMonth) * 100 
+            : 0;
+
+        // Count calculations
+        $labsThisMonth = \App\Models\Lab::where('created_at', '>=', $thisMonthStart)->count();
+        $clinicsThisMonth = \App\Models\Clinic::where('created_at', '>=', $thisMonthStart)->count();
+        $ordersThisMonth = \App\Models\Order::where('created_at', '>=', $thisMonthStart)->count();
+
         $stats = [
             'total_users' => \App\Models\User::count(),
             'total_clinics' => \App\Models\Clinic::count(),
             'total_labs' => \App\Models\Lab::count(),
             'total_orders' => \App\Models\Order::count(),
             'total_revenue' => \App\Models\Order::whereIn('status', ['delivered', 'archived'])->sum('price'),
-            'mrr' => \App\Models\Order::whereIn('status', ['delivered', 'archived'])
-                ->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year)
-                ->sum('price'),
+            'mrr' => $totalRevenueThisMonth,
+            'growths' => [
+                'revenue' => round($revenueGrowth, 1),
+                'mrr' => round($revenueGrowth, 1),
+                'labs_clinics' => $labsThisMonth + $clinicsThisMonth,
+                'orders' => $ordersThisMonth
+            ]
         ];
 
         // Ensure we handle MySQL date formatting properly

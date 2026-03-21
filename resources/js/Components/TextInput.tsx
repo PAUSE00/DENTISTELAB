@@ -1,41 +1,41 @@
 import {
-    forwardRef,
-    InputHTMLAttributes,
-    useEffect,
-    useImperativeHandle,
-    useRef,
+ forwardRef,
+ InputHTMLAttributes,
+ useEffect,
+ useImperativeHandle,
+ useRef,
 } from 'react';
 
 export default forwardRef(function TextInput(
-    {
-        type = 'text',
-        className = '',
-        isFocused = false,
-        ...props
-    }: InputHTMLAttributes<HTMLInputElement> & { isFocused?: boolean },
-    ref,
+ {
+ type = 'text',
+ className = '',
+ isFocused = false,
+ ...props
+ }: InputHTMLAttributes<HTMLInputElement> & { isFocused?: boolean },
+ ref,
 ) {
-    const localRef = useRef<HTMLInputElement>(null);
+ const localRef = useRef<HTMLInputElement>(null);
 
-    useImperativeHandle(ref, () => ({
-        focus: () => localRef.current?.focus(),
-    }));
+ useImperativeHandle(ref, () => ({
+ focus: () => localRef.current?.focus(),
+ }));
 
-    useEffect(() => {
-        if (isFocused) {
-            localRef.current?.focus();
-        }
-    }, [isFocused]);
+ useEffect(() => {
+ if (isFocused) {
+ localRef.current?.focus();
+ }
+ }, [isFocused]);
 
-    return (
-        <input
-            {...props}
-            type={type}
-            className={
-                'rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-surface/50 text-text dark:text-gray-300 shadow-sm focus:border-brand focus:ring-brand dark:focus:border-accent dark:focus:ring-accent ' +
-                className
-            }
-            ref={localRef}
-        />
-    );
+ return (
+ <input
+ {...props}
+ type={type}
+ className={
+ 'rounded-xl bg-white dark:bg-surface/50 text-text shadow-sm focus:border-brand focus:ring-brand dark:focus:border-accent dark:focus:ring-accent ' +
+ className
+ }
+ ref={localRef}
+ />
+ );
 });

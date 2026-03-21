@@ -5,16 +5,12 @@ import {
     Users,
     Building2,
     Activity,
-    ShieldCheck,
-    CreditCard,
+    Search,
     DollarSign,
     Package,
-    ArrowUpRight,
-    Search,
-    ExternalLink,
-    Clock,
-    UserPlus,
-    BarChart3
+    BarChart3,
+    CheckCircle2,
+    ArrowRight
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import useTranslation from '@/Hooks/useTranslation';
@@ -26,6 +22,12 @@ interface Stats {
     total_orders: number;
     total_revenue: number;
     mrr: number;
+    growths: {
+        revenue: number;
+        mrr: number;
+        labs_clinics: number;
+        orders: number;
+    };
 }
 
 interface OrderTrend {
@@ -38,6 +40,7 @@ interface MiniUser {
     name: string;
     email: string;
     role: string;
+    is_active: boolean;
     created_at: string;
     clinic?: { name: string };
     lab?: { name: string };
@@ -60,307 +63,284 @@ interface Props extends PageProps {
     recentOrders: MiniOrder[];
 }
 
+// ── Helpers ───────────────────────────────────────────────────
+const formatValue = (v: number) => new Intl.NumberFormat('fr-MA', { maximumFractionDigits: 0 }).format(v);
+
+// ── Chart tooltip ─────────────────────────────────────────────
+const ChartTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="card px-3 py-2 text-[12px]">
+            <p style={{ color: 'var(--txt-2)' }}>{label}</p>
+            {payload.map((p: any) => (
+                <p key={p.dataKey} className="font-semibold mt-0.5" style={{ color: 'var(--txt-accent)' }}>
+                    {p.value} orders
+                </p>
+            ))}
+        </div>
+    );
+};
+
 export default function Dashboard({ auth, stats, orderVolumeTrend, recentUsers, recentOrders }: Props) {
     const { t } = useTranslation();
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-    const getStatusColor = (status: string) => {
-        const colors: Record<string, string> = {
-            'pending': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-            'in_progress': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-            'delivered': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-            'cancelled': 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
-            'rejected': 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+    const renderUserRole = (role: string) => {
+        const getRoleColors = (r: string) => {
+            switch(r) {
+                case 'super_admin': return { bg: 'rgba(168,85,247,0.1)', border: 'rgba(168,85,247,0.2)', text: '#c084fc' };
+                case 'dentist': return { bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.2)', text: '#38bdf8' };
+                case 'lab_owner': return { bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.2)', text: '#34d399' };
+                case 'lab_tech': return { bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.2)', text: '#fbbf24' };
+                case 'clinic_staff': return { bg: 'rgba(148,163,184,0.1)', border: 'rgba(148,163,184,0.2)', text: '#94a3b8' };
+                default: return { bg: 'var(--surface)', border: 'var(--border)', text: 'var(--txt-1)' };
+            }
         };
-        return colors[status] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
-    };
-
-    const StatCard = ({ icon: Icon, label, value, unit, trend, color }: any) => {
-        const colorMap: any = {
-            indigo: 'from-indigo-500/10 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5 hover:border-indigo-500/30',
-            purple: 'from-purple-500/10 text-purple-600 dark:text-purple-400 bg-purple-500/5 hover:border-purple-500/30',
-            pink: 'from-pink-500/10 text-pink-600 dark:text-pink-400 bg-pink-500/5 hover:border-pink-500/30',
-            amber: 'from-amber-500/10 text-amber-600 dark:text-amber-400 bg-amber-500/5 hover:border-amber-500/30',
-        };
-
+        const colors = getRoleColors(role);
         return (
-            <div className={`card overflow-hidden p-6 relative group hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-indigo-500/10 transition-all duration-500 ${colorMap[color]}`} style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
-                <div className="flex items-start justify-between relative z-10">
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${colorMap[color]} shadow-sm group-hover:scale-110 transition-transform duration-500`}>
-                        <Icon className="w-6 h-6" />
-                    </div>
-                    {trend && (
-                        <span className={`text-[10px] font-black py-1 px-2.5 rounded-lg bg-emerald-500/10 text-emerald-500 uppercase tracking-widest`}>
-                            {trend}
-                        </span>
-                    )}
-                </div>
-                <div className="mt-6 relative z-10 text-left">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--txt-3)' }}>{label}</p>
-                    <h3 className="text-2xl font-black tracking-tighter italic" style={{ color: 'var(--txt-1)' }}>
-                        {value} {unit && <span className="text-xs font-bold not-italic ml-1" style={{ color: 'var(--txt-3)' }}>{unit}</span>}
-                    </h3>
-                </div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-transparent to-slate-200/5 dark:to-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full -mr-16 -mt-16 pointer-events-none" />
-            </div>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border"
+                style={{ background: colors.bg, borderColor: colors.border, color: colors.text }}>
+                {t(role.replace('_', ' '))}
+            </span>
         );
     };
 
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700 p-4 rounded-2xl shadow-2xl">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</p>
-                    <p className="text-lg font-black text-white italic">
-                        {payload[0].value} <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest not-italic ml-1">{t('Orders')}</span>
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
-
     return (
-        <AdminLayout header={t('Admin Dashboard')}>
+        <AdminLayout header={t('Dashboard')}>
             <Head title={t('Admin Dashboard')} />
 
-            <div className="space-y-8 animate-fade-in pb-12">
-                {/* Hero section */}
-                <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 border border-slate-800 shadow-2xl">
-                    {/* Background effects */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-transparent to-purple-500/20" />
-                    <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="flex flex-col gap-6 pb-12">
 
-                    <div className="relative z-10 px-10 py-12 flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="text-center md:text-left">
-                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4 leading-tight">
-                                {t('Hello')}, <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{auth.user.name.split(' ')[0]}</span> <span className="inline-block animate-bounce-subtle">👋</span>
-                            </h1>
-                            <p className="text-slate-400 text-lg max-w-xl font-medium leading-relaxed">
-                                {t('Platform control center active. All systems are performing optimally.')}
-                            </p>
+                {/* ── Welcome Banner ─────────────────────────────────────── */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-[20px] font-semibold tracking-tight" style={{ color: 'var(--txt-1)' }}>
+                            {t(greeting)}, <span style={{ color: 'var(--txt-accent)' }}>{auth.user.name.split(' ')[0]}</span> 👋
+                        </h2>
+                        <p className="text-[12.5px] mt-0.5" style={{ color: 'var(--txt-2)' }}>
+                            {t('Platform control center active.')}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Link href={route('admin.system-logs.index')} className="btn-ghost text-[12px]">
+                            {t('System Status')} <ArrowRight size={13} />
+                        </Link>
+                    </div>
+                </div>
+
+                {/* ── KPI Cards ─────────────────────────────────────────── */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Total Revenue */}
+                    <div className="card p-5 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-medium" style={{ color: 'var(--txt-3)' }}>{t('Total Revenue')}</p>
+                            <DollarSign size={14} style={{ color: 'var(--txt-3)' }} />
                         </div>
-                        <div className="flex flex-wrap justify-center gap-4">
-                            <Link href={route('admin.users.index')} className="group px-6 py-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3">
-                                <div className="p-2 bg-indigo-500/20 rounded-xl text-indigo-400 group-hover:scale-110 transition-transform">
-                                    <Search className="w-5 h-5" />
-                                </div>
-                                <span className="text-white font-bold">{t('Find User')}</span>
-                            </Link>
-                            <button className="group px-6 py-4 bg-indigo-500 hover:bg-indigo-400 text-white rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.3)] transition-all duration-300 flex items-center gap-3 transform active:scale-95">
-                                <Activity className="w-5 h-5 group-hover:animate-pulse" />
-                                <span className="font-bold whitespace-nowrap">{t('System Status')}</span>
-                            </button>
+                        <div className="flex items-end justify-between gap-2 mt-1">
+                            <p className="text-[24px] font-semibold tabular-nums" style={{ color: 'var(--txt-1)' }}>
+                                {formatValue(stats.total_revenue)}<span className="text-[12px] opacity-40 ml-1">MAD</span>
+                            </p>
+                            <div className="flex items-center gap-1 text-[11px] font-semibold mb-1"
+                                style={{ color: stats.growths.revenue >= 0 ? '#60ddc6' : '#f87171' }}>
+                                {stats.growths.revenue >= 0 ? '+' : ''}{stats.growths.revenue}%
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Monthly Active (MRR) */}
+                    <div className="card p-5 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-medium" style={{ color: 'var(--txt-3)' }}>{t('Monthly Active')}</p>
+                            <BarChart3 size={14} style={{ color: 'var(--txt-3)' }} />
+                        </div>
+                        <div className="flex items-end justify-between gap-2 mt-1">
+                            <p className="text-[24px] font-semibold tabular-nums" style={{ color: 'var(--txt-1)' }}>
+                                {formatValue(stats.mrr)}<span className="text-[12px] opacity-40 ml-1">MAD</span>
+                            </p>
+                            <div className="flex items-center gap-1 text-[11px] font-semibold mb-1"
+                                style={{ color: stats.growths.mrr >= 0 ? '#60ddc6' : '#f87171' }}>
+                                {stats.growths.mrr >= 0 ? '+' : ''}{stats.growths.mrr}%
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Labs / Clinics */}
+                    <div className="card p-5 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-medium" style={{ color: 'var(--txt-3)' }}>{t('Labs / Clinics')}</p>
+                            <Building2 size={14} style={{ color: 'var(--txt-3)' }} />
+                        </div>
+                        <div className="flex items-end justify-between gap-2 mt-1">
+                            <p className="text-[24px] font-semibold tabular-nums" style={{ color: 'var(--txt-1)' }}>
+                                {stats.total_labs} <span className="opacity-40 text-lg mx-1">/</span> {stats.total_clinics}
+                            </p>
+                            <div className="flex items-center gap-1 text-[11px] font-semibold mb-1"
+                                style={{ color: stats.growths.labs_clinics >= 0 ? '#60ddc6' : '#f87171' }}>
+                                {stats.growths.labs_clinics >= 0 ? '+' : ''}{stats.growths.labs_clinics}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Total Orders */}
+                    <div className="card p-5 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-medium" style={{ color: 'var(--txt-3)' }}>{t('Total Orders')}</p>
+                            <Package size={14} style={{ color: 'var(--txt-3)' }} />
+                        </div>
+                        <div className="flex items-end justify-between gap-2 mt-1">
+                            <p className="text-[24px] font-semibold tabular-nums" style={{ color: 'var(--txt-1)' }}>
+                                {stats.total_orders}
+                            </p>
+                            <div className="flex items-center gap-1 text-[11px] font-semibold mb-1"
+                                style={{ color: stats.growths.orders >= 0 ? '#60ddc6' : '#f87171' }}>
+                                {stats.growths.orders >= 0 ? '+' : ''}{stats.growths.orders}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatCard 
-                        icon={DollarSign} 
-                        label={t('Total Revenue')} 
-                        value={stats.total_revenue.toLocaleString()} 
-                        unit="MAD" 
-                        trend="+12.5%" 
-                        color="indigo" 
-                    />
-                    <StatCard 
-                        icon={BarChart3} 
-                        label={t('Monthly Active')} 
-                        value={stats.mrr.toLocaleString()} 
-                        unit="MAD" 
-                        trend="+8.2%" 
-                        color="purple" 
-                    />
-                    <StatCard 
-                        icon={Building2} 
-                        label={t('Labs / Clinics')} 
-                        value={`${stats.total_labs} / ${stats.total_clinics}`} 
-                        trend="+3" 
-                        color="pink" 
-                    />
-                    <StatCard 
-                        icon={Package} 
-                        label={t('Total Orders')} 
-                        value={stats.total_orders.toString()} 
-                        trend="+156" 
-                        color="amber" 
-                    />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* ── Charts & Lists ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    
                     {/* Trend Chart */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <section className="card p-8 relative overflow-hidden group shadow-sm" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
-                            <div className="flex items-center justify-between mb-10 relative z-10">
-                                <div>
-                                    <h3 className="text-xl font-black uppercase tracking-tight italic underline decoration-indigo-500/30" style={{ color: 'var(--txt-1)' }}>{t('Order Volume Trend')}</h3>
-                                    <p className="text-xs font-bold mt-2 uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('30 Day Activity Analytics')}</p>
-                                </div>
-                                <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'var(--surface)' }}>
-                                    <button className="px-4 py-1.5 rounded-lg shadow-sm text-[10px] font-black uppercase tracking-wider text-indigo-500" style={{ background: 'var(--bg-raised)' }}>{t('Daily')}</button>
-                                    <button className="px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ color: 'var(--txt-3)' }}>{t('Weekly')}</button>
-                                </div>
+                    <div className="card lg:col-span-8 p-5 flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                                    {t('Order Volume Trend')}
+                                </p>
+                                <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                    {t('30 Day Activity Analytics')}
+                                </p>
                             </div>
-
-                            <div className="h-[350px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={orderVolumeTrend}>
-                                        <defs>
-                                            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-                                        <XAxis 
-                                            dataKey="date" 
-                                            stroke="#94a3b8" 
-                                            fontSize={10} 
-                                            fontWeight="800"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            dy={10}
-                                        />
-                                        <YAxis 
-                                            stroke="#94a3b8" 
-                                            fontSize={10} 
-                                            fontWeight="800"
-                                            axisLine={false}
-                                            tickLine={false}
-                                        />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Area 
-                                            type="monotone" 
-                                            dataKey="orders" 
-                                            stroke="#6366f1" 
-                                            strokeWidth={4} 
-                                            fillOpacity={1} 
-                                            fill="url(#chartGradient)" 
-                                            animationDuration={1500} 
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </section>
-
-                        {/* Recent Orders Table */}
-                        <section className="card overflow-hidden" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
-                            <div className="px-8 py-6 flex items-center justify-between border-b" style={{ borderColor: 'var(--border)' }}>
-                                <h3 className="font-black flex items-center gap-3 italic uppercase tracking-tight underline decoration-indigo-500/30" style={{ color: 'var(--txt-1)' }}>
-                                    <Clock className="w-5 h-5 text-indigo-500" />
-                                    {t('Real-time Operations')}
-                                </h3>
-                                <button className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest hover:underline">{t('View All Orders')}</button>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead style={{ background: 'var(--surface)' }}>
-                                        <tr className="text-[10px] uppercase tracking-widest font-black" style={{ color: 'var(--txt-3)' }}>
-                                            <th className="px-8 py-5 tracking-tighter">{t('Order Reference')}</th>
-                                            <th className="px-6 py-5 tracking-tighter">{t('Involved Entities')}</th>
-                                            <th className="px-6 py-5 tracking-tighter">{t('Financials')}</th>
-                                            <th className="px-6 py-5 tracking-tighter">{t('Progress Status')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y" style={{ borderColor: 'var(--surface)' }}>
-                                        {recentOrders.map((order) => (
-                                            <tr key={order.id} className="group hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-300">
-                                                <td className="px-8 py-5 group-hover:translate-x-1 transition-transform">
-                                                    <p className="font-black tracking-tighter" style={{ color: 'var(--txt-1)' }}>ORD-{order.id.toString().padStart(4, '0')}</p>
-                                                    <p className="text-[10px] font-bold uppercase mt-1" style={{ color: 'var(--txt-3)' }}>{order.patient.first_name} {order.patient.last_name}</p>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="flex items-center gap-2">
-                                                        <Building2 className="w-3 h-3 text-indigo-400" />
-                                                    </div>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <Activity className="w-3 h-3 text-purple-400" />
-                                                        <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--txt-3)' }}>{order.lab.name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <span className="font-black text-xs tracking-tight" style={{ color: 'var(--txt-1)' }}>{order.price.toLocaleString()} MAD</span>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
-                                                        {t(order.status.replace('_', ' '))}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
-                    </div>
-
-                    {/* Sidebar Area */}
-                    <div className="space-y-6">
-                        {/* Summary Card */}
-                        <div className="card p-8 shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                            <ShieldCheck className="w-10 h-10 text-indigo-500 mb-6" />
-                            <h3 className="text-xl font-bold uppercase tracking-tight font-black leading-tight italic underline decoration-indigo-500/30" style={{ color: 'var(--txt-1)' }}>{t('System Overview')}</h3>
-                            <p className="text-sm font-medium mt-3 leading-relaxed" style={{ color: 'var(--txt-2)' }}>
-                                {t('The platform is currently hosting')} <span className="text-indigo-500 font-bold">{stats.total_users} active users</span>.
-                                {t('Average daily order volume is')} <span className="font-bold" style={{ color: 'var(--txt-1)' }}>{(stats.total_orders / 30).toFixed(1)}</span>.
-                            </p>
-                            
-                            <div className="mt-8 space-y-4">
-                                <div className="flex items-center justify-between p-4 rounded-2xl shadow-sm" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Server Health')}</span>
-                                    </div>
-                                    <span className="text-xs font-black text-emerald-500 uppercase tracking-widest">99.9%</span>
-                                </div>
-                                <div className="flex items-center justify-between p-4 rounded-2xl shadow-sm" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                                        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Queue Status')}</span>
-                                    </div>
-                                    <span className="text-xs font-black text-indigo-500 uppercase tracking-widest">{t('Idle')}</span>
-                                </div>
+                            <div className="flex gap-2">
+                                <button className="px-3 py-1 rounded-md text-[10px] font-bold text-white" style={{ background: '#60ddc6', color: '#0d1f1a' }}>DAILY</button>
+                                <button className="px-3 py-1 text-[10px] font-bold text-[var(--txt-3)] hover:text-[var(--txt-1)] transition-colors">WEEKLY</button>
                             </div>
                         </div>
 
-                        {/* Recent Users List */}
-                        <div className="card overflow-hidden shadow-sm" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
-                            <div className="px-6 py-6 border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-                                <h3 className="font-bold uppercase font-black italic tracking-tighter underline decoration-indigo-500/30" style={{ color: 'var(--txt-1)' }}>
-                                    {t('New Registrations')}
-                                </h3>
+                        <div className="h-[220px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={orderVolumeTrend} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#60ddc6" stopOpacity={0.25} />
+                                            <stop offset="100%" stopColor="#60ddc6" stopOpacity={0.01} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={1} strokeDasharray="0" />
+                                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: 'var(--txt-3)', fontSize: 11 }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--txt-3)', fontSize: 11 }} />
+                                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(96,221,198,0.05)', strokeWidth: 0 }} />
+                                    <Area type="monotone" dataKey="orders" stroke="#60ddc6" strokeWidth={1.5} fillOpacity={1} fill="url(#g1)"
+                                          dot={false} activeDot={{ r: 3, fill: '#60ddc6', strokeWidth: 0 }} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="card lg:col-span-4 p-5 flex flex-col gap-4">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <Activity size={16} />
+                                <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>
+                                    {t('Quick Actions')}
+                                </p>
                             </div>
-                            <div className="p-4 space-y-3">
-                                {recentUsers.map((user) => (
-                                    <div key={user.id} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-black/5 dark:hover:bg-white/5 transition-all group">
-                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform shrink-0 uppercase tracking-tight">
-                                            {user.name.substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-bold truncate text-sm uppercase tracking-tight leading-none mb-1" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-black py-0.5 px-2 rounded-md uppercase tracking-widest shrink-0" style={{ background: 'var(--surface)', color: 'var(--txt-2)' }}>
-                                                    {user.role.replace('_', ' ')}
-                                                </span>
-                                                <span className="text-[10px] font-medium truncate" style={{ color: 'var(--txt-3)' }}>{user.clinic?.name || user.lab?.name || user.email}</span>
-                                            </div>
-                                        </div>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Link href={route('admin.users.index')} className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition-colors">
-                                                <ArrowUpRight className="w-4 h-4" />
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <Link href={route('admin.users.index')} className="block w-full py-4 text-center text-xs font-black uppercase tracking-widest transition-all border-t hover:bg-black/5 dark:hover:bg-white/5" style={{ color: 'var(--txt-3)', borderColor: 'var(--border)' }}>
-                                {t('View all users')}
+                            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--txt-2)' }}>
+                                {t('Instantly jump to the most common actions across the administration panel.')}
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2 mt-auto">
+                            <Link href={route('admin.tickets.index')} className="group flex items-center justify-between p-3 rounded-lg border transition-all hover:bg-[var(--surface-hover)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                <div className="flex items-center gap-3">
+                                    <Activity size={14} style={{ color: 'var(--txt-3)' }} />
+                                    <span className="text-[12px] font-medium transition-colors group-hover:text-[var(--txt-1)]" style={{ color: 'var(--txt-2)' }}>{t('Resolve Tickets')}</span>
+                                </div>
+                            </Link>
+                            <Link href={route('admin.announcements.index')} className="group flex items-center justify-between p-3 rounded-lg border transition-all hover:bg-[var(--surface-hover)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                <div className="flex items-center gap-3">
+                                    <Activity size={14} style={{ color: 'var(--txt-3)' }} />
+                                    <span className="text-[12px] font-medium transition-colors group-hover:text-[var(--txt-1)]" style={{ color: 'var(--txt-2)' }}>{t('Global Broadcast')}</span>
+                                </div>
+                            </Link>
+                            <Link href={route('admin.system-logs.index')} className="group flex items-center justify-between p-3 rounded-lg border transition-all hover:bg-[var(--surface-hover)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                <div className="flex items-center gap-3">
+                                    <Activity size={14} style={{ color: 'var(--txt-3)' }} />
+                                    <span className="text-[12px] font-medium transition-colors group-hover:text-[var(--txt-1)]" style={{ color: 'var(--txt-2)' }}>{t('View Audit Logs')}</span>
+                                </div>
+                            </Link>
+                            <Link href={route('admin.users.index')} className="group flex items-center justify-between p-3 rounded-lg border transition-all hover:bg-[var(--surface-hover)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                <div className="flex items-center gap-3">
+                                    <Users size={14} style={{ color: 'var(--txt-3)' }} />
+                                    <span className="text-[12px] font-medium transition-colors group-hover:text-[var(--txt-1)]" style={{ color: 'var(--txt-2)' }}>{t('Manage Users')}</span>
+                                </div>
                             </Link>
                         </div>
                     </div>
                 </div>
+
+                {/* New Registrations */}
+                <div className="card overflow-hidden">
+                    <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
+                        <p className="text-[13px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('New Registrations')}</p>
+                        <Link href={route('admin.users.index')} className="text-[11px] hover:underline" style={{ color: 'var(--txt-3)' }}>
+                            {t('View All')}
+                        </Link>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left min-w-[800px]">
+                            <thead>
+                                <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+                                    <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest opacity-60" style={{ color: 'var(--txt-2)' }}>{t('User')}</th>
+                                    <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest opacity-60" style={{ color: 'var(--txt-2)' }}>{t('Role')}</th>
+                                    <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest opacity-60" style={{ color: 'var(--txt-2)' }}>{t('Organization')}</th>
+                                    <th className="py-4 px-6 text-[10px] font-black uppercase tracking-widest opacity-60 text-right" style={{ color: 'var(--txt-2)' }}>{t('Status')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {recentUsers.slice(0, 5).map((u) => (
+                                    <tr key={u.id} className="group border-b last:border-0 transition-colors hover:bg-[var(--surface-hover)]" style={{ borderColor: 'var(--border)' }}>
+                                        <td className="py-4 px-6">
+                                            <div className="flex gap-3 items-center">
+                                                <div className="w-9 h-9 flex items-center justify-center rounded-xl font-bold text-[11px] shrink-0 text-white" style={{ background: '#34d399', color: '#0d1f1a' }}>
+                                                    {u.name.substring(0,2).toUpperCase()}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[13px] font-semibold leading-tight mb-0.5" style={{ color: 'var(--txt-1)' }}>{u.name}</p>
+                                                    <p className="text-[11px]" style={{ color: 'var(--txt-3)' }}>{u.email}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            {renderUserRole(u.role)}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <p className="text-[12px] font-medium truncate max-w-[180px]" style={{ color: 'var(--txt-2)' }}>
+                                                {u.clinic?.name || u.lab?.name || '—'}
+                                            </p>
+                                        </td>
+                                        <td className="py-4 px-6 text-right">
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border"
+                                                style={{
+                                                    background: u.is_active ? 'rgba(52,211,153,0.1)' : 'rgba(244,63,94,0.1)',
+                                                    borderColor: u.is_active ? 'rgba(52,211,153,0.25)' : 'rgba(244,63,94,0.25)',
+                                                    color: u.is_active ? '#34d399' : '#f43f5e',
+                                                }}>
+                                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
+                                                {u.is_active ? t('Active') : t('Suspended')}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </AdminLayout>
     );

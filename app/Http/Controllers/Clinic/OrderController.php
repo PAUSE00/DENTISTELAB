@@ -200,10 +200,10 @@ class OrderController extends Controller
             'service_id' => $validated['service_id'],
             'priority' => $validated['priority'],
             'due_date' => $validated['due_date'],
-            'teeth' => $validated['teeth'],
+            'teeth' => $validated['teeth'] ?? null,
             'shade' => $validated['shade'],
             'material' => $validated['material'],
-            'instructions' => $validated['instructions'],
+            'instructions' => $validated['instructions'] ?? null,
             'price' => $service->price,
         ]);
 

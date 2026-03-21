@@ -27,38 +27,45 @@ class DashboardController extends Controller
             OrderStatus::Cancelled->value,
         ];
 
-        $totalActive = Order::where('lab_id', $labId)
-            ->whereNotIn('status', $activeStatuses)
-            ->count();
+        // Cache dashboard stats for 60 seconds (Redis)
+        $stats = \Illuminate\Support\Facades\Cache::remember("lab.{$labId}.dashboard.stats", 60, function () use ($labId, $now, $activeStatuses) {
+            return [
+                'totalActive' => Order::where('lab_id', $labId)
+                    ->whereNotIn('status', $activeStatuses)
+                    ->count(),
+                'pendingNew' => Order::where('lab_id', $labId)
+                    ->where('status', OrderStatus::New->value)
+                    ->count(),
+                'overdueCount' => Order::where('lab_id', $labId)
+                    ->whereNotIn('status', $activeStatuses)
+                    ->where('due_date', '<', $now)
+                    ->count(),
+                'dueTodayCount' => Order::where('lab_id', $labId)
+                    ->whereNotIn('status', $activeStatuses)
+                    ->whereDate('due_date', $now)
+                    ->count(),
+                'monthRevenue' => (float) (Order::where('lab_id', $labId)
+                    ->whereIn('status', [OrderStatus::Delivered->value, OrderStatus::Finished->value, OrderStatus::Archived->value])
+                    ->whereBetween('created_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])
+                    ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(final_price, price)')) ?? 0),
+                'lastMonthRevenue' => (float) (Order::where('lab_id', $labId)
+                    ->whereIn('status', [OrderStatus::Delivered->value, OrderStatus::Finished->value, OrderStatus::Archived->value])
+                    ->whereBetween('created_at', [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth()])
+                    ->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(final_price, price)')) ?? 0),
+                'unpaidCount' => Order::where('lab_id', $labId)
+                    ->whereIn('status', [OrderStatus::Finished->value, OrderStatus::Delivered->value])
+                    ->where(fn($q) => $q->where('payment_status', 'unpaid')->orWhereNull('payment_status'))
+                    ->count(),
+            ];
+        });
 
-        $pendingNew = Order::where('lab_id', $labId)
-            ->where('status', OrderStatus::New->value)
-            ->count();
-
-        $overdueCount = Order::where('lab_id', $labId)
-            ->whereNotIn('status', $activeStatuses)
-            ->where('due_date', '<', $now)
-            ->count();
-
-        $dueTodayCount = Order::where('lab_id', $labId)
-            ->whereNotIn('status', $activeStatuses)
-            ->whereDate('due_date', $now)
-            ->count();
-
-        $monthRevenue = (float) (Order::where('lab_id', $labId)
-            ->whereIn('status', [OrderStatus::Delivered->value, OrderStatus::Finished->value, OrderStatus::Archived->value])
-            ->whereBetween('created_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])
-            ->sum(DB::raw('COALESCE(final_price, price)')) ?? 0);
-
-        $lastMonthRevenue = (float) (Order::where('lab_id', $labId)
-            ->whereIn('status', [OrderStatus::Delivered->value, OrderStatus::Finished->value, OrderStatus::Archived->value])
-            ->whereBetween('created_at', [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth()])
-            ->sum(DB::raw('COALESCE(final_price, price)')) ?? 0);
-
-        $unpaidCount = Order::where('lab_id', $labId)
-            ->whereIn('status', [OrderStatus::Finished->value, OrderStatus::Delivered->value])
-            ->where(fn($q) => $q->where('payment_status', 'unpaid')->orWhereNull('payment_status'))
-            ->count();
+        $totalActive = $stats['totalActive'];
+        $pendingNew = $stats['pendingNew'];
+        $overdueCount = $stats['overdueCount'];
+        $dueTodayCount = $stats['dueTodayCount'];
+        $monthRevenue = $stats['monthRevenue'];
+        $lastMonthRevenue = $stats['lastMonthRevenue'];
+        $unpaidCount = $stats['unpaidCount'];
 
         // ── New orders inbox ───────────────────────────────────────────────
         $newOrdersInbox = Order::where('lab_id', $labId)
