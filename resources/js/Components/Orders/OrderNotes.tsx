@@ -59,13 +59,14 @@ export default function OrderNotes({ orderId, notes }: OrderNotesProps) {
 
  <form onSubmit={handleAddNote} className="mb-6">
  <div className="relative group">
- <textarea
- value={noteContent}
- onChange={(e) => setNoteContent(e.target.value)}
- placeholder={t('Add internal note for the team...')}
- className="w-full border rounded-xl p-4 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all min-h-[100px] resize-none"
- />
- <button
+        <textarea
+            value={noteContent}
+            onChange={(e) => setNoteContent(e.target.value)}
+            placeholder={t('Add internal note for the team...')}
+            className="w-full border rounded-xl p-4 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all min-h-[100px] resize-none outline-none"
+            style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--txt-1)' }}
+        />
+        <button
  type="submit"
  disabled={processing || !noteContent.trim()}
  className="absolute bottom-3 right-3 p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50 disabled:translate-y-0 transform hover:-translate-y-0.5"
@@ -78,8 +79,8 @@ export default function OrderNotes({ orderId, notes }: OrderNotesProps) {
  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
  {notes && notes.length > 0 ? (
  notes.map((note) => (
- <div key={note.id} className="relative group p-4 bg-white/50 rounded-xl border hover:border-amber-200 dark:hover:border-amber-900/30 transition-all">
- <div className="flex justify-between items-start mb-2">
+        <div key={note.id} className="relative group p-4 rounded-xl border transition-all" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+            <div className="flex justify-between items-start mb-2">
  <div className="flex items-center gap-2">
  <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-[10px] font-bold">
  {note.user.name[0]}
@@ -100,8 +101,8 @@ export default function OrderNotes({ orderId, notes }: OrderNotesProps) {
  </div>
  ))
  ) : (
- <div className="text-center py-6 border-2 border-dashed rounded-2xl">
- <p className="text-xs italic">{t('No internal notes yet.')}</p>
+        <div className="text-center py-6 border-2 border-dashed rounded-2xl" style={{ borderColor: 'var(--border-strong)', color: 'var(--txt-3)' }}>
+            <p className="text-xs italic font-bold">{t('No internal notes yet.')}</p>
  </div>
  )}
  </div>

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'lab_id',
         'clinic_id',
         'is_active',
+        'avatar_path',
     ];
 
     /**
@@ -60,6 +61,16 @@ class User extends Authenticatable
     public function lab()
     {
         return $this->belongsTo(Lab::class);
+    }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function ticketMessages()
+    {
+        return $this->hasMany(TicketMessage::class);
     }
 
     /**

@@ -9,7 +9,10 @@ use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+use App\Mail\NewUserCredentials;
 
 class UserController extends Controller
 {
@@ -60,15 +63,32 @@ class UserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'role' => $request->role,
-            'password' => Hash::make($request->password),
+        $plainPassword = $request->password;
+
+        $user = User::create([
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'role'      => $request->role,
+            'password'  => Hash::make($plainPassword),
             'is_active' => true,
         ]);
 
-        return redirect()->route('admin.users.index')->with('success', 'User created successfully.');
+        \App\Services\AuditLogger::log('User Created', "Admin created user {$user->email} ({$user->role})");
+
+        // Send credentials email to the new user
+        try {
+            Mail::to($user->email)->send(new NewUserCredentials(
+                name:     $user->name,
+                email:    $user->email,
+                password: $plainPassword,
+                role:     $user->role,
+                loginUrl: route('login'),
+            ));
+        } catch (\Exception $e) {
+            \Log::warning('New user credentials email failed: ' . $e->getMessage());
+        }
+
+        return redirect()->route('admin.users.index')->with('success', 'User created & credentials emailed successfully.');
     }
 
     /**
@@ -108,6 +128,8 @@ class UserController extends Controller
             'is_active' => $request->is_active,
         ]);
 
+        \App\Services\AuditLogger::log('User Updated', "Admin updated user {$user->email}");
+
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully.');
     }
 
@@ -120,7 +142,10 @@ class UserController extends Controller
             return back()->with('error', 'You cannot delete yourself.');
         }
 
+        $email = $user->email;
         $user->delete();
+
+        \App\Services\AuditLogger::log('User Deleted', "Admin deleted user {$email}");
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
@@ -135,6 +160,9 @@ class UserController extends Controller
         }
 
         $user->update(['is_active' => !$user->is_active]);
+
+        $status = $user->is_active ? 'activated' : 'deactivated';
+        \App\Services\AuditLogger::log('User Status Changed', "Admin {$status} user {$user->email}");
 
         return back()->with('success', 'User status updated successfully.');
     }

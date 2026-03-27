@@ -78,7 +78,7 @@ export default function SettingsIndex({ auth, clinic, mustVerifyEmail, status }:
  </div>
  )}
 
- <div className="max-w-2xl mx-auto flex flex-col gap-5 pb-10">
+    <div className="max-w-4xl mx-auto flex flex-col gap-5 pb-10">
 
  {/* Header */}
  <div className="flex items-center gap-3">
@@ -103,32 +103,6 @@ export default function SettingsIndex({ auth, clinic, mustVerifyEmail, status }:
  <p className="text-[12px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('Clinic Profile')}</p>
  </div>
  <div className="p-5 flex flex-col gap-5">
-
- {/* Logo Upload */}
- <div>
- <label style={labelStyle}>
- <ImageIcon size={13} /> {t('Clinic Logo')}
- </label>
- <div className="flex items-center gap-4">
- <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 flex items-center justify-center"
- style={{ background: 'var(--surface)', border: '2px dashed var(--border-strong)' }}>
- {clinic.logo_path
- ? <img src={`/storage/${clinic.logo_path}`} alt="Logo" className="w-full h-full object-cover" />
- : <Building2 size={20} style={{ color: 'var(--txt-3)' }} />
- }
- </div>
- <div className="flex-1">
- <input type="file" accept="image/*"
- onChange={e => setData('logo', e.target.files?.[0] ?? null)}
- className="block w-full text-[12px]"
- style={{ color: 'var(--txt-2)' }} />
- <p className="text-[11px] mt-1.5" style={{ color: 'var(--txt-3)' }}>PNG, JPG or WEBP · Max 2MB</p>
- {errors.logo && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.logo}</p>}
- </div>
- </div>
- </div>
-
- <div style={{ height: 1, background: 'var(--border)' }} />
 
  {/* Clinic Name */}
  <div>
@@ -183,14 +157,14 @@ export default function SettingsIndex({ auth, clinic, mustVerifyEmail, status }:
  </div>
  </form>
 
- {/* Account Settings */}
- <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
- <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} className="max-w-xl" />
- </div>
+        {/* Account Settings */}
+        <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
+            <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} className="w-full" />
+        </div>
 
- <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
- <UpdatePasswordForm className="max-w-xl" />
- </div>
+        <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
+            <UpdatePasswordForm className="w-full" />
+        </div>
  </div>
  </ClinicLayout>
  );

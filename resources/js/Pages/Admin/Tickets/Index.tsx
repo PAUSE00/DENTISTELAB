@@ -84,94 +84,101 @@ export default function Tickets({ tickets, filters }: Props) {
                     ))}
                 </div>
 
-                {/* Data Table */}
-                <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)' }}>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[900px] border-collapse">
-                            <thead>
-                                <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
-                                    {['Reference', 'Subject', 'Context', 'Status', 'Actions'].map((h, i) => (
-                                        <th
-                                            key={h}
-                                            className={`py-4 px-6 text-[10px] font-black uppercase tracking-widest opacity-60 ${i === 4 ? 'text-right' : ''}`}
-                                            style={{ color: 'var(--txt-2)' }}
-                                        >{t(h)}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tickets.data.length > 0 ? tickets.data.map((tck: Ticket) => (
-                                    <tr
-                                        key={tck.id}
-                                        className="group border-b transition-colors hover:bg-[var(--surface-hover)] last:border-0 cursor-pointer"
-                                        style={{ borderColor: 'var(--border)' }}
-                                        onClick={() => router.visit(route('admin.tickets.show', tck.id))}
+                {/* Modern Data List */}
+                <div className="space-y-4">
+                    {/* Header Row */}
+                    {tickets.data.length > 0 && (
+                        <div className="hidden lg:grid grid-cols-12 gap-4 px-8 py-2 text-[10px] font-black uppercase tracking-widest opacity-60" style={{ color: 'var(--txt-2)' }}>
+                            <div className="col-span-3">{t('User & Clinic')}</div>
+                            <div className="col-span-4">{t('Ticket Info')}</div>
+                            <div className="col-span-2">{t('Category')}</div>
+                            <div className="col-span-2">{t('Status')}</div>
+                            <div className="col-span-1 text-right">{t('Action')}</div>
+                        </div>
+                    )}
+
+                    {tickets.data.length > 0 ? tickets.data.map((tck: Ticket) => (
+                        <div 
+                            key={tck.id}
+                            onClick={() => router.visit(route('admin.tickets.show', tck.id))}
+                            className="group relative rounded-3xl p-5 lg:p-6 transition-all duration-300 hover:shadow-xl cursor-pointer overflow-hidden border"
+                            style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}
+                        >
+                            {/* Hover Gradient Background */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent)] to-transparent opacity-0 group-hover:opacity-[0.02] transition-opacity duration-300 pointer-events-none" />
+
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-4 items-center relative z-10">
+                                {/* 1. User Info */}
+                                <div className="col-span-1 lg:col-span-3 flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border relative transition-all duration-300 group-hover:border-[var(--accent)] group-hover:bg-[var(--accent-10)]" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                        <TicketIcon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" style={{ color: 'var(--accent)' }} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[14px] font-bold transition-colors group-hover:text-[var(--accent)]" style={{ color: 'var(--txt-1)' }}>
+                                            {tck.user.name}
+                                        </p>
+                                        <p className="text-[12px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+                                            {tck.user.email}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* 2. Subject */}
+                                <div className="col-span-1 lg:col-span-4 pr-4">
+                                    <p className="text-[15px] font-bold truncate" style={{ color: 'var(--txt-1)' }}>
+                                        <span className="opacity-50 font-normal mr-1.5" style={{ color: 'var(--txt-3)' }}>#{tck.id}</span>
+                                        {tck.subject}
+                                    </p>
+                                    <p className="text-[12px] mt-1 flex items-center gap-1.5" style={{ color: 'var(--txt-3)' }}>
+                                        <Clock className="w-3.5 h-3.5 opacity-60" />
+                                        {new Date(tck.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+
+                                {/* 3. Priority & Category */}
+                                <div className="col-span-1 lg:col-span-2 flex flex-col items-start gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--txt-2)' }}>
+                                        {tck.category}
+                                    </span>
+                                    <span 
+                                        className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 px-1"
+                                        style={{ color: tck.priority === 'urgent' || tck.priority === 'high' ? '#f43f5e' : 'var(--txt-3)' }}
                                     >
-                                        <td className="py-4 px-6">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'var(--accent-10)', border: '1px solid var(--border)' }}>
-                                                    <TicketIcon className="w-4 h-4" style={{ color: 'var(--accent)' }} />
-                                                    <span className="absolute text-[8px] font-black translate-y-3" style={{ color: 'var(--accent)' }}>#{tck.id}</span>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[13px] font-bold leading-tight" style={{ color: 'var(--txt-1)' }}>{tck.user.name}</p>
-                                                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>{tck.user.email}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <p className="text-[14px] font-semibold truncate max-w-sm transition-colors group-hover:text-[var(--accent)]" style={{ color: 'var(--txt-1)' }}>
-                                                {tck.subject}
-                                            </p>
-                                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
-                                                {new Date(tck.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                            </p>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex flex-col gap-1.5 items-start">
-                                                <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border" style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--txt-2)' }}>
-                                                    {tck.category}
-                                                </span>
-                                                <span
-                                                    className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1"
-                                                    style={{ color: tck.priority === 'urgent' || tck.priority === 'high' ? '#f43f5e' : 'var(--txt-3)' }}
-                                                >
-                                                    <div className="w-1 h-1 rounded-full" style={{ background: 'currentColor' }} />
-                                                    {tck.priority} Priority
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <StatusBadge s={tck.status} />
-                                        </td>
-                                        <td className="py-4 px-6 text-right">
-                                            <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                <button className="p-2 rounded-xl transition-all" style={{ background: 'var(--accent-10)', color: 'var(--accent)' }}>
-                                                    <Navigation className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan={5} className="py-20 text-center">
-                                            <div className="flex flex-col items-center gap-3">
-                                                <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: 'var(--surface)' }}>
-                                                    <TicketIcon className="w-7 h-7" style={{ color: 'var(--txt-3)' }} />
-                                                </div>
-                                                <p className="font-bold text-[13px]" style={{ color: 'var(--txt-1)' }}>{t('No Tickets Found')}</p>
-                                                <p className="text-[12px]" style={{ color: 'var(--txt-3)' }}>{t('Looks like all support queries are resolved. Great job!')}</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
+                                        {tck.priority}
+                                    </span>
+                                </div>
+
+                                {/* 4. Status */}
+                                <div className="col-span-1 lg:col-span-2">
+                                    <StatusBadge s={tck.status} />
+                                </div>
+
+                                {/* 5. Actions */}
+                                <div className="hidden lg:flex col-span-1 justify-end">
+                                    <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all bg-[var(--surface)] border border-[var(--border)] text-[var(--txt-2)] scale-90 opacity-50 group-hover:opacity-100 group-hover:scale-100 group-hover:bg-[var(--accent)] group-hover:text-[#0d1f1a] group-hover:border-transparent group-hover:shadow-[0_4px_16px_rgba(96,221,198,0.3)]">
+                                        <Navigation className="w-4 h-4 ml-0.5" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )) : (
+                        <div className="py-24 flex flex-col items-center justify-center text-center rounded-3xl border border-dashed" style={{ background: 'var(--bg-raised)', borderColor: 'var(--border)' }}>
+                            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6 border shadow-sm" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                                <AlertCircle className="w-8 h-8 opacity-40" style={{ color: 'var(--txt-3)' }} />
+                            </div>
+                            <h3 className="text-lg font-bold mb-2 tracking-tight" style={{ color: 'var(--txt-1)' }}>{t('No Tickets Found')}</h3>
+                            <p className="text-[14px] max-w-sm opacity-80" style={{ color: 'var(--txt-3)' }}>
+                                {t('Looks like all support queries matching this filter are resolved. Great job!')}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Pagination */}
                     {tickets.links && tickets.links.length > 3 && (
-                        <div className="px-6 py-4 border-t flex justify-between items-center" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-                            <p className="text-[11px]" style={{ color: 'var(--txt-3)' }}>
-                                {t('Showing')} <span className="font-bold" style={{ color: 'var(--txt-2)' }}>{tickets.data.length}</span> {t('of')} {tickets.total ?? tickets.data.length} {t('tickets')}
+                        <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <p className="text-[12px] font-medium" style={{ color: 'var(--txt-3)' }}>
+                                {t('Showing')} <span className="font-bold" style={{ color: 'var(--txt-1)' }}>{tickets.data.length}</span> {t('of')} <span className="font-bold" style={{ color: 'var(--txt-1)' }}>{tickets.total ?? tickets.data.length}</span> {t('tickets')}
                             </p>
                             <Pagination links={tickets.links} />
                         </div>

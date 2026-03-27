@@ -156,7 +156,7 @@ export default function Show({ auth, order }: Props) {
  </div>
  )}
  </div>
- <div className="flex items-center gap-2">
+ <div className="flex items-center gap-2 no-print">
  {order.status === 'new' && (
  <Link href={route('clinic.orders.edit', order.id)} style={btnBase}
  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.background = 'var(--bg-raised)'; }}
@@ -266,7 +266,7 @@ export default function Show({ auth, order }: Props) {
  </div>
 
  {/* QUICK ACTIONS (Clinic side) */}
- <div className="rounded-xl shadow-sm border mt-2 flex flex-col" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+ <div className="rounded-xl shadow-sm border mt-2 flex flex-col no-print" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
  <div className="flex items-center gap-2 font-bold text-[11px] uppercase tracking-[0.08em] p-4 border-b" style={{ borderColor: 'var(--border)', color: 'var(--txt-1)' }}>
  <Zap size={14} style={{ color: 'var(--txt-3)' }} /> {t('Quick Actions')}
  </div>
@@ -293,7 +293,7 @@ export default function Show({ auth, order }: Props) {
  </div>
 
  {/* ── RIGHT FIXED SIDEBAR (ONLY DESKTOP) ── */}
- <div className="hidden lg:flex flex-col w-[340px] shrink-0 h-full border-l" style={{ background: 'var(--bg)', borderColor: 'var(--border)' }}>
+ <div className="hidden lg:flex flex-col w-[340px] shrink-0 h-full border-l no-print" style={{ background: 'var(--bg)', borderColor: 'var(--border)' }}>
  {/* Tabs */}
  <div className="flex border-b" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
  <button onClick={() => setSidebarTab('timeline')} className="flex-1 py-4 text-[10.5px] font-bold uppercase tracking-[0.08em] flex items-center justify-center gap-2 transition-colors relative" style={{ color: sidebarTab === 'timeline' ? 'var(--txt-accent)' : 'var(--txt-3)' }}>
@@ -322,7 +322,7 @@ export default function Show({ auth, order }: Props) {
  </div>
 
  {/* Mobile Tab Fallback (shows at bottom instead of right sidebar) */}
- <div className="lg:hidden flex flex-col h-[500px] border-t" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+ <div className="lg:hidden flex flex-col h-[500px] border-t no-print" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
  <div className="flex border-b" style={{ borderColor: 'var(--border)' }}>
  <button onClick={() => setSidebarTab('timeline')} className="flex-1 py-4 text-[11px] font-bold uppercase tracking-[0.08em] flex items-center justify-center gap-2 transition-colors relative" style={{ color: sidebarTab === 'timeline' ? 'var(--txt-accent)' : 'var(--txt-3)' }}>
  <History size={13} /> {t('Timeline')}

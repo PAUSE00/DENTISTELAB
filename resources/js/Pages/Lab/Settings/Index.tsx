@@ -1,200 +1,196 @@
 import LabLayout from '@/Layouts/LabLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { Building, User, Shield, Upload, Loader2, CloudUpload } from 'lucide-react';
-import { FormEventHandler } from 'react';
-import { ToastContainer, useToast } from '@/Components/Toast';
-import useTranslation from '@/Hooks/useTranslation';
+import { Save, Building2, Mail, Phone, MapPin, AlignLeft, Settings } from 'lucide-react';
+import { FormEventHandler, useEffect, useState } from 'react';
 import UpdatePasswordForm from '@/Pages/Profile/Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from '@/Pages/Profile/Partials/UpdateProfileInformationForm';
+import useTranslation from '@/Hooks/useTranslation';
 
 interface Lab {
- id: number;
- name: string;
- email: string;
- phone: string;
- address: string | null;
- city: string | null;
- description: string | null;
- terms: string | null;
- logo_path: string | null;
+ id: number; name: string; email: string | null; phone: string | null; address: string | null; city: string | null; description: string | null; logo_path: string | null;
 }
+interface Props extends PageProps { lab: Lab; mustVerifyEmail: boolean; status?: string; }
 
-interface Props extends PageProps {
- lab: Lab;
- mustVerifyEmail: boolean;
- status?: string;
-}
-
-const SECTION_TITLE = "text-[16px] font-bold flex items-center gap-3 text-white tracking-wide";
-const LABEL = "block text-[10px] uppercase font-bold tracking-widest mb-2 opacity-70";
-const INPUT_BASE = "w-full px-4 py-2.5 rounded-lg text-[13px] border border-[#312e81] focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-accent transition-colors bg-[rgba(15,23,42,0.2)] text-[var(--txt-1)] placeholder-white/30";
-
-export default function LabSettings({ auth, lab, mustVerifyEmail, status }: Props) {
+export default function SettingsIndex({ auth, lab, mustVerifyEmail, status }: Props) {
+ const { flash } = usePage().props as any;
  const { t } = useTranslation();
- const { toasts, addToast, removeToast } = useToast();
+ const [toast, setToast] = useState<string | null>(null);
 
- const { data, setData, post, processing, errors } = useForm({
+ const { data, setData, post, processing, errors, isDirty } = useForm({
  name: lab.name || '',
  email: lab.email || '',
  phone: lab.phone || '',
  address: lab.address || '',
  city: lab.city || '',
  description: lab.description || '',
- terms: lab.terms || '',
  logo: null as File | null,
  _method: 'PATCH',
  });
 
+ useEffect(() => {
+ if (flash?.success) {
+ setToast(flash.success);
+ const t = setTimeout(() => setToast(null), 3000);
+ return () => clearTimeout(t);
+ }
+ }, [flash]);
+
  const submit: FormEventHandler = (e) => {
  e.preventDefault();
- post(route('lab.settings.update'), {
- onSuccess: () => addToast(t('Settings updated successfully!'), 'success'),
- onError: () => addToast(t('Error updating settings.'), 'error'),
- });
+ post(route('lab.settings.update'));
+ };
+
+ const fieldStyle = {
+ background: 'var(--surface)',
+ border: '1px solid var(--border-strong)',
+ color: 'var(--txt-1)',
+ borderRadius: 8,
+ padding: '7px 12px',
+ fontSize: 13,
+ fontFamily: 'inherit',
+ outline: 'none',
+ width: '100%',
+ };
+
+ const labelStyle = {
+ fontSize: 11,
+ fontWeight: 600,
+ letterSpacing: '0.08em',
+ textTransform: 'uppercase' as const,
+ color: 'var(--txt-3)',
+ marginBottom: 6,
+ display: 'flex',
+ alignItems: 'center',
+ gap: 6,
  };
 
  return (
  <LabLayout>
  <Head title={t('Settings')} />
 
- <div className="max-w-[900px] mx-auto space-y-16 py-10 px-6 sm:px-8">
-
- {/* --- 1. GENERAL INFORMATION --- */}
- <form onSubmit={submit} encType="multipart/form-data">
- <h2 className={SECTION_TITLE} style={{ color: 'var(--txt-1)' }}>
- <Building className="w-5 h-5 text-accent" />
- {t('General Information')}
- </h2>
- 
- <div className="flex flex-col md:flex-row gap-10 mt-6">
- {/* Logo Upload (Left Col) */}
- <div className="w-full md:w-[220px] shrink-0">
- <label className={LABEL} style={{ color: 'var(--txt-1)' }}>{t('Laboratory Logo')}</label>
- <div className="relative h-[220px] rounded-2xl flex flex-col items-center justify-center border-2 border-dashed border-accent/20 bg-accent/5 hover:bg-accent/10 transition-colors overflow-hidden mt-1 group cursor-pointer">
- <input
- type="file"
- onChange={(e) => setData('logo', e.target.files ? e.target.files[0] : null)}
- className="absolute inset-0 opacity-0 cursor-pointer z-10"
- accept="image/*"
- />
- {lab.logo_path && !data.logo ? (
- <div className="absolute inset-0 bg-black">
- <img src={`/storage/${lab.logo_path}`} className="w-full h-full object-cover opacity-80 group-hover:opacity-50 transition-opacity" alt="Logo" />
- <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
- <CloudUpload className="text-white w-8 h-8 mb-2" />
- <span className="text-white text-xs font-bold">{t('Change Logo')}</span>
- </div>
- </div>
- ) : data.logo ? (
- <div className="text-center px-4">
- <div className="w-10 h-10 mx-auto bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-3">
- <CloudUpload className="w-5 h-5" />
- </div>
- <p className="text-[12px] font-bold text-emerald-500 truncate">{data.logo.name}</p>
- </div>
- ) : (
- <div className="text-center px-4 opacity-70 group-hover:opacity-100 transition-opacity">
- <CloudUpload className="w-8 h-8 mx-auto mb-3 text-indigo-400" />
- <p className="text-[11.5px] font-medium text-indigo-300 px-4">{t('Click to upload brand asset')}</p>
+ {/* Toast */}
+ {toast && (
+ <div className="fixed top-20 right-6 z-50 px-4 py-3 rounded-xl text-[13px] font-semibold flex items-center gap-2 shadow-lg transition-all"
+ style={{ background: 'var(--accent-grad)', color: 'white' }}>
+ <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current" strokeWidth={2.5}>
+ <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+ </svg>
+ {toast}
  </div>
  )}
+
+    <div className="max-w-4xl mx-auto flex flex-col gap-5 pb-10">
+
+ {/* Header */}
+ <div className="flex items-center gap-3">
+ <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+ style={{ background: 'var(--accent-grad)', color: 'white' }}>
+ <Settings size={18} />
  </div>
- <p className="text-[10px] mt-4 font-medium opacity-50 text-center" style={{ color: 'var(--txt-1)' }}>
- {t('Recommended: 512×512px SVG or PNG.')}
+ <div>
+ <h1 className="text-[17px] font-bold tracking-tight" style={{ color: 'var(--txt-1)' }}>
+ {t('Laboratory Settings')}
+ </h1>
+ <p className="text-[11px] mt-0.5" style={{ color: 'var(--txt-3)' }}>
+ {t('Manage your lab information')}
  </p>
- {errors.logo && <p className="text-red-500 text-[11px] font-bold mt-2 text-center">{errors.logo}</p>}
- </div>
-
- {/* Form Inputs (Right Col) */}
- <div className="flex-1 flex flex-col gap-5 pt-1">
- <div>
- <label className={LABEL} style={{ color: 'var(--txt-1)' }}>{t('Laboratory Name')}</label>
- <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className={INPUT_BASE} />
- {errors.name && <p className="text-red-500 text-[11px] mt-1">{errors.name}</p>}
- </div>
-
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
- <div>
- <label className={LABEL} style={{ color: 'var(--txt-1)' }}>{t('Official Email')}</label>
- <input type="email" value={data.email} onChange={e => setData('email', e.target.value)} className={INPUT_BASE} />
- {errors.email && <p className="text-red-500 text-[11px] mt-1">{errors.email}</p>}
- </div>
- <div>
- <label className={LABEL} style={{ color: 'var(--txt-1)' }}>{t('Phone Number')}</label>
- <input type="text" value={data.phone} onChange={e => setData('phone', e.target.value)} className={INPUT_BASE} />
- {errors.phone && <p className="text-red-500 text-[11px] mt-1">{errors.phone}</p>}
  </div>
  </div>
 
+ {/* Lab Form */}
+ <form onSubmit={submit} encType="multipart/form-data">
+ <div className="card overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
+ <div className="px-5 py-3.5 border-b" style={{ borderColor: 'var(--border)' }}>
+ <p className="text-[12px] font-semibold" style={{ color: 'var(--txt-1)' }}>{t('Laboratory Profile')}</p>
+ </div>
+ <div className="p-5 flex flex-col gap-5">
+
+ {/* Lab Name */}
  <div>
- <label className={LABEL} style={{ color: 'var(--txt-1)' }}>{t('Address Line')}</label>
- <input type="text" value={data.address} onChange={e => setData('address', e.target.value)} className={INPUT_BASE} />
- {errors.address && <p className="text-red-500 text-[11px] mt-1">{errors.address}</p>}
+ <label style={labelStyle}><Building2 size={13} /> {t('Laboratory Name')}</label>
+ <input type="text" style={fieldStyle} value={data.name}
+ onChange={e => setData('name', e.target.value)}
+ onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px rgba(168,85,247,0.12)'; }}
+ onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+ placeholder={t('Lab name')} />
+ {errors.name && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.name}</p>}
  </div>
 
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
- <label className={LABEL} style={{ color: 'var(--txt-1)' }}>{t('City / Region')}</label>
- <input type="text" value={data.city} onChange={e => setData('city', e.target.value)} className={INPUT_BASE} />
- {errors.city && <p className="text-red-500 text-[11px] mt-1">{errors.city}</p>}
+ <label style={labelStyle}><Mail size={13} /> {t('Email')}</label>
+ <input type="email" style={fieldStyle} value={data.email}
+ onChange={e => setData('email', e.target.value)}
+ onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px rgba(168,85,247,0.12)'; }}
+ onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+ placeholder="contact@lab.ma" />
+ {errors.email && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.email}</p>}
  </div>
  <div>
- <label className={LABEL} style={{ color: 'var(--txt-1)' }}>{t('Postal Code')}</label>
- <input type="text" placeholder={t('Optional')} className={INPUT_BASE} />
+ <label style={labelStyle}><Phone size={13} /> {t('Phone')}</label>
+ <input type="tel" style={fieldStyle} value={data.phone}
+ onChange={e => setData('phone', e.target.value)}
+ onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px rgba(168,85,247,0.12)'; }}
+ onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+ placeholder="0528-123456" />
+ {errors.phone && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.phone}</p>}
+ </div>
+ </div>
+
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+ <div>
+ <label style={labelStyle}><MapPin size={13} /> {t('Address Line')}</label>
+ <input type="text" style={fieldStyle} value={data.address}
+ onChange={e => setData('address', e.target.value)}
+ onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px rgba(168,85,247,0.12)'; }}
+ onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+ placeholder={t('Address line')} />
+ {errors.address && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.address}</p>}
+ </div>
+ <div>
+ <label style={labelStyle}><MapPin size={13} /> {t('City / Region')}</label>
+ <input type="text" style={fieldStyle} value={data.city}
+ onChange={e => setData('city', e.target.value)}
+ onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px rgba(168,85,247,0.12)'; }}
+ onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+ placeholder={t('Agadir')} />
+ {errors.city && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.city}</p>}
  </div>
  </div>
 
  <div>
- <label className={LABEL} style={{ color: 'var(--txt-1)' }}>{t('Lab Description')}</label>
- <textarea 
- value={data.description} 
- onChange={e => setData('description', e.target.value)} 
- rows={3} 
- className={`${INPUT_BASE} resize-none`}
- />
- {errors.description && <p className="text-red-500 text-[11px] mt-1">{errors.description}</p>}
+ <label style={labelStyle}><AlignLeft size={13} /> {t('Lab Description')}</label>
+ <textarea rows={4} style={{ ...fieldStyle, resize: 'none' }}
+ value={data.description}
+ onChange={e => setData('description', e.target.value)}
+ onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px rgba(168,85,247,0.12)'; }}
+ onBlur={e => { e.target.style.borderColor = 'var(--border-strong)'; e.target.style.boxShadow = 'none'; }}
+ placeholder={t('Describe your lab...')} />
+ {errors.description && <p className="text-[11px] mt-1" style={{ color: '#f87171' }}>{errors.description}</p>}
+ </div>
  </div>
 
- <div className="flex justify-end mt-2">
- <button type="submit" disabled={processing} className="px-6 py-2.5 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white text-[13px] font-bold transition-colors disabled:opacity-50 flex items-center gap-2">
- {processing && <Loader2 className="w-4 h-4 animate-spin" />}
- {t('Save Lab Profile')}
+ <div className="px-5 py-3.5 border-t flex justify-end" style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+ <button type="submit" disabled={processing || !isDirty} className="px-4 py-2 rounded-lg font-bold text-[13px] text-white transition-opacity disabled:opacity-50" style={{ background: 'var(--accent)' }}>
+ <div className="flex items-center gap-2">
+ <Save size={13} />
+ {processing ? t('Saving...') : t('Save Changes')}
+ </div>
  </button>
- </div>
  </div>
  </div>
  </form>
 
- <div className="w-full h-[1px] bg-[var(--border)] opacity-50" />
+        {/* Account Settings */}
+        <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
+            <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} className="w-full" />
+        </div>
 
- {/* --- 2. PERSONAL IDENTITY --- */}
- <div>
- <h2 className={SECTION_TITLE} style={{ color: 'var(--txt-1)' }}>
- <User className="w-5 h-5 text-accent" />
- {t('Personal Identity')}
- </h2>
- <div className="mt-6">
- <UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} />
+        <div className="card p-5" style={{ background: 'var(--bg-raised)' }}>
+            <UpdatePasswordForm className="w-full" />
+        </div>
  </div>
- </div>
-
- <div className="w-full h-[1px] bg-[var(--border)] opacity-50" />
-
- {/* --- 3. SECURITY & AUTHENTICATION --- */}
- <div>
- <h2 className={SECTION_TITLE} style={{ color: 'var(--txt-1)' }}>
- <Shield className="w-5 h-5 text-accent" />
- {t('Security & Authentication')}
- </h2>
- <div className="mt-6 pb-12">
- <UpdatePasswordForm />
- </div>
- </div>
-
- </div>
-
- <ToastContainer toasts={toasts} removeToast={removeToast} />
  </LabLayout>
  );
 }

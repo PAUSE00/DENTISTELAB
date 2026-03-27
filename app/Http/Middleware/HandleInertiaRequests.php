@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\Announcement;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -32,7 +33,7 @@ class HandleInertiaRequests extends Middleware
         return [
             'auth' => [
                 'user' => $request->user() ? array_merge(
-                    $request->user()->only('id', 'name', 'email', 'role', 'clinic_id', 'lab_id'),
+                    $request->user()->only('id', 'name', 'email', 'role', 'clinic_id', 'lab_id', 'avatar_path'),
                     [
                         'clinic' => $request->user()->clinic ? clone $request->user()->clinic : null,
                         'lab' => $request->user()->lab ? clone $request->user()->lab : null,
@@ -49,6 +50,30 @@ class HandleInertiaRequests extends Middleware
                 return file_exists($path) ? json_decode(file_get_contents($path), true) : [];
             },
             'locale' => app()->getLocale(),
+            'announcements' => function () use ($request) {
+                $user = $request->user();
+
+                // Determine which targets apply to this user
+                $targets = ['all'];
+                if ($user) {
+                    if (in_array($user->role, ['lab_owner', 'lab_tech'])) {
+                        $targets[] = 'lab';
+                    } elseif (in_array($user->role, ['dentist', 'clinic_staff'])) {
+                        $targets[] = 'clinic';
+                    } else {
+                        // super_admin sees everything
+                        $targets = ['all', 'lab', 'clinic'];
+                    }
+                }
+
+                return Announcement::where('is_active', true)
+                    ->whereIn('target', $targets)
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                    })
+                    ->latest()
+                    ->get(['id', 'title', 'message', 'type', 'target', 'expires_at', 'created_at']);
+            },
         ];
     }
 }

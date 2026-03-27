@@ -99,7 +99,7 @@ export default function Show({ auth, patient, stats, timeline }: Props) {
  </Link>
 
  <div className="flex items-center gap-4">
- <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#818cf8] to-[#6638b4] flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-accent">
+ <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#818cf8] to-[#6638b4] flex items-center justify-center text-white text-2xl font-black shadow-lg shadow-indigo-500/40">
  {patient.first_name[0]}{patient.last_name[0]}
  </div>
  <div className="flex flex-col gap-1">

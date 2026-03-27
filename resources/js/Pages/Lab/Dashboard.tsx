@@ -123,7 +123,7 @@ export default function Dashboard({
  <div className="flex items-center justify-between">
  <div>
  <h2 className="text-[20px] font-semibold tracking-tight" style={{ color: 'var(--txt-1)' }}>
- {greeting}, <span style={{ color: 'var(--txt-accent)' }}>{auth.user.name.split(' ')[0]}</span> 👋
+ {greeting}, <span style={{ color: 'var(--txt-accent)' }}>{auth.user.name}</span> 👋
  </h2>
  <p className="text-[12.5px] mt-0.5" style={{ color: 'var(--txt-2)' }}>
  {t('Laboratory')} · {t('Command Center')}

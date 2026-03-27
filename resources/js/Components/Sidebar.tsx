@@ -12,7 +12,7 @@ import {
  Building2,
  Activity,
  ShieldCheck,
- Stethoscope,
+ 
  DollarSign,
  Calendar,
  MessageSquare,
@@ -21,6 +21,7 @@ import {
  Layers,
  Compass,
  Receipt,
+ Ticket,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -69,6 +70,7 @@ export default function Sidebar() {
  { name: t('Billing'), href: route('clinic.billing.index'), icon: Receipt, active: isActive('/clinic/billing') },
  { name: t('Explore Labs'), href: route('clinic.explore.index'), icon: Compass, active: isActive('/clinic/explore') },
  { name: t('Templates'), href: route('clinic.templates.index'), icon: Layers, active: isActive('/clinic/templates') },
+ { name: t('Support'), href: route('clinic.tickets.index'), icon: Ticket, active: isActive('/clinic/tickets') },
  ...(user.role === 'dentist' ? [{ name: t('Team'), href: route('clinic.team.index'), icon: ShieldCheck, active: isActive('/clinic/team') }] : []),
  ],
  });
@@ -92,6 +94,7 @@ export default function Sidebar() {
  { name: t('Finance'), href: route('lab.finance.index'), icon: DollarSign, active: isActive('/lab/finance') },
  ...(user.role === 'lab_owner' ? [{ name: t('My Team'), href: route('lab.team.index'), icon: Users, active: isActive('/lab/team') }] : []),
  { name: t('Reports'), href: route('lab.reports.index'), icon: BarChart2, active: isActive('/lab/reports') },
+ { name: t('Support'), href: route('lab.tickets.index'), icon: Ticket, active: isActive('/lab/tickets') },
  { name: t('Settings'), href: route('lab.settings.index'), icon: Settings, active: isActive('/lab/settings') },
  ],
  });
@@ -118,12 +121,15 @@ export default function Sidebar() {
  >
  <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(90deg, var(--accent-10) 0%, transparent 100%)' }} />
  
- <div className={`relative rounded-xl flex items-center justify-center text-white font-bold shadow-[0_0_15px_var(--accent-20)] shrink-0 transition-all duration-300 ${collapsed ? 'w-9 h-9 mx-auto' : 'w-9 h-9'}`} style={{ background: 'var(--accent-grad)' }}>
- <Stethoscope className="w-5 h-5" />
- </div>
+ <div className={`relative flex items-center transition-all duration-300 ${collapsed ? 'w-10 h-10 mx-auto justify-center' : 'w-full gap-3'}`}>
+ <img 
+ src="/images/logo.png" 
+ alt="Logo" 
+ className="w-9 h-9 object-contain drop-shadow-[0_0_10px_rgba(96,221,198,0.25)] transition-transform hover:scale-105"
+ />
  
  {!collapsed && (
- <div className="ml-3 animate-fade-in flex-1">
+ <div className="animate-fade-in flex-1">
  <h1 className="font-extrabold text-[15px] tracking-tight leading-none" style={{ color: 'var(--txt-1)' }}>
  Dental<span style={{ color: 'var(--accent)' }}>Lab</span>Pro
  </h1>
@@ -132,6 +138,8 @@ export default function Sidebar() {
  </p>
  </div>
  )}
+ </div>
+ </div>
 
  {/* Collapse toggle */}
  <button
@@ -151,7 +159,7 @@ export default function Sidebar() {
       <ChevronRight className="w-3 h-3" />
     </button>
  )}
- </div>
+
 
  {/* Navigation */}
  <nav className="flex-1 overflow-y-auto no-scrollbar py-6 px-3 space-y-5">
@@ -242,16 +250,20 @@ export default function Sidebar() {
  style={{ background: collapsed ? 'transparent' : 'var(--surface)', borderColor: collapsed ? 'transparent' : 'var(--border)' }}
  >
  <div className="relative shrink-0">
-  <div className={`rounded-xl flex items-center justify-center text-white font-black shadow-lg ${collapsed ? 'w-10 h-10 text-[13px]' : 'w-9 h-9 text-xs'}`}
-    style={{ background: 'var(--accent-grad)' }}>
- {getInitials(user.name)}
- </div>
+  {user.avatar_path ? (
+     <img src={`/storage/${user.avatar_path}`} className={`rounded-xl object-cover border-[1px] shadow-lg ${collapsed ? 'w-10 h-10' : 'w-9 h-9'}`} style={{ borderColor: 'var(--border)' }} alt="Avatar" />
+  ) : (
+     <div className={`rounded-xl flex items-center justify-center text-white font-black shadow-lg ${collapsed ? 'w-10 h-10 text-[13px]' : 'w-9 h-9 text-xs'}`}
+       style={{ background: 'var(--accent-grad)' }}>
+       {getInitials(user.name)}
+     </div>
+  )}
  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 shadow-sm" style={{ background: getRoleColor(user?.role), borderColor: 'var(--bg-raised)', boxShadow: `0 0 8px ${getRoleColor(user?.role)}80` }} />
  </div>
 
  {!collapsed && (
  <div className="flex-1 min-w-0">
- <p className="font-bold text-[13px] truncate" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
+ <p className="font-bold text-[13px] break-words whitespace-normal leading-tight" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
  <p className="text-[9px] uppercase font-black tracking-widest truncate mt-0.5" style={{ color: getRoleColor(user?.role) }}>{t(user.role.replace('_', ' '))}</p>
  </div>
  )}

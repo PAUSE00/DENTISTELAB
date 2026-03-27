@@ -48,6 +48,20 @@ class AppServiceProvider extends ServiceProvider
             return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
-        // Listeners are auto-discovered by Laravel 11
+        // Listeners are auto-discovered by Laravel 11. Custom inline ones below:
+        Event::listen(function (\Illuminate\Auth\Events\Login $event) {
+            \App\Services\AuditLogger::log('User Login', "User {$event->user->email} logged into the system.");
+        });
+
+        Event::listen(function (\Illuminate\Auth\Events\Logout $event) {
+            if ($event->user) {
+                \App\Services\AuditLogger::log('User Logout', "User {$event->user->email} logged out.");
+            }
+        });
+
+        Event::listen(function (\Illuminate\Auth\Events\Failed $event) {
+            $email = $event->credentials['email'] ?? 'Unknown';
+            \App\Services\AuditLogger::log('Failed Login', "Failed login attempt for email: {$email}.");
+        });
     }
 }

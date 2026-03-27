@@ -61,9 +61,9 @@ export default function LabProfile({ auth, lab }: Props) {
  <div className="absolute top-0 right-0 w-96 h-96 bg-[#818cf8] opacity-5 blur-[120px] -mr-48 -mt-48 pointer-events-none" />
 
  <div className="flex flex-col lg:flex-row lg:items-center gap-8 relative z-10">
- <div className="w-24 h-24 rounded-3xl bg-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-accent">
- {lab.name[0]}
- </div>
+                        <div className="w-24 h-24 rounded-3xl bg-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-indigo-500/40">
+                            {lab.name[0]}
+                        </div>
  
  <div className="flex-1">
  <h1 className="text-3xl font-black tracking-tight" style={{ color: 'var(--txt-1)' }}>{lab.name}</h1>

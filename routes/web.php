@@ -16,6 +16,9 @@ Route::get('/', function () {
     ]);
 });
 
+// ── Public: Access Request from landing page ─────────────────────
+Route::post('/access-request', [\App\Http\Controllers\AccessRequestController::class, 'store'])->name('access-request.store');
+
 // ── Invitation (public-ish — needs auth but any role can view) ───
 Route::get('/invitation/{token}', [\App\Http\Controllers\InvitationController::class, 'show'])->name('invitation.show');
 Route::post('/invitation/{token}/accept', [\App\Http\Controllers\InvitationController::class, 'accept'])->middleware('auth')->name('invitation.accept');
@@ -44,6 +47,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('patients', \App\Http\Controllers\Clinic\PatientController::class);
         Route::resource('orders', \App\Http\Controllers\Clinic\OrderController::class);
         Route::resource('appointments', \App\Http\Controllers\Clinic\AppointmentController::class);
+
+        // Support Tickets
+        Route::resource('tickets', \App\Http\Controllers\UserTicketController::class)->only(['index', 'create', 'store', 'show']);
+        Route::post('tickets/{ticket}/reply', [\App\Http\Controllers\UserTicketController::class, 'reply'])->name('tickets.reply');
         Route::get('analytics', [\App\Http\Controllers\Clinic\AnalyticsController::class, 'index'])->name('analytics.index');
         
         Route::get('explore', [\App\Http\Controllers\Clinic\ExploreController::class, 'index'])->name('explore.index');
@@ -142,6 +149,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Global Search API
         Route::get('search', [\App\Http\Controllers\Lab\SearchController::class, '__invoke'])->name('search');
 
+        // Support Tickets
+        Route::resource('tickets', \App\Http\Controllers\UserTicketController::class)->only(['index', 'create', 'store', 'show']);
+        Route::post('tickets/{ticket}/reply', [\App\Http\Controllers\UserTicketController::class, 'reply'])->name('tickets.reply');
+
         // Calendar / Schedule
         Route::get('calendar', [\App\Http\Controllers\Lab\CalendarController::class, 'index'])->name('calendar.index');
 
@@ -181,6 +192,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('announcements', [\App\Http\Controllers\Admin\AnnouncementController::class, 'store'])->name('announcements.store');
         Route::delete('announcements/{announcement}', [\App\Http\Controllers\Admin\AnnouncementController::class, 'destroy'])->name('announcements.destroy');
         Route::patch('announcements/{announcement}/toggle', [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggle'])->name('announcements.toggle');
+
+        // Access Requests (Onboarding)
+        Route::get('access-requests', [\App\Http\Controllers\Admin\AccessRequestController::class, 'index'])->name('access-requests.index');
+        Route::post('access-requests/{accessRequest}/reject', [\App\Http\Controllers\Admin\AccessRequestController::class, 'reject'])->name('access-requests.reject');
     });
 });
 

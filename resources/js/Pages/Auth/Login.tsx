@@ -191,20 +191,7 @@ export default function Login({
  </button>
  </form>
 
- {/* Footer link */}
- <div style={{ marginTop: 28, textAlign: 'center' }}>
- <span style={{ fontSize: 13.5, color: 'rgba(241,240,248,0.35)' }}>
- Don't have an account?{' '}
- <Link
- href={route('register')}
- style={{ color: '#60ddc6', fontWeight: 600, textDecoration: 'none' }}
- onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
- onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
- >
- Create one
- </Link>
- </span>
- </div>
+          {/* Footer link removed as registry page is disabled */}
  </div>
 
  <style>{`

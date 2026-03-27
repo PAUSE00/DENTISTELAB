@@ -82,7 +82,7 @@ export default function Index({ auth, labs, filters }: Props) {
  }}
  />
  <div className="absolute right-2 top-1/2 -translate-y-1/2">
- <button type="submit" className="flex items-center justify-center bg-[#818cf8] hover:bg-[#6366f1] text-white px-6 h-10 rounded-xl text-sm font-bold shadow-lg shadow-accent transition-all hover:scale-105 active:scale-95">
+ <button type="submit" className="flex items-center justify-center bg-[#818cf8] hover:bg-[#6366f1] text-white px-6 h-10 rounded-xl text-sm font-bold shadow-lg shadow-[#818cf8]/40 transition-all hover:scale-105 active:scale-95">
  {t('Explore')}
  </button>
  </div>

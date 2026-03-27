@@ -77,6 +77,8 @@ class ClinicController extends Controller
         $dentist->clinic_id = $clinic->id;
         $dentist->save();
 
+        \App\Services\AuditLogger::log('Clinic Created', "Admin created clinic {$clinic->name}");
+
         return redirect()->route('admin.clinics.index')->with('success', 'Clinic created successfully.');
     }
 
@@ -146,6 +148,8 @@ class ClinicController extends Controller
             $newOwner->save();
         }
 
+        \App\Services\AuditLogger::log('Clinic Updated', "Admin updated clinic {$clinic->name}");
+
         return redirect()->route('admin.clinics.index')->with('success', 'Clinic updated successfully.');
     }
 
@@ -157,7 +161,10 @@ class ClinicController extends Controller
         // Unlink users first
         User::where('clinic_id', $clinic->id)->update(['clinic_id' => null]);
 
+        $name = $clinic->name;
         $clinic->delete();
+
+        \App\Services\AuditLogger::log('Clinic Deleted', "Admin deleted clinic {$name}");
 
         return redirect()->route('admin.clinics.index')->with('success', 'Clinic deleted successfully.');
     }
@@ -168,6 +175,9 @@ class ClinicController extends Controller
     public function toggleActive(Clinic $clinic)
     {
         $clinic->update(['is_active' => !$clinic->is_active]);
+
+        $status = $clinic->is_active ? 'activated' : 'deactivated';
+        \App\Services\AuditLogger::log('Clinic Status Changed', "Admin {$status} clinic {$clinic->name}");
 
         return back()->with('success', 'Clinic status updated successfully.');
     }

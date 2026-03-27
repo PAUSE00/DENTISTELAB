@@ -116,25 +116,28 @@ export default function Odontogram({ selectedTeeth = [], toothTreatments = {}, o
 
  return (
  <div className="relative" style={{ width: '100%', maxWidth: 420, margin: '0 auto', userSelect: 'none' }}>
- {activeTooth && (
- <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 bg-white border rounded-xl shadow-2xl z-10 p-2 animate-fade-in-up">
- <div className="flex justify-between items-center mb-2 px-1">
- <span className="text-[11px] font-bold uppercase tracking-wider">Tooth {activeTooth}</span>
- <button type="button" onClick={() => setActiveTooth(null)} className=" hover: dark:hover: transition-colors pointer">&times;</button>
- </div>
- <div className="flex flex-col gap-1">
- {TREATMENTS.map(t => (
- <button type="button" key={t} onClick={() => { onAssignTreatment?.(activeTooth, t); setActiveTooth(null); }} className="text-left px-3 py-1.5 text-xs font-semibold rounded-md hover: dark:hover: transition-colors">
- {t}
- </button>
- ))}
- <div className="h-px my-1"></div>
- <button type="button" onClick={() => { onAssignTreatment?.(activeTooth, null); setActiveTooth(null); }} className="text-left px-3 py-1.5 text-xs font-bold rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
- Clear Treatment
- </button>
- </div>
- </div>
- )}
+                {activeTooth && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 border rounded-xl shadow-2xl z-10 p-2 animate-fade-in-up"
+                     style={{ background: 'var(--surface)', borderColor: 'var(--border-strong)', color: 'var(--txt-1)' }}>
+                        <div className="flex justify-between items-center mb-2 px-1">
+                            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--txt-2)' }}>Tooth {activeTooth}</span>
+                            <button type="button" onClick={() => setActiveTooth(null)} className="transition-colors pointer" style={{ color: 'var(--txt-3)' }} onMouseOver={e => e.currentTarget.style.color = 'var(--txt-1)'} onMouseOut={e => e.currentTarget.style.color = 'var(--txt-3)'}>&times;</button>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            {TREATMENTS.map(t => (
+                                <button type="button" key={t} onClick={() => { onAssignTreatment?.(activeTooth, t); setActiveTooth(null); }} className="text-left px-3 py-1.5 text-xs font-semibold rounded-md transition-colors"
+                                 style={{ color: 'var(--txt-1)' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-raised)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    {t}
+                                </button>
+                            ))}
+                            <div className="h-px my-1" style={{ background: 'var(--border)' }}></div>
+                            <button type="button" onClick={() => { onAssignTreatment?.(activeTooth, null); setActiveTooth(null); }} className="text-left px-3 py-1.5 text-xs font-bold rounded-md transition-colors"
+                             style={{ color: '#ef4444' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                Clear Treatment
+                            </button>
+                        </div>
+                    </div>
+                )}
 
  <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
  {TEETH.map(tooth => {

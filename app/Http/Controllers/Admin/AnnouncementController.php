@@ -20,10 +20,11 @@ class AnnouncementController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'message' => 'required|string',
-            'type' => 'required|in:info,warning,success,error',
-            'is_active' => 'boolean',
+            'title'      => 'required|string|max:255',
+            'message'    => 'required|string',
+            'type'       => 'required|in:info,warning,success,error',
+            'target'     => 'required|in:all,lab,clinic',
+            'is_active'  => 'boolean',
             'expires_at' => 'nullable|date',
         ]);
 

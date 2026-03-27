@@ -4,6 +4,7 @@ export interface User {
     email: string;
     email_verified_at?: string;
     role: 'dentist' | 'lab_owner' | 'lab_tech' | 'clinic_staff' | 'super_admin';
+    avatar_path?: string;
     clinic_id?: number;
     lab_id?: number;
     locale?: string;

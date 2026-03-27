@@ -52,12 +52,9 @@ export default function UpdatePasswordForm({
  };
 
  return (
- <form onSubmit={updatePassword} className={`space-y-6 ${className}`}>
+ <form onSubmit={updatePassword} className={`space-y-6 flex flex-col gap-6 ${className}`}>
  
- {/* Box exactly like reference image */}
- <div className="card p-6 flex flex-col gap-6 relative" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
- 
- <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
  {/* Current */}
  <div>
  <label htmlFor="current_password" className={LABEL} style={{ color: 'var(--txt-1)' }}>
@@ -108,12 +105,11 @@ export default function UpdatePasswordForm({
  autoComplete="new-password"
  placeholder="••••••••"
  />
- <InputError message={errors.password_confirmation} className="mt-2 text-[11px]" />
- </div>
- </div>
- </div>
+        <InputError message={errors.password_confirmation} className="mt-2 text-[11px]" />
+    </div>
+</div>
 
- <div className="flex justify-end gap-6 pt-2 items-center">
+<div className="flex justify-end gap-6 pt-2 items-center">
  <Transition
  show={recentlySuccessful}
  enter="transition ease-in-out duration-300"
@@ -131,7 +127,7 @@ export default function UpdatePasswordForm({
  <button 
  type="submit" 
  disabled={processing}
- className="btn-primary px-8 py-2.5 rounded-xl text-[13px] font-bold shadow-lg shadow-accent disabled:opacity-50"
+ className="btn-primary px-8 py-2.5 rounded-xl text-[13px] font-bold disabled:opacity-50"
  >
  {t('Update Password')}
  </button>

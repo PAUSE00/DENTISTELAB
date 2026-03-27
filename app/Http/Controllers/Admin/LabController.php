@@ -78,6 +78,8 @@ class LabController extends Controller
         $owner->lab_id = $lab->id;
         $owner->save();
 
+        \App\Services\AuditLogger::log('Lab Created', "Admin created lab {$lab->name}");
+
         return redirect()->route('admin.labs.index')->with('success', 'Lab created successfully.');
     }
 
@@ -149,6 +151,8 @@ class LabController extends Controller
             $newOwner->save();
         }
 
+        \App\Services\AuditLogger::log('Lab Updated', "Admin updated lab {$lab->name}");
+
         return redirect()->route('admin.labs.index')->with('success', 'Lab updated successfully.');
     }
 
@@ -160,7 +164,10 @@ class LabController extends Controller
         // Unlink users first
         User::where('lab_id', $lab->id)->update(['lab_id' => null]);
 
+        $name = $lab->name;
         $lab->delete();
+
+        \App\Services\AuditLogger::log('Lab Deleted', "Admin deleted lab {$name}");
 
         return redirect()->route('admin.labs.index')->with('success', 'Lab deleted successfully.');
     }
@@ -171,6 +178,9 @@ class LabController extends Controller
     public function toggleActive(Lab $lab)
     {
         $lab->update(['is_active' => !$lab->is_active]);
+
+        $status = $lab->is_active ? 'activated' : 'deactivated';
+        \App\Services\AuditLogger::log('Lab Status Changed', "Admin {$status} lab {$lab->name}");
 
         return back()->with('success', 'Lab status updated successfully.');
     }

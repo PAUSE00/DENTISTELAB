@@ -150,11 +150,11 @@ export default function Inbox({ auth, conversations }: Props) {
  };
 
  return (
- <LabLayout>
+ <LabLayout fullBleed={true}>
  <Head title={t('Messages')} />
  
- <div className="flex h-[calc(100vh-100px)] lg:h-[calc(100vh-48px)] rounded-2xl overflow-hidden shadow-2xl relative"
- style={{ border: '1px solid var(--border)', background: 'var(--bg-raised)', color: 'var(--txt-1)' }}>
+ <div className="flex h-full w-full overflow-hidden relative"
+ style={{ background: 'var(--bg-raised)', color: 'var(--txt-1)' }}>
  
  {/* ── LEFT SIDEBAR ── */}
  <div className="w-[340px] flex flex-col shrink-0 border-r relative z-10" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
@@ -249,9 +249,13 @@ export default function Inbox({ auth, conversations }: Props) {
  <div className="p-4 border-t" style={{ borderColor: 'var(--border)', background: 'var(--bg-overlay)' }}>
  <div className="flex items-center justify-between py-1">
  <div className="flex items-center gap-3">
- <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-sm shadow-[0_0_15px_var(--purple)]" style={{ background: 'var(--purple)' }}>
- {getInitials(user.name)}
- </div>
+ {user.avatar_path ? (
+  <img src={`/storage/${user.avatar_path}`} className="w-10 h-10 rounded-full object-cover border-[1px] shadow-[0_0_15px_var(--purple)]" style={{ borderColor: 'var(--border)' }} alt="Avatar" />
+ ) : (
+  <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-sm shadow-[0_0_15px_var(--purple)]" style={{ background: 'var(--purple)' }}>
+  {getInitials(user.name)}
+  </div>
+ )}
  <div className="flex flex-col">
  <span className="text-sm font-bold" style={{ color: 'var(--txt-1)' }}>{user.name}</span>
  <span className="text-[11px] font-medium" style={{ color: 'var(--teal)' }}>Active now</span>
@@ -291,8 +295,6 @@ export default function Inbox({ auth, conversations }: Props) {
  </div>
  <div className="flex items-center gap-5" style={{ color: 'var(--txt-3)' }}>
  <Search size={18} className="cursor-pointer transition-colors" onMouseOver={e => e.currentTarget.style.color = 'var(--txt-1)'} onMouseOut={e => e.currentTarget.style.color = 'var(--txt-3)'} />
- <Phone size={18} className="cursor-pointer transition-colors" onMouseOver={e => e.currentTarget.style.color = 'var(--txt-1)'} onMouseOut={e => e.currentTarget.style.color = 'var(--txt-3)'} />
- <Video size={19} className="cursor-pointer transition-colors" onMouseOver={e => e.currentTarget.style.color = 'var(--txt-1)'} onMouseOut={e => e.currentTarget.style.color = 'var(--txt-3)'} />
  <MoreHorizontal size={20} className="cursor-pointer transition-colors" onMouseOver={e => e.currentTarget.style.color = 'var(--txt-1)'} onMouseOut={e => e.currentTarget.style.color = 'var(--txt-3)'} />
  </div>
  </div>

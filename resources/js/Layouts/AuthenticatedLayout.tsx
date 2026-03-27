@@ -54,10 +54,14 @@ export default function Authenticated({
  <p className="text-xs font-bold leading-none" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
   <p className="text-[10px] font-bold uppercase" style={{ color: 'var(--accent)' }}>{t(`roles.${user.role}`, user.role.replace('_', ' '))}</p>
   </div>
-  <div className="w-7 h-7 rounded-full flex items-center justify-center text-white font-black text-xs shadow-md"
-    style={{ background: 'var(--accent-grad)' }}>
- {getInitials(user.name)}
- </div>
+  {user.avatar_path ? (
+     <img src={`/storage/${user.avatar_path}`} className="w-7 h-7 rounded-full object-cover border-[1px] shadow-md" style={{ borderColor: 'var(--border)' }} alt="Avatar" />
+  ) : (
+      <div className="w-7 h-7 rounded-full flex items-center justify-center text-white font-black text-xs shadow-md"
+        style={{ background: 'var(--accent-grad)' }}>
+     {getInitials(user.name)}
+     </div>
+  )}
  </div>
  </div>
  </header>

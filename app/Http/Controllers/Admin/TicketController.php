@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
 use Illuminate\Http\Request;
+use App\Events\TicketMessageSent;
 use Inertia\Inertia;
 
 class TicketController extends Controller
@@ -39,7 +40,7 @@ class TicketController extends Controller
         $request->validate(['message' => 'required|string']);
 
         $ticket->messages()->create([
-            'user_id' => auth()->user()->id,
+            'user_id' => auth()->id(),
             'message' => $request->message,
             'is_admin_reply' => true
         ]);
@@ -47,6 +48,8 @@ class TicketController extends Controller
         if ($ticket->status === 'open') {
             $ticket->update(['status' => 'in_progress']);
         }
+
+        event(new TicketMessageSent($ticket->id));
 
         return back()->with('success', 'Reply sent successfully.');
     }

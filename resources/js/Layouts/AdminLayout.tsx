@@ -2,7 +2,7 @@ import { useState, PropsWithChildren, useEffect, ReactNode } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import {
     LayoutDashboard, ClipboardList, Users,
-    Shield, ShieldPlus, LogOut, Menu, Moon, Sun,
+    Shield, LogOut, Menu, Moon, Sun,
     X, Settings, ChevronLeft, ChevronRight, Package
 } from 'lucide-react';
 import NotificationBell from '@/Components/NotificationBell';
@@ -10,6 +10,7 @@ import { useNotifications } from '@/Hooks/useNotifications';
 import ToastContainer from '@/Components/ToastContainer';
 import useTranslation from '@/Hooks/useTranslation';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import AnnouncementBanner from '@/Components/AnnouncementBanner';
 
 interface Props extends PropsWithChildren {
     header?: ReactNode;
@@ -54,13 +55,14 @@ export default function AdminLayout({ children, header, fullBleed }: Props) {
     };
 
     const mainLinks = [
-        { path: 'admin.dashboard', pat: 'admin.dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-        { path: 'admin.users.index', pat: 'admin.users.*', label: 'Users', Icon: Users },
-        { path: 'admin.clinics.index', pat: 'admin.clinics.*', label: 'Clinics', Icon: ClipboardList },
-        { path: 'admin.labs.index', pat: 'admin.labs.*', label: 'Labs', Icon: Package },
-        { path: 'admin.tickets.index', pat: 'admin.tickets.*', label: 'Support', Icon: Shield },
-        { path: 'admin.announcements.index', pat: 'admin.announcements.*', label: 'Broadcasts', Icon: Settings }, // Will replace Icon later if needed
-        { path: 'admin.system-logs.index', pat: 'admin.system-logs.*', label: 'Audit Logs', Icon: ClipboardList },
+        { path: 'admin.dashboard',           pat: 'admin.dashboard',          label: 'Dashboard',       Icon: LayoutDashboard },
+        { path: 'admin.users.index',          pat: 'admin.users.*',            label: 'Users',           Icon: Users },
+        { path: 'admin.clinics.index',        pat: 'admin.clinics.*',          label: 'Clinics',         Icon: ClipboardList },
+        { path: 'admin.labs.index',           pat: 'admin.labs.*',             label: 'Labs',            Icon: Package },
+        { path: 'admin.access-requests.index',pat: 'admin.access-requests.*', label: 'Access Requests', Icon: Shield },
+        { path: 'admin.tickets.index',        pat: 'admin.tickets.*',          label: 'Support',         Icon: Shield },
+        { path: 'admin.announcements.index',  pat: 'admin.announcements.*',    label: 'Broadcasts',      Icon: Settings },
+        { path: 'admin.system-logs.index',    pat: 'admin.system-logs.*',      label: 'Audit Logs',      Icon: ClipboardList },
     ];
 
     const NavLink = ({ item }: { item: typeof mainLinks[0] }) => {
@@ -99,13 +101,16 @@ export default function AdminLayout({ children, header, fullBleed }: Props) {
                 {/* Brand */}
                 <div className={`flex items-center h-14 border-b ${collapsed ? 'justify-center px-3' : 'px-4 gap-3'}`}
                     style={{ borderColor: 'var(--border)' }}>
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: 'var(--accent-grad)' }}>
-                        <ShieldPlus size={14} className="text-white" />
+                    <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                        <img
+                            src="/images/logo.png"
+                            className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(96,221,198,0.25)]"
+                            alt="DentalLabPro"
+                        />
                     </div>
                     {!collapsed && (
                         <div className="min-w-0">
-                            <p className="font-semibold text-[13px] truncate leading-none" style={{ color: 'var(--txt-1)' }}>
+                            <p className="font-bold text-[13px] truncate leading-none italic" style={{ color: 'var(--txt-1)' }}>
                                 DentalLab<span style={{ color: 'var(--accent)' }}>Pro</span>
                             </p>
                             <p className="text-[10px] mt-0.5 font-bold uppercase tracking-widest" style={{ color: 'var(--txt-3)' }}>{t('Administration')}</p>
@@ -126,21 +131,27 @@ export default function AdminLayout({ children, header, fullBleed }: Props) {
                 <div className="shrink-0 p-2 border-t" style={{ borderColor: 'var(--border)' }}>
                     <div className={`flex items-center gap-2.5 rounded-lg p-2 ${collapsed ? 'justify-center' : ''}`}
                         style={{ background: 'var(--surface)' }}>
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center font-semibold text-[11px] shrink-0 text-white"
-                            style={{ background: 'var(--accent-grad)' }}>
-                            {getInitials(user.name)}
-                        </div>
-                        {!collapsed && (
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[12px] font-semibold truncate leading-none" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
-                                <p className="text-[10px] mt-0.5 font-bold uppercase" style={{ color: 'var(--accent)' }}>{user.role.replace('_', ' ')}</p>
+                        {user.avatar_path ? (
+                            <img src={`/storage/${user.avatar_path}`} className="w-8 h-8 rounded-full object-cover shrink-0 border border-[var(--border)]" alt="Avatar" />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-[11.5px] shrink-0 text-white"
+                                style={{ background: 'var(--accent-grad)' }}>
+                                {getInitials(user.name)}
                             </div>
                         )}
-                        <Link href={route('logout')} method="post" as="button"
-                            className="p-1 rounded transition-colors hover:text-red-400"
-                            style={{ color: 'var(--txt-3)' }}>
-                            <LogOut size={13} />
-                        </Link>
+                        {!collapsed && (
+                            <div className="flex-1 min-w-0 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[12.5px] font-bold truncate leading-none mb-[3px]" style={{ color: 'var(--txt-1)' }}>{user.name}</p>
+                                    <p className="text-[10.5px] font-medium opacity-60" style={{ color: 'var(--txt-3)' }}>{user.role.replace('_', ' ')}</p>
+                                </div>
+                                <Link href={route('logout')} method="post" as="button"
+                                    className="p-1.5 rounded-md transition-colors hover:text-red-400 opacity-60 hover:opacity-100"
+                                    style={{ color: 'var(--txt-1)' }}>
+                                    <LogOut size={15} />
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             </aside>
@@ -195,16 +206,23 @@ export default function AdminLayout({ children, header, fullBleed }: Props) {
 
                         {/* User chip */}
                         <div className="flex items-center gap-2 pl-1">
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center font-semibold text-[11px] text-white"
-                                style={{ background: 'var(--accent-grad)' }}>
-                                {getInitials(user.name)}
-                            </div>
+                            {user.avatar_path ? (
+                                <img src={`/storage/${user.avatar_path}`} className="w-7 h-7 rounded-full object-cover border border-[var(--border)] shadow-[0_2px_10px_rgba(0,0,0,0.1)]" alt="Avatar" />
+                            ) : (
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center font-semibold text-[11px] text-white shadow-[0_2px_10px_rgba(0,0,0,0.1)]"
+                                    style={{ background: 'var(--accent-grad)' }}>
+                                    {getInitials(user.name)}
+                                </div>
+                            )}
                             <span className="hidden sm:block text-[12.5px] font-medium" style={{ color: 'var(--txt-1)' }}>
                                 {user.name.split(' ')[0]}
                             </span>
                         </div>
                     </div>
                 </header>
+
+                {/* Announcements */}
+                <AnnouncementBanner />
 
                 {/* Content */}
                 {fullBleed ? (

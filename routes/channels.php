@@ -35,3 +35,11 @@ Broadcast::channel('lab.{labId}', function ($user, $labId) {
 Broadcast::channel('clinic.{clinicId}', function ($user, $clinicId) {
     return in_array($user->role, ['dentist', 'clinic_staff']) && (int) $user->clinic_id === (int) $clinicId;
 });
+
+Broadcast::channel('tickets.{ticketId}', function ($user, $ticketId) {
+    $ticket = \App\Models\Ticket::find($ticketId);
+    if (!$ticket) return false;
+    
+    if ($user->role === 'super_admin') return true;
+    return (int) $user->id === (int) $ticket->user_id;
+});
